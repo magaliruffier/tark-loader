@@ -1,0 +1,290 @@
+=head1 LICENSE
+
+Copyright 2015 EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+use warnings;
+use strict;
+use DBI;
+use Digest::SHA1 qw(sha1);
+package Bio::EnsEMBL::Tark::SpeciesLoader;
+
+use Moose;
+with 'MooseX::Log::Log4perl';
+
+has 'dsn' => ( is => 'ro', isa => 'Str' );
+
+has 'dbuser' => ( is => 'ro', isa => 'Str' );
+
+has 'dbpass' => ( is => 'ro', isa => 'Str' );
+
+has 'query' => (
+    traits  => ['Hash'],
+    is      => 'rw',
+    isa     => 'HashRef',
+    default => sub { {} },
+    handles => {
+         set_query     => 'set',
+         get_insert     => 'get',
+         delete_query  => 'delete',
+         clear_queries => 'clear',
+         fetch_keys    => 'keys',
+         fetch_values  =>'values',
+         query_pairs   => 'kv',
+    },
+);
+
+sub BUILD {
+    my ($self) = @_;
+
+    $self->log()->info("Initializing species loader");
+
+    # Attempt a connection to the database
+    my $dbh = $self->dbh();
+
+    # Setup the insert queries
+    my $sth = $dbh->prepare("INSERT INTO genome (name, tax_id, session_id) VALUES (?, ?, ?)");
+    $self->set_query('genome' => $dbh);
+
+    $sth = $dbh->prepare("INSERT INTO assembly (genome_id, assembly_name, assembly_version, session_id) VALUES (?, ?, ?, ?)");
+    $self->set_query('assembly' => $dbh);
+
+    $sth = $dbh->prepare("INSERT INTO gene (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, gene_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $self->set_query('gene' => $dbh);
+
+    $sth = $dbh->prepare("INSERT INTO transcript (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, transcript_checksum, seq_checksum, gene_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $self->set_query('transcript' => $dbh);
+
+    $sth = $dbh->prepare("INSERT INTO exon_transcript (transcript_id, exon_id, exon_order, session_id) VALUES (?, ?, ?, ?)");
+    $self->set_query('exon_transcript' => $dbh);
+
+    $sth = $dbh->prepare("INSERT INTO exon (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, exon_checksum, seq_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $self->set_query('exon' => $dbh);
+
+    $sth = $dbh->prepare("INSERT INTO translation (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, translation_checksum, seq_checksum, transcript_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $self->set_query('translation' => $dbh);
+
+    $sth = $dbh->prepare("INSERT IGNORE INTO sequence (seq_checksum, sequence, session_id) VALUES (?, ?, ?)");
+    $self->set_query('exon_transcript' => $dbh);
+
+    return;
+}
+
+sub dbh {
+    my $self = shift;
+
+    return DBI->connect_cached( $self->dsn, $self->dbuser, $self->dbpass )
+	or $self->log()->die("Error connecting to " . $self->dsn . ": ". $DBI::errstr);
+}
+
+sub load_species {
+    my $self = shift;
+    my $dba = shift;
+    my $session_id = shift;
+
+    $self->log->info("Starting loading process");
+
+    my $mc = $dba->get_MetaContainer();
+    my $species = $mc->get_production_name();
+    $self->log->info("Storing genome for $species");
+
+    my $sth = $self->get_insert('genome');
+    $sth->execute($species, $mc->get_taxonomy_id() + 0, $session_id);
+    my $genome_id = $sth->{mysql_insertid};
+    $sth = $self->get_insert('assembly');
+    $sth->execute($genome_id, $mc->single_value_by_key('assembly.default'), 1, $session_id);
+    my $assembly_id = $sth->{mysql_insertid};
+
+    my $session_pkg = { session_id => $session_id,
+			genome_id => $genome_id,
+			assembly_id => $assembly_id
+    };
+
+    # Fetch a gene iterator and cycle through loading the genes
+    my $iter = $self->metadata_extractor->genes_to_metadata_iterator($dba);
+    while ( my $gene = $iter->next() ) {
+	$self->log->debug( "Loading gene " . $gene->{stable_id} );
+	$self->_load_gene($gene, $session_pkg);
+    }
+    $self->log->info( "Completed dumping genes for " . $species );
+
+}
+
+sub _load_gene {
+    my ( $self, $gene, $session_pkg ) = @_;
+
+    # Insert the sequence and get back the checksum
+    my $seq_checksum = $self->_insert_sequence($gene->seq(), $session_pkg->{session_id});
+
+    my @loc_pieces = ( $gene->stable_id(), $gene->stable_id_version(), $session_pkg->{assembly_id},
+		       $gene->seq_region_start(), $gene->seq_region_end(), $gene->seq_region_strand(),
+		       $gene->seq_region_name() );
+    my $loc_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
+
+    my $sth = $self->get_insert('gene');
+    $sth->execute( @loc_pieces, $loc_checksum, $seq_checksum, $session_pkg->{session_id} );
+    my $gene_id = $sth->{mysql_insertid};
+
+    my $exons = {};
+    $session_pkg->{gene_id} = $gene_id;
+    for my $transcript ( @{ $gene->get_all_Transcripts() } ) {
+	my $transcript_id = $self->_load_transcript( $transcript, $session_pkg );
+
+	$session_pkg->{transcript_id} = $transcript_id;
+	for my $exon (@{ $transcript->get_all_Exons() }) {
+	    $self->_load_exon( $exon, $session_pkg );
+	}
+
+	my $translation = $transcript->translation();
+	if ( defined $translation ) {
+	    $self->_load_translation( $translation, $session_pkg );
+	}
+
+	delete $session_pkg->{transcript_id};
+
+    }
+
+}
+
+sub _load_transcript {
+    my ($self, $transcript, $session_pkg) = @_;
+
+    # Insert the sequence and get back the checksum
+    my $seq_checksum = $self->_insert_sequence($transcript->seq(), $session_pkg->{session_id});
+
+    my @loc_pieces = ( $transcript->stable_id(), $transcript->stable_id_version(), $session_pkg->{assembly_id},
+		       $transcript->seq_region_start(), $transcript->seq_region_end(), 
+		       $transcript->seq_region_strand(), $transcript->seq_region_name() );
+    my $loc_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
+
+    my $sth = $self->get_insert('transcript');
+    $sth->execute( @loc_pieces, $loc_checksum, $seq_checksum, $session_pkg->{gene_id}, $session_pkg->{session_id} );
+    my $transcript_id = $sth->{mysql_insertid};
+
+    return $transcript_id;
+}
+
+sub _load_exon {
+    my ($self, $exon, $session_pkg) = @_;
+
+    # Insert the sequence and get back the checksum
+    my $seq_checksum = $self->_insert_sequence($exon->seq(), $session_pkg->{session_id});
+
+    my @loc_pieces = ( $exon->stable_id(), $exon->stable_id_version(), $session_pkg->{assembly_id},
+		       $exon->seq_region_start(), $exon->seq_region_end(), 
+		       $exon->seq_region_strand(), $exon->seq_region_name() );
+    my $loc_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
+
+    my $sth = $self->get_insert('exon');
+    $sth->execute( @loc_pieces, $loc_checksum, $seq_checksum, $session_pkg->{session_id} );
+    my $exon_id = $sth->{mysql_insertid};
+
+    $sth = $self->get_insert('exon_transcript');
+    $sth->execute($session_pkg->{transcript_id}, $exon_id);
+
+    return $exon_id;
+}
+
+sub _load_translation {
+    my ($self, $translation, $session_pkg) = @_;
+
+    # Insert the sequence and get back the checksum
+    my $seq_checksum = $self->_insert_sequence($translation->seq(), $session_pkg->{session_id});
+
+    my @loc_pieces = ( $translation->stable_id(), $translation->stable_id_version(), $session_pkg->{assembly_id},
+		       $translation->seq_region_start(), $translation->seq_region_end(), 
+		       $translation->seq_region_strand(), $translation->seq_region_name() );
+    my $loc_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
+
+    my $sth = $self->get_insert('translation');
+    $sth->execute( @loc_pieces, $loc_checksum, $seq_checksum, $session_pkg->{transcript_id}, $session_pkg->{session_id} );
+    my $translation_id = $sth->{mysql_insertid};
+    
+}
+
+sub _insert_sequence {
+    my ( $self, $sequence, $session_id ) = @_;
+
+    my $sha1 = $self->checksum_array($sequence);
+
+    my $sth = $self->get_insert('sequence');
+    $sth->execute($sha1, $sequence, $session_id);
+
+    return $sha1;
+    
+}
+
+sub genes_to_metadata_iterator {
+	my ( $self, $dba ) = @_;
+	my $ga           = $dba->get_GeneAdaptor();
+	my $gene_ids     = $ga->_list_dbIDs('gene');
+	my $len          = scalar(@$gene_ids);
+	my $current_gene = 0;
+	my $genes_i      = Bio::EnsEMBL::Utils::Iterator->new(
+		sub {
+			if ( $current_gene >= $len ) {
+				return undef;
+			}
+			else {
+				my $gene = $ga->fetch_by_dbID( $gene_ids->[ $current_gene++ ] );
+				return $self->_gene_to_metadata( $gene, $dba->species() );
+			}
+		}
+	);
+	return $genes_i;
+}
+
+# Join an array of values with a ':' delimeter and find a sha1 checksum of it
+
+sub checksum_array {
+    my ($self, @values) = @_;
+
+    return sha1( join(':', @values) );
+}
+
+sub start_session {
+    my $self = shift;
+    my $client_name = shift;
+
+    my $dbh = $self->dbh();
+    my $sth = $dbh->prepare("INSERT INTO session (client_id, status) VALUES(?, 1)");
+    $sth->execute($client_name);
+
+    my $session_id = $sth->{mysql_insertid};
+
+    $self->log->info("Starting session $session_id");
+
+    return $session_id;
+    
+}
+
+sub end_session {
+    my $self = shift;
+    my $session_id = shift;
+
+    my $dbh = $self->dbh();
+    $dbh->do("UPDATE session SET status = 2 WHERE session_id = ?", undef, $session_id);
+}
+
+sub abort_session {
+    my $self = shift;
+    my $session_id = shift;
+
+    my $dbh = $self->dbh();
+    $dbh->do("UPDATE session SET status = 3 WHERE session_id = ?", undef, $session_id);
+}
+
+1;
