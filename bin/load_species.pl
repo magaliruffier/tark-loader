@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 =cut
 
+$|++;
+
 use warnings;
 use strict;
 
@@ -26,6 +28,8 @@ use Bio::EnsEMBL::Registry;
 my $dbuser; my $dbpass; my $dbhost; my $database; my $dbport = 3306;
 my $species;
 
+Log::Log4perl->easy_init($DEBUG);
+
 get_options();
 
 my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new( dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
@@ -34,7 +38,8 @@ my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new( dsn => "DBI:mysql:database=
 
 # Connect to the Ensembl Registry to access the databases
 Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host => 'ensembldb.ensembl.org',
+    -host => 'mysql-ensembl-mirror.ebi.ac.uk',
+    -port => 4240,
     -user => 'anonymous',
     -db_version => '84'
     );
@@ -43,13 +48,13 @@ my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, "core" );
 
 my $session_id = $loader->start_session("Test client");
 
-eval {
+#eval {
     $loader->load_species($dba, $session_id);
-};
-if($@) {
-    $loader->abort_session($session_id);
-    die "Error loading species: $@";
-}
+#};
+#if($@) {
+#    $loader->abort_session($session_id);
+#    die "Error loading species: $@";
+#}
 
 $loader->end_session($session_id);
 

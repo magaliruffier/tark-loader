@@ -19,7 +19,7 @@ limitations under the License.
 use warnings;
 use strict;
 use DBI;
-use Digest::SHA1 qw(sha1);
+use Digest::SHA1  qw(sha1);
 package Bio::EnsEMBL::Tark::SpeciesLoader;
 
 use Moose;
@@ -56,29 +56,30 @@ sub BUILD {
     my $dbh = $self->dbh();
 
     # Setup the insert queries
-    my $sth = $dbh->prepare("INSERT INTO genome (name, tax_id, session_id) VALUES (?, ?, ?)");
-    $self->set_query('genome' => $dbh);
+    my $sth = $dbh->prepare("INSERT INTO genome (name, tax_id, session_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE genome_id=LAST_INSERT_ID(genome_id)") or
+	$self->log->logdie("Error creating genome insert: $DBI::errstr");
+    $self->set_query('genome' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO assembly (genome_id, assembly_name, assembly_version, session_id) VALUES (?, ?, ?, ?)");
-    $self->set_query('assembly' => $dbh);
+    $self->set_query('assembly' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO gene (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, gene_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $self->set_query('gene' => $dbh);
+    $self->set_query('gene' => $sth);
 
-    $sth = $dbh->prepare("INSERT INTO transcript (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, transcript_checksum, seq_checksum, gene_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $self->set_query('transcript' => $dbh);
+    $sth = $dbh->prepare("INSERT INTO transcript (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, transcript_checksum, exon_set_checksum, seq_checksum, gene_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $self->set_query('transcript' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO exon_transcript (transcript_id, exon_id, exon_order, session_id) VALUES (?, ?, ?, ?)");
-    $self->set_query('exon_transcript' => $dbh);
+    $self->set_query('exon_transcript' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO exon (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, exon_checksum, seq_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $self->set_query('exon' => $dbh);
+    $self->set_query('exon' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO translation (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, translation_checksum, seq_checksum, transcript_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $self->set_query('translation' => $dbh);
+    $self->set_query('translation' => $sth);
 
     $sth = $dbh->prepare("INSERT IGNORE INTO sequence (seq_checksum, sequence, session_id) VALUES (?, ?, ?)");
-    $self->set_query('exon_transcript' => $dbh);
+    $self->set_query('sequence' => $sth);
 
     return;
 }
@@ -102,10 +103,15 @@ sub load_species {
     $self->log->info("Storing genome for $species");
 
     my $sth = $self->get_insert('genome');
-    $sth->execute($species, $mc->get_taxonomy_id() + 0, $session_id);
+    $sth->execute($species, $mc->get_taxonomy_id() + 0, $session_id) or
+	$self->log->logdie("Error inserting genome: $DBI::errstr");
     my $genome_id = $sth->{mysql_insertid};
     $sth = $self->get_insert('assembly');
-    $sth->execute($genome_id, $mc->single_value_by_key('assembly.default'), 1, $session_id);
+    my $assembly_accession = $mc->single_value_by_key('assembly.accession');
+    my ($accession, $acc_ver) = split '\.', $assembly_accession;
+    $acc_ver ||= 1;
+    $sth->execute($genome_id, $accession, $acc_ver, $session_id) or
+	$self->log->logdie("Error inserting assembly: $DBI::errstr");
     my $assembly_id = $sth->{mysql_insertid};
 
     my $session_pkg = { session_id => $session_id,
@@ -114,7 +120,7 @@ sub load_species {
     };
 
     # Fetch a gene iterator and cycle through loading the genes
-    my $iter = $self->metadata_extractor->genes_to_metadata_iterator($dba);
+    my $iter = $self->genes_to_metadata_iterator($dba);
     while ( my $gene = $iter->next() ) {
 	$self->log->debug( "Loading gene " . $gene->{stable_id} );
 	$self->_load_gene($gene, $session_pkg);
@@ -129,24 +135,43 @@ sub _load_gene {
     # Insert the sequence and get back the checksum
     my $seq_checksum = $self->_insert_sequence($gene->seq(), $session_pkg->{session_id});
 
-    my @loc_pieces = ( $gene->stable_id(), $gene->stable_id_version(), $session_pkg->{assembly_id},
+    my @loc_pieces = ( $gene->stable_id(), $gene->version(), $session_pkg->{assembly_id},
 		       $gene->seq_region_start(), $gene->seq_region_end(), $gene->seq_region_strand(),
 		       $gene->seq_region_name() );
     my $loc_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
 
     my $sth = $self->get_insert('gene');
-    $sth->execute( @loc_pieces, $loc_checksum, $seq_checksum, $session_pkg->{session_id} );
+    $sth->execute( @loc_pieces, $loc_checksum, $seq_checksum, $session_pkg->{session_id} ) or
+	$self->log->logdie("Error inserting gene: $DBI::errstr");
     my $gene_id = $sth->{mysql_insertid};
 
     my $exons = {};
     $session_pkg->{gene_id} = $gene_id;
     for my $transcript ( @{ $gene->get_all_Transcripts() } ) {
+
+	my @exon_checksums; my @exon_ids;
+	for my $exon (@{ $transcript->get_all_Exons() }) {
+	    my ($exon_id, $exon_checksum) = $self->_load_exon( $exon, $session_pkg );
+	    push @exon_checksums, $exon_checksum;
+	    push @exon_ids, $exon_id;
+	}
+
+	if( @exon_checksums ) {
+	    $session_pkg->{exon_set_checksum} = $self->checksum_array( @exon_checksums );
+	}
+
 	my $transcript_id = $self->_load_transcript( $transcript, $session_pkg );
 
-	$session_pkg->{transcript_id} = $transcript_id;
-	for my $exon (@{ $transcript->get_all_Exons() }) {
-	    $self->_load_exon( $exon, $session_pkg );
+	my $exon_order = 1;
+	for my $exon_id (@exon_ids) {
+	    $sth = $self->get_insert('exon_transcript');
+	    $sth->execute($transcript_id, $exon_id, $exon_order, $session_pkg->{session_id}) or
+		$self->log->logdie("Error inserting exon_transcript: $DBI::errstr");
+	    $exon_order++;
 	}
+
+	$session_pkg->{transcript_id} = $transcript_id;
+	$session_pkg->{transcript} = $transcript;
 
 	my $translation = $transcript->translation();
 	if ( defined $translation ) {
@@ -154,6 +179,7 @@ sub _load_gene {
 	}
 
 	delete $session_pkg->{transcript_id};
+	delete $session_pkg->{transcript};
 
     }
 
@@ -165,13 +191,17 @@ sub _load_transcript {
     # Insert the sequence and get back the checksum
     my $seq_checksum = $self->_insert_sequence($transcript->seq(), $session_pkg->{session_id});
 
-    my @loc_pieces = ( $transcript->stable_id(), $transcript->stable_id_version(), $session_pkg->{assembly_id},
+    my @loc_pieces = ( $transcript->stable_id(), $transcript->version(), $session_pkg->{assembly_id},
 		       $transcript->seq_region_start(), $transcript->seq_region_end(), 
 		       $transcript->seq_region_strand(), $transcript->seq_region_name() );
-    my $loc_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
+    my $loc_checksum = $self->checksum_array( @loc_pieces );
+    my $transcript_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
 
     my $sth = $self->get_insert('transcript');
-    $sth->execute( @loc_pieces, $loc_checksum, $seq_checksum, $session_pkg->{gene_id}, $session_pkg->{session_id} );
+    $sth->execute( @loc_pieces, $loc_checksum, $transcript_checksum, 
+		   ($session_pkg->{exon_set_checksum} ? $session_pkg->{exon_set_checksum} : undef), 
+		   $seq_checksum, $session_pkg->{gene_id}, $session_pkg->{session_id} ) or
+		       $self->log->logdie("Error inserting transcript: $DBI::errstr");
     my $transcript_id = $sth->{mysql_insertid};
 
     return $transcript_id;
@@ -183,19 +213,18 @@ sub _load_exon {
     # Insert the sequence and get back the checksum
     my $seq_checksum = $self->_insert_sequence($exon->seq(), $session_pkg->{session_id});
 
-    my @loc_pieces = ( $exon->stable_id(), $exon->stable_id_version(), $session_pkg->{assembly_id},
+    my @loc_pieces = ( $exon->stable_id(), $exon->version(), $session_pkg->{assembly_id},
 		       $exon->seq_region_start(), $exon->seq_region_end(), 
 		       $exon->seq_region_strand(), $exon->seq_region_name() );
-    my $loc_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
+    my $loc_checksum = $self->checksum_array( @loc_pieces );
+    my $exon_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
 
     my $sth = $self->get_insert('exon');
-    $sth->execute( @loc_pieces, $loc_checksum, $seq_checksum, $session_pkg->{session_id} );
+    $sth->execute( @loc_pieces, $loc_checksum, $exon_checksum, $seq_checksum, $session_pkg->{session_id} ) or
+	$self->log->logdie("Error inserting exon: $DBI::errstr");
     my $exon_id = $sth->{mysql_insertid};
 
-    $sth = $self->get_insert('exon_transcript');
-    $sth->execute($session_pkg->{transcript_id}, $exon_id);
-
-    return $exon_id;
+    return ($exon_id, $exon_checksum);
 }
 
 sub _load_translation {
@@ -204,13 +233,20 @@ sub _load_translation {
     # Insert the sequence and get back the checksum
     my $seq_checksum = $self->_insert_sequence($translation->seq(), $session_pkg->{session_id});
 
-    my @loc_pieces = ( $translation->stable_id(), $translation->stable_id_version(), $session_pkg->{assembly_id},
-		       $translation->seq_region_start(), $translation->seq_region_end(), 
-		       $translation->seq_region_strand(), $translation->seq_region_name() );
-    my $loc_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
+    my @loc_pieces = ( $translation->stable_id(), $translation->version(), $session_pkg->{assembly_id} );
+    if($session_pkg->{transcript}->seq_region_strand() > 0) {
+	push @loc_pieces, $translation->genomic_start(), $translation->genomic_end();
+    } else {
+	push @loc_pieces, $translation->genomic_end(), $translation->genomic_start();
+    }
+    push @loc_pieces, $session_pkg->{transcript}->seq_region_strand(), $session_pkg->{transcript}->seq_region_name();
+
+    my $loc_checksum = $self->checksum_array( @loc_pieces );
+    my $translation_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
 
     my $sth = $self->get_insert('translation');
-    $sth->execute( @loc_pieces, $loc_checksum, $seq_checksum, $session_pkg->{transcript_id}, $session_pkg->{session_id} );
+    $sth->execute( @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{transcript_id}, $session_pkg->{session_id} ) or
+	$self->log->logdie("Error inserting translation: $DBI::errstr");
     my $translation_id = $sth->{mysql_insertid};
     
 }
@@ -221,7 +257,8 @@ sub _insert_sequence {
     my $sha1 = $self->checksum_array($sequence);
 
     my $sth = $self->get_insert('sequence');
-    $sth->execute($sha1, $sequence, $session_id);
+    $sth->execute($sha1, $sequence, $session_id) or
+	$self->log->logdie("Error inserting sequence: $DBI::errstr");
 
     return $sha1;
     
@@ -240,7 +277,7 @@ sub genes_to_metadata_iterator {
 			}
 			else {
 				my $gene = $ga->fetch_by_dbID( $gene_ids->[ $current_gene++ ] );
-				return $self->_gene_to_metadata( $gene, $dba->species() );
+				return $gene;
 			}
 		}
 	);
@@ -252,7 +289,7 @@ sub genes_to_metadata_iterator {
 sub checksum_array {
     my ($self, @values) = @_;
 
-    return sha1( join(':', @values) );
+    return Digest::SHA1::sha1( join(':', @values) );
 }
 
 sub start_session {
@@ -261,11 +298,17 @@ sub start_session {
 
     my $dbh = $self->dbh();
     my $sth = $dbh->prepare("INSERT INTO session (client_id, status) VALUES(?, 1)");
-    $sth->execute($client_name);
+    $sth->execute($client_name) or
+		$self->log->logdie("Error inserting session: $DBI::errstr");
 
     my $session_id = $sth->{mysql_insertid};
 
     $self->log->info("Starting session $session_id");
+
+    $dbh->do("SET FOREIGN_KEY_CHECKS = 0");
+    $dbh->do("SET UNIQUE_CHECKS = 0");
+    $dbh->do("SET SESSION tx_isolation='READ-UNCOMMITTED'");
+#    $dbh->do("SET sql_log_bin = 0");
 
     return $session_id;
     
@@ -277,6 +320,11 @@ sub end_session {
 
     my $dbh = $self->dbh();
     $dbh->do("UPDATE session SET status = 2 WHERE session_id = ?", undef, $session_id);
+
+    $dbh->do("SET UNIQUE_CHECKS = 1");
+    $dbh->do("SET FOREIGN_KEY_CHECKS = 1");
+    $dbh->do("SET SESSION tx_isolation='READ-REPEATABLE'");
+
 }
 
 sub abort_session {
