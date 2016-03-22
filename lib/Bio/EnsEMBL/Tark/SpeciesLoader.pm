@@ -60,7 +60,7 @@ sub BUILD {
 	$self->log->logdie("Error creating genome insert: $DBI::errstr");
     $self->set_query('genome' => $sth);
 
-    $sth = $dbh->prepare("INSERT INTO assembly (genome_id, assembly_name, assembly_version, session_id) VALUES (?, ?, ?, ?)");
+    $sth = $dbh->prepare("INSERT INTO assembly (genome_id, assembly_name, assembly_accession, assembly_version, session_id) VALUES (?, ?, ?, ?, ?)");
     $self->set_query('assembly' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO gene (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, gene_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -108,9 +108,10 @@ sub load_species {
     my $genome_id = $sth->{mysql_insertid};
     $sth = $self->get_insert('assembly');
     my $assembly_accession = $mc->single_value_by_key('assembly.accession');
+    my $assembly_name = $mc->single_value_by_key('assembly.name');
     my ($accession, $acc_ver) = split '\.', $assembly_accession;
     $acc_ver ||= 1;
-    $sth->execute($genome_id, $accession, $acc_ver, $session_id) or
+    $sth->execute($genome_id, $assembly_name, $accession, $acc_ver, $session_id) or
 	$self->log->logdie("Error inserting assembly: $DBI::errstr");
     my $assembly_id = $sth->{mysql_insertid};
 
