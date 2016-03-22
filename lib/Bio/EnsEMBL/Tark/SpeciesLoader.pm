@@ -233,13 +233,9 @@ sub _load_translation {
     # Insert the sequence and get back the checksum
     my $seq_checksum = $self->_insert_sequence($translation->seq(), $session_pkg->{session_id});
 
-    my @loc_pieces = ( $translation->stable_id(), $translation->version(), $session_pkg->{assembly_id} );
-    if($session_pkg->{transcript}->seq_region_strand() > 0) {
-	push @loc_pieces, $translation->genomic_start(), $translation->genomic_end();
-    } else {
-	push @loc_pieces, $translation->genomic_end(), $translation->genomic_start();
-    }
-    push @loc_pieces, $session_pkg->{transcript}->seq_region_strand(), $session_pkg->{transcript}->seq_region_name();
+    my @loc_pieces = ( $translation->stable_id(), $translation->version(), $session_pkg->{assembly_id},
+		       $translation->genomic_start(), $translation->genomic_end(),
+		       $session_pkg->{transcript}->seq_region_strand(), $session_pkg->{transcript}->seq_region_name() );
 
     my $loc_checksum = $self->checksum_array( @loc_pieces );
     my $translation_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
