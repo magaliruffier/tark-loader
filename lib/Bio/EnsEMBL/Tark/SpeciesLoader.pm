@@ -78,7 +78,7 @@ sub BUILD {
     $sth = $dbh->prepare("INSERT INTO translation (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, translation_checksum, seq_checksum, transcript_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $self->set_query('translation' => $sth);
 
-    $sth = $dbh->prepare("INSERT IGNORE INTO sequence (seq_checksum, sequence, session_id) VALUES (?, ?, ?)");
+    $sth = $dbh->prepare("INSERT IGNORE INTO sequence (seq_checksum, sequence, session_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE seq_checksum=LAST_INSERT_ID(seq_checksum)");
     $self->set_query('sequence' => $sth);
 
     return;
@@ -320,7 +320,7 @@ sub end_session {
 
     $dbh->do("SET UNIQUE_CHECKS = 1");
     $dbh->do("SET FOREIGN_KEY_CHECKS = 1");
-    $dbh->do("SET SESSION tx_isolation='READ-REPEATABLE'");
+#    $dbh->do("SET SESSION tx_isolation='READ-REPEATABLE'");
 
 }
 
