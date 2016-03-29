@@ -27,6 +27,8 @@ use Bio::EnsEMBL::Registry;
 
 my $dbuser; my $dbpass; my $dbhost; my $database; my $dbport = 3306;
 my $species;
+my $ensdbhost = 'mysql-ensembl-mirror.ebi.ac.uk';
+my $ensdbport = 4240;
 
 Log::Log4perl->easy_init($DEBUG);
 
@@ -38,8 +40,8 @@ my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new( dsn => "DBI:mysql:database=
 
 # Connect to the Ensembl Registry to access the databases
 Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host => 'mysql-ensembl-mirror.ebi.ac.uk',
-    -port => 4240,
+    -host => $ensdbhost,
+    -port => $ensdbport,
     -user => 'anonymous',
     -db_version => '84'
     );
@@ -69,6 +71,8 @@ sub get_options {
 	"database=s"             => \$database,
 	"dbport=s"               => \$dbport,
         "species=s"              => \$species,
+	"enshost=s"              => \$ensdbhost,
+	"ensport=s"              => \$ensdbport,
         "help"                   => \$help,
         );
     
