@@ -22,65 +22,35 @@ use strict;
 use Log::Log4perl qw(:easy);
 use Getopt::Long qw(:config no_ignore_case);
 
-use Bio::EnsEMBL::Tark::SpeciesLoader;
 use Bio::EnsEMBL::Tark::DB;
-use Bio::EnsEMBL::Tark::Tag;
-use Bio::EnsEMBL::Registry;
 
 my $dbuser; my $dbpass; my $dbhost; my $database; my $dbport = 3306;
-my $species;
-my $ensdbhost = 'mysql-ensembl-mirror.ebi.ac.uk';
-my $ensdbport = 4240;
-my $config_file;
 
 Log::Log4perl->easy_init($DEBUG);
 
 get_options();
 
+print "Passing:\nDBI:mysql:database=$database;host=$dbhost;port=$dbport\n$dbuser\n$dbpass\n";
+
 Bio::EnsEMBL::Tark::DB->initialize( dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
 				    dbuser => $dbuser,
 				    dbpass => $dbpass );
 
-my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new();
+my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
 
-# Connect to the Ensembl Registry to access the databases
-Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host => $ensdbhost,
-    -port => $ensdbport,
-    -user => 'anonymous',
-    -db_version => '84'
-    );
+my $session_id = Bio::EnsEMBL::Tark::DB->start_session("My processor");
 
-my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, "core" );
-
-my $session_id = Bio::EnsEMBL::Tark::DB->start_session("Test client");
-
-Bio::EnsEMBL::Tark::Tag->initialize( config_file => $config_file );
-
-#eval {
-    $loader->load_species($dba);
-#};
-#if($@) {
-#    $loader->abort_session($session_id);
-#    die "Error loading species: $@";
-#}
-
-$Bio::EnsEMBL::Tark::DB->end_session($session_id);
-
+Bio::EnsEMBL::Tark::DB->abort_session();
 
 sub get_options {
     my $help;
 
     GetOptions(
-	"config=s"               => \$config_file,
 	"dbuser=s"               => \$dbuser,
 	"dbpass=s"               => \$dbpass,
 	"dbhost=s"               => \$dbhost,
 	"database=s"             => \$database,
 	"dbport=s"               => \$dbport,
-        "species=s"              => \$species,
-	"enshost=s"              => \$ensdbhost,
-	"ensport=s"              => \$ensdbport,
         "help"                   => \$help,
         );
     

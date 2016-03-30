@@ -22,6 +22,9 @@ use DBI;
 use Digest::SHA1  qw(sha1);
 package Bio::EnsEMBL::Tark::SpeciesLoader;
 
+use Bio::EnsEMBL::Tark::DB;
+use Bio::EnsEMBL::Tark::Tag;
+
 use Moose;
 with 'MooseX::Log::Log4perl';
 
@@ -53,14 +56,14 @@ sub BUILD {
     $self->log()->info("Initializing species loader");
 
     # Attempt a connection to the database
-    my $dbh = $self->dbh();
+    my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
 
     # Setup the insert queries
     my $sth = $dbh->prepare("INSERT INTO genome (name, tax_id, session_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE genome_id=LAST_INSERT_ID(genome_id)") or
 	$self->log->logdie("Error creating genome insert: $DBI::errstr");
     $self->set_query('genome' => $sth);
 
-    $sth = $dbh->prepare("INSERT INTO assembly (genome_id, assembly_name, assembly_accession, assembly_version, session_id) VALUES (?, ?, ?, ?, ?)");
+    $sth = $dbh->prepare("INSERT INTO assembly (genome_id, assembly_name, assembly_accession, assembly_version, session_id) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE assembly_id=LAST_INSERT_ID(assembly_id)");
     $self->set_query('assembly' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO gene (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, gene_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -84,17 +87,11 @@ sub BUILD {
     return;
 }
 
-sub dbh {
-    my $self = shift;
-
-    return DBI->connect_cached( $self->dsn, $self->dbuser, $self->dbpass )
-	or $self->log()->die("Error connecting to " . $self->dsn . ": ". $DBI::errstr);
-}
-
 sub load_species {
     my $self = shift;
     my $dba = shift;
-    my $session_id = shift;
+
+    my $session_id = Bio::EnsEMBL::Tark::DB->session_id;
 
     $self->log->info("Starting loading process");
 
@@ -114,6 +111,9 @@ sub load_species {
     $sth->execute($genome_id, $assembly_name, $accession, $acc_ver, $session_id) or
 	$self->log->logdie("Error inserting assembly: $DBI::errstr");
     my $assembly_id = $sth->{mysql_insertid};
+
+    # Initialize the tags we'll be using
+    Bio::EnsEMBL::Tark::Tag->init_tags($assembly_id);
 
     my $session_pkg = { session_id => $session_id,
 			genome_id => $genome_id,
@@ -145,6 +145,9 @@ sub _load_gene {
     $sth->execute( @loc_pieces, $loc_checksum, $seq_checksum, $session_pkg->{session_id} ) or
 	$self->log->logdie("Error inserting gene: $DBI::errstr");
     my $gene_id = $sth->{mysql_insertid};
+
+    # Apply tags to feature we've just inserted
+    Bio::EnsEMBL::Tark::Tag->tag_feature($gene_id, 'gene');
 
     my $exons = {};
     $session_pkg->{gene_id} = $gene_id;
@@ -205,6 +208,9 @@ sub _load_transcript {
 		       $self->log->logdie("Error inserting transcript: $DBI::errstr");
     my $transcript_id = $sth->{mysql_insertid};
 
+    # Apply tags to feature we've just inserted
+    Bio::EnsEMBL::Tark::Tag->tag_feature($transcript_id, 'transcript');
+
     return $transcript_id;
 }
 
@@ -224,6 +230,9 @@ sub _load_exon {
     $sth->execute( @loc_pieces, $loc_checksum, $exon_checksum, $seq_checksum, $session_pkg->{session_id} ) or
 	$self->log->logdie("Error inserting exon: $DBI::errstr");
     my $exon_id = $sth->{mysql_insertid};
+
+    # Apply tags to feature we've just inserted
+    Bio::EnsEMBL::Tark::Tag->tag_feature($exon_id, 'exon');
 
     return ($exon_id, $exon_checksum);
 }
@@ -245,6 +254,9 @@ sub _load_translation {
     $sth->execute( @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{transcript_id}, $session_pkg->{session_id} ) or
 	$self->log->logdie("Error inserting translation: $DBI::errstr");
     my $translation_id = $sth->{mysql_insertid};
+
+    # Apply tags to feature we've just inserted
+    Bio::EnsEMBL::Tark::Tag->tag_feature($translation_id, 'translation');
     
 }
 
@@ -287,49 +299,6 @@ sub checksum_array {
     my ($self, @values) = @_;
 
     return Digest::SHA1::sha1( join(':', @values) );
-}
-
-sub start_session {
-    my $self = shift;
-    my $client_name = shift;
-
-    my $dbh = $self->dbh();
-    my $sth = $dbh->prepare("INSERT INTO session (client_id, status) VALUES(?, 1)");
-    $sth->execute($client_name) or
-		$self->log->logdie("Error inserting session: $DBI::errstr");
-
-    my $session_id = $sth->{mysql_insertid};
-
-    $self->log->info("Starting session $session_id");
-
-    $dbh->do("SET FOREIGN_KEY_CHECKS = 0");
-    $dbh->do("SET UNIQUE_CHECKS = 0");
-    $dbh->do("SET SESSION tx_isolation='READ-UNCOMMITTED'");
-#    $dbh->do("SET sql_log_bin = 0");
-
-    return $session_id;
-    
-}
-
-sub end_session {
-    my $self = shift;
-    my $session_id = shift;
-
-    my $dbh = $self->dbh();
-    $dbh->do("UPDATE session SET status = 2 WHERE session_id = ?", undef, $session_id);
-
-    $dbh->do("SET UNIQUE_CHECKS = 1");
-    $dbh->do("SET FOREIGN_KEY_CHECKS = 1");
-#    $dbh->do("SET SESSION tx_isolation='READ-REPEATABLE'");
-
-}
-
-sub abort_session {
-    my $self = shift;
-    my $session_id = shift;
-
-    my $dbh = $self->dbh();
-    $dbh->do("UPDATE session SET status = 3 WHERE session_id = ?", undef, $session_id);
 }
 
 1;
