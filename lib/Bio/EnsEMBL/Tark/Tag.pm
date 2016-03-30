@@ -124,6 +124,21 @@ sub tag_feature {
     }
 }
 
+sub checksum_sets {
+    my $self = shift;
+
+    foreach my $tag (@{$self->blocks()}) {
+	$self->checksum_set($tag);
+    }
+
+}
+
+sub checksum_set {
+    my ($self, $tag) = @_;
+
+
+}
+
 sub fetch_tag {
     my ($self, $tag) = @_;
 
