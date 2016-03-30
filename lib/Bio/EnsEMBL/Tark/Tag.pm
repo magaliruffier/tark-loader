@@ -170,7 +170,7 @@ sub fetch_tag {
     $self->config()->param("$tag.id", $tag_id);
 
     # Create the insert statement for later
-    $sth = $dbh->prepare("INSERT INTO " . $tag_table . "tag ($feature_col, ${keycol}_id, session_id) VALUES (?, $feature_val $tag_id, $session_id)");
+    $sth = $dbh->prepare("INSERT IGNORE INTO " . $tag_table . "tag ($feature_col, ${keycol}_id, session_id) VALUES (?, $feature_val $tag_id, $session_id)");
     $self->set_insert($tag => $sth);
 
 }

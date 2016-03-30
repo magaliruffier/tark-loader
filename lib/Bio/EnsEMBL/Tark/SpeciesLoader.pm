@@ -190,7 +190,11 @@ sub _load_transcript {
     my ($self, $transcript, $session_pkg) = @_;
 
     # Insert the sequence and get back the checksum
-    my $seq_checksum = $self->_insert_sequence($transcript->seq(), $session_pkg->{session_id});
+    my $seq_obj = $transcript->seq();
+    my $seq_checksum;
+    if($seq_obj) {
+	$seq_checksum = $self->_insert_sequence($seq_obj->seq(), $session_pkg->{session_id});
+    }
 
     my @loc_pieces = ( $transcript->stable_id(), $transcript->version(), $session_pkg->{assembly_id},
 		       $transcript->seq_region_start(), $transcript->seq_region_end(), 
@@ -217,7 +221,11 @@ sub _load_exon {
     my ($self, $exon, $session_pkg) = @_;
 
     # Insert the sequence and get back the checksum
-    my $seq_checksum = $self->_insert_sequence($exon->seq(), $session_pkg->{session_id});
+    my $seq_obj = $exon->seq();
+    my $seq_checksum;
+    if($seq_obj) {
+	$seq_checksum = $self->_insert_sequence($seq_obj->seq(), $session_pkg->{session_id});
+    }
 
     my @loc_pieces = ( $exon->stable_id(), $exon->version(), $session_pkg->{assembly_id},
 		       $exon->seq_region_start(), $exon->seq_region_end(), 
