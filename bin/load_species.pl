@@ -65,7 +65,7 @@ Bio::EnsEMBL::Tark::Tag->initialize( config_file => $config_file );
 #    die "Error loading species: $@";
 #}
 
-$Bio::EnsEMBL::Tark::DB->end_session($session_id);
+Bio::EnsEMBL::Tark::DB->end_session($session_id);
 
 
 sub get_options {
