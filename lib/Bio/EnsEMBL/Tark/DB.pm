@@ -20,6 +20,7 @@ use warnings;
 use strict;
 use DBI;
 use Carp;
+use Digest::SHA1 qw(sha1);
 
 package Bio::EnsEMBL::Tark::DB;
 
@@ -42,6 +43,14 @@ sub dbh {
     return DBI->connect_cached( $self->dsn, $self->dbuser, $self->dbpass )
 	or $self->log()->die("Error connecting to " . $self->dsn . ": ". $DBI::errstr);
 
+}
+
+# Join an array of values with a ':' delimeter and find a sha1 checksum of it
+
+sub checksum_array {
+    my ($self, @values) = @_;
+
+    return Digest::SHA1::sha1( join(':', grep { defined } @values) );
 }
 
 sub start_session {

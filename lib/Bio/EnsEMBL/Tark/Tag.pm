@@ -53,7 +53,8 @@ has 'feature_type' => (
                      } },
     handles   => {
         get_type       => 'get',
-        get_types      => 'keys'
+        get_types      => 'keys',
+        feature_pairs  => 'kv',
     },
 );
 
@@ -127,16 +128,110 @@ sub tag_feature {
 sub checksum_sets {
     my $self = shift;
 
+    $self->log->info("Checksumming tagging sets");
+
     foreach my $tag (@{$self->blocks()}) {
-	$self->checksum_set($tag);
+	$self->log("Checksumming tag set $tag");
+	my $tagset_id = $self->config()->param("$tag.id");
+
+	warn "No tagset id for $tag" unless $tagset_id;
+
+	my $tagset_checksum = $self->checksum_set($tagset_id, $tag);
+	$self->log("Checksum for tag set $tag is $tagset_checksum");
+
+	$self->write_checksum($tagset_id, $tagset_checksum, $tag);
     }
 
 }
 
+sub write_checksum {
+    my $self = shift;
+    my $tagset_id = shift;
+    my $checksum = shift;
+    my $set_type = ( @_ ? shift : 'tag' );
+
+    my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+
+    # Yes, yes, multiple compares, rarely called, deal with it
+    my $table = ( $set_type eq 'release' ? 'release_set' : 'tagset' );
+    my $checksum_col = ( $set_type eq 'release' ? 'release_checksum' : 'tagset_checksum' );
+    my $key_col = ( $set_type eq 'release' ? 'release_id' : 'tagset_id' );
+    $dbh->do("UPDATE $table SET $checksum_col = ? WHERE $key_col = ?", undef, $checksum, $tagset_id);
+
+}
+
 sub checksum_set {
-    my ($self, $tag) = @_;
+    my ($self, $tagset_id, $set_type) = @_;
+    my @cumulative_checksums;
 
+    # Make the checksums in order found in the enum lookup of feature names
+    foreach my $feature_type (sort { $a->[1] <=> $b->[1] } $self->feature_pairs()) {
 
+	# We only to transcript for tags sets
+	next if($feature_type->[0] ne 'transcript' && $set_type ne 'release');
+
+	$self->log->info("Computing checksum for tagset type $set_type, id $tagset_id, feature type ". $feature_type->[0]);
+
+	my $feature_checksum = $self->checksum_feature_set($tagset_id, $feature_type->[0], $set_type);
+
+	$self->log->info("Found checksum of $feature_checksum");
+
+	# Now push it on to the features cumulative checksums
+	push @cumulative_checksums, $feature_checksum;
+    }
+
+    # Find the final cumulative checksum
+    my $tag_checksum = ($#cumulative_checksums > 1 ? Bio::EnsEMBL::Tark::DB->checksum_array(@cumulative_checksums) : shift @cumulative_checksums);
+
+    return $tag_checksum;
+}
+
+# Optional $set_type can be 'release' or 'tag' (anything non-'release' is considered 'tag')
+# $feature_type is the word, 'gene', 'transcript',...
+sub checksum_feature_set {
+    my $self = shift;
+    my $tagset_id = shift;
+    my $feature_type = shift;
+    my $set_type = ( @_ ? shift : 'tag' );
+
+    my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+
+    my $tagset_table = 'tag';
+    my $tagset_col = 'tagset_id';
+    my $tagset_join_col = 'feature_id';
+    my $tagset_cond = '';
+    $feature_type = $self->get_type($feature_type);
+    if($set_type eq 'release') {
+	$tagset_table = 'release_tag';
+	$tagset_col = 'release_id';
+	$tagset_join_col = 'feature_id';
+	$tagset_cond = ' AND release.feature_type = ? ';
+	# Don't let users do stupid things
+	$feature_type = $self->get_type('transcript');
+    }
+
+    my $key_col = $feature_type . "_id";
+    my $checksum_col = $feature_type . "_checksum";
+
+    my $stmt = "SELECT $checksum_col FROM $feature_type, $tagset_table WHERE $tagset_table.$tagset_join_col = $feature_type.$key_col AND $tagset_table.$tagset_col = $tagset_id $tagset_cond ORDER BY $feature_type.$key_col";
+    my $sth = $dbh->prepare($stmt);
+
+    my @params = ();
+    push( @params, $feature_type->[1] ) if( $set_type eq 'release' );
+    $sth->execute(@params);
+
+    # Now we loop through and create a checksum of the checksums
+    my @feature_checksums;
+
+    while(my ($checksum) = $sth->fetchrow_array) {
+	push @feature_checksums, $checksum;
+    }
+
+    # Find the checksum of the checksums
+    my $feature_checksum = Bio::EnsEMBL::Tark::DB->checksum_array(@feature_checksums);
+
+    # Send back the checksum
+    return $feature_checksum;
 }
 
 sub fetch_tag {

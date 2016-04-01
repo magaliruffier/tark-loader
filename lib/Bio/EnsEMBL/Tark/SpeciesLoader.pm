@@ -19,7 +19,6 @@ limitations under the License.
 use warnings;
 use strict;
 use DBI;
-use Digest::SHA1  qw(sha1);
 package Bio::EnsEMBL::Tark::SpeciesLoader;
 
 use Bio::EnsEMBL::Tark::DB;
@@ -66,7 +65,7 @@ sub BUILD {
     $sth = $dbh->prepare("INSERT INTO assembly (genome_id, assembly_name, assembly_accession, assembly_version, session_id) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE assembly_id=LAST_INSERT_ID(assembly_id)");
     $self->set_query('assembly' => $sth);
 
-    $sth = $dbh->prepare("INSERT INTO gene (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE gene_id=LAST_INSERT_ID(gene_id)");
+    $sth = $dbh->prepare("INSERT INTO gene (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, gene_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE gene_id=LAST_INSERT_ID(gene_id)");
     $self->set_query('gene' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO transcript (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, transcript_checksum, exon_set_checksum, seq_checksum, gene_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE transcript_id=LAST_INSERT_ID(transcript_id)");
@@ -128,6 +127,11 @@ sub load_species {
     }
     $self->log->info( "Completed dumping genes for " . $species );
 
+    $self->log->info( "Tagging sets for " . $species );
+    Bio::EnsEMBL::Tark::Tag->checksum_sets();
+
+    $self->log->info( "Completed tagging sets for " . $species );
+
 }
 
 sub _load_gene {
@@ -136,7 +140,7 @@ sub _load_gene {
     my @loc_pieces = ( $gene->stable_id(), $gene->version(), $session_pkg->{assembly_id},
 		       $gene->seq_region_start(), $gene->seq_region_end(), $gene->seq_region_strand(),
 		       $gene->seq_region_name() );
-    my $loc_checksum = $self->checksum_array( @loc_pieces );
+    my $loc_checksum = Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
 
     my $sth = $self->get_insert('gene');
     $sth->execute( @loc_pieces, $loc_checksum, $session_pkg->{session_id} ) or
@@ -158,7 +162,7 @@ sub _load_gene {
 	}
 
 	if( @exon_checksums ) {
-	    $session_pkg->{exon_set_checksum} = $self->checksum_array( @exon_checksums );
+	    $session_pkg->{exon_set_checksum} =  Bio::EnsEMBL::Tark::DB->checksum_array( @exon_checksums );
 	}
 
 	my $transcript_id = $self->_load_transcript( $transcript, $session_pkg );
@@ -199,8 +203,8 @@ sub _load_transcript {
     my @loc_pieces = ( $transcript->stable_id(), $transcript->version(), $session_pkg->{assembly_id},
 		       $transcript->seq_region_start(), $transcript->seq_region_end(), 
 		       $transcript->seq_region_strand(), $transcript->seq_region_name() );
-    my $loc_checksum = $self->checksum_array( @loc_pieces );
-    my $transcript_checksum = $self->checksum_array( @loc_pieces, 
+    my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
+    my $transcript_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, 
 						     ($session_pkg->{exon_set_checksum} ? $session_pkg->{exon_set_checksum} : undef),
 						     $seq_checksum );
 
@@ -230,8 +234,8 @@ sub _load_exon {
     my @loc_pieces = ( $exon->stable_id(), $exon->version(), $session_pkg->{assembly_id},
 		       $exon->seq_region_start(), $exon->seq_region_end(), 
 		       $exon->seq_region_strand(), $exon->seq_region_name() );
-    my $loc_checksum = $self->checksum_array( @loc_pieces );
-    my $exon_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
+    my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
+    my $exon_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $seq_checksum );
 
     my $sth = $self->get_insert('exon');
     $sth->execute( @loc_pieces, $loc_checksum, $exon_checksum, $seq_checksum, $session_pkg->{session_id} ) or
@@ -254,8 +258,8 @@ sub _load_translation {
 		       $translation->genomic_start(), $translation->genomic_end(),
 		       $session_pkg->{transcript}->seq_region_strand(), $session_pkg->{transcript}->seq_region_name() );
 
-    my $loc_checksum = $self->checksum_array( @loc_pieces );
-    my $translation_checksum = $self->checksum_array( @loc_pieces, $seq_checksum );
+    my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
+    my $translation_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $seq_checksum );
 
     my $sth = $self->get_insert('translation');
     $sth->execute( @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{transcript_id}, $session_pkg->{session_id} ) or
@@ -270,7 +274,7 @@ sub _load_translation {
 sub _insert_sequence {
     my ( $self, $sequence, $session_id ) = @_;
 
-    my $sha1 = $self->checksum_array($sequence);
+    my $sha1 =  Bio::EnsEMBL::Tark::DB->checksum_array($sequence);
 
     my $sth = $self->get_insert('sequence');
     $sth->execute($sha1, $sequence, $session_id) or
@@ -298,14 +302,6 @@ sub genes_to_metadata_iterator {
 		}
 	);
 	return $genes_i;
-}
-
-# Join an array of values with a ':' delimeter and find a sha1 checksum of it
-
-sub checksum_array {
-    my ($self, @values) = @_;
-
-    return Digest::SHA1::sha1( join(':', grep { defined } @values) );
 }
 
 1;
