@@ -238,6 +238,7 @@ sub _load_exon {
     my $exon_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $seq_checksum );
 
     my $sth = $self->get_insert('exon');
+    print "For exon " . $exon->stable_id() . ", using checksum: " . unpack("H*", $exon_checksum) . "\n";
     $sth->execute( @loc_pieces, $loc_checksum, $exon_checksum, $seq_checksum, $session_pkg->{session_id} ) or
 	$self->log->logdie("Error inserting exon: $DBI::errstr");
     my $exon_id = $sth->{mysql_insertid};
