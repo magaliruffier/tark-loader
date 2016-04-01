@@ -217,7 +217,7 @@ sub checksum_feature_set {
     my $sth = $dbh->prepare($stmt);
 
     my @params = ();
-    push( @params, $feature_type->[1] ) if( $set_type eq 'release' );
+    push( @params, $self->get_type(feature_type) ) if( $set_type eq 'release' );
     $sth->execute(@params);
 
     # Now we loop through and create a checksum of the checksums
