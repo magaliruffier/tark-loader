@@ -137,7 +137,7 @@ sub checksum_sets {
 	warn "No tagset id for $tag" unless $tagset_id;
 
 	my $tagset_checksum = $self->checksum_set($tagset_id, $tag);
-	$self->log("Checksum for tag set $tag is $tagset_checksum");
+	$self->log( "Checksum for tag set $tag is " . unpack("H*", $tagset_checksum) );
 
 	$self->write_checksum($tagset_id, $tagset_checksum, $tag);
     }
@@ -174,7 +174,10 @@ sub checksum_set {
 
 	my $feature_checksum = $self->checksum_feature_set($tagset_id, $feature_type->[0], $set_type);
 
-	$self->log->info("Found checksum of $feature_checksum");
+	# Skip to the next feature type is no checksum was returned
+	next unless $feature_checksum;
+
+	$self->log->info( "Found checksum of " .  unpack("H*", $feature_checksum) );
 
 	# Now push it on to the features cumulative checksums
 	push @cumulative_checksums, $feature_checksum;
@@ -198,30 +201,33 @@ sub checksum_feature_set {
 
     my $tagset_table = 'tag';
     my $tagset_col = 'tagset_id';
-    my $tagset_join_col = 'feature_id';
+    my $tagset_join_col = 'transcript_id';
     my $tagset_cond = '';
-    $feature_type = $self->get_type($feature_type);
     if($set_type eq 'release') {
 	$tagset_table = 'release_tag';
 	$tagset_col = 'release_id';
 	$tagset_join_col = 'feature_id';
-	$tagset_cond = ' AND release.feature_type = ? ';
+	$tagset_cond = ' AND release_tag.feature_type = ? ';
+    } else {
 	# Don't let users do stupid things
-	$feature_type = $self->get_type('transcript');
+	$feature_type = 'transcript';
     }
 
     my $key_col = $feature_type . "_id";
     my $checksum_col = $feature_type . "_checksum";
 
-    my $stmt = "SELECT $checksum_col FROM $feature_type, $tagset_table WHERE $tagset_table.$tagset_join_col = $feature_type.$key_col AND $tagset_table.$tagset_col = $tagset_id $tagset_cond ORDER BY $feature_type.$key_col";
+    my $stmt = "SELECT $checksum_col FROM $feature_type, $tagset_table WHERE $tagset_table.$tagset_join_col = " . $feature_type . ".$key_col AND $tagset_table.$tagset_col = $tagset_id $tagset_cond ORDER BY " . $feature_type . ".$key_col";
     my $sth = $dbh->prepare($stmt);
 
     my @params = ();
     push( @params, $self->get_type($feature_type) ) if( $set_type eq 'release' );
     $sth->execute(@params);
 
+    # Don't do a checksum if no rows for that type
+    return unless($sth->rows);
+
     # Now we loop through and create a checksum of the checksums
-    my @feature_checksums;
+    my @feature_checksums;    
 
     while(my ($checksum) = $sth->fetchrow_array) {
 	push @feature_checksums, $checksum;

@@ -40,7 +40,7 @@ Bio::EnsEMBL::Tark::Tag->initialize( config_file => $config_file );
 
 my $checksum = Bio::EnsEMBL::Tark::Tag->checksum_set($tagset_id, $set_type);
 
-print "Found checksum: $checksum\n";
+print "\nFound checksum: " .  unpack("H*", $checksum) . "\n";
 
 sub get_options {
     my $help;
