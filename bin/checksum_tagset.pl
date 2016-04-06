@@ -42,6 +42,8 @@ my $checksum = Bio::EnsEMBL::Tark::Tag->checksum_set($tagset_id, $set_type);
 
 print "\nFound checksum: " .  unpack("H*", $checksum) . "\n";
 
+Bio::EnsEMBL::Tark::Tag->write_checksum($tagset_id, $checksum, $set_type);
+
 sub get_options {
     my $help;
 
