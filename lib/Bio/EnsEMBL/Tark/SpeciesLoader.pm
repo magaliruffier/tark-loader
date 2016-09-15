@@ -141,10 +141,11 @@ sub _load_gene {
 		       $gene->seq_region_start(), $gene->seq_region_end(), $gene->seq_region_strand(),
 		       $gene->seq_region_name() );
     my $loc_checksum = Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
-    my $hgnc_id = $self->_fetch_hgnc_id($gene) | undef;
+    my $hgnc_id = $self->_fetch_hgnc_id($gene);
+    print "hgnc id: $hgnc_id\n";
 
     my $sth = $self->get_insert('gene');
-    $sth->execute( @loc_pieces, $hgnc_id, $loc_checksum, $session_pkg->{session_id} ) or
+    $sth->execute( @loc_pieces, ($hgnc_id ? $hgnc_id : undef), $loc_checksum, $session_pkg->{session_id} ) or
 	$self->log->logdie("Error inserting gene: $DBI::errstr");
     my $gene_id = $sth->{mysql_insertid};
 
