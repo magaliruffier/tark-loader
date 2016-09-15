@@ -31,6 +31,7 @@ my $dbuser; my $dbpass; my $dbhost; my $database; my $dbport = 3306;
 my $species;
 my $ensdbhost = 'mysql-ensembl-mirror.ebi.ac.uk';
 my $ensdbport = 4240;
+my $release;
 my $config_file;
 
 Log::Log4perl->easy_init($DEBUG);
@@ -48,7 +49,7 @@ Bio::EnsEMBL::Registry->load_registry_from_db(
     -host => $ensdbhost,
     -port => $ensdbport,
     -user => 'anonymous',
-    -db_version => '84'
+    -db_version => $release
     );
 
 my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, "core" );
@@ -79,6 +80,7 @@ sub get_options {
 	"database=s"             => \$database,
 	"dbport=s"               => \$dbport,
         "species=s"              => \$species,
+	"release=s"              => \$release,
 	"enshost=s"              => \$ensdbhost,
 	"ensport=s"              => \$ensdbport,
         "help"                   => \$help,

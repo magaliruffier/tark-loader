@@ -66,7 +66,7 @@ sub start_session {
 
     $self->log->info("Starting session " . $self->session_id);
 
-#    $dbh->do("SET FOREIGN_KEY_CHECKS = 0");
+    $dbh->do("SET FOREIGN_KEY_CHECKS = 0");
 #    $dbh->do("SET UNIQUE_CHECKS = 0");
 #    $dbh->do("SET SESSION tx_isolation='READ-UNCOMMITTED'");
 #    $dbh->do("SET sql_log_bin = 0");

@@ -54,7 +54,7 @@ sub BUILD {
     my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
 
     # Setup the insert queries
-    my $sth = $dbh->prepare("INSERT INTO gene_names (name, gene_id, assembly_id, source, primary_id, session_id) VALUES (?, ?, ?, 'HGNC', ?, ?)") ||
+    my $sth = $dbh->prepare("INSERT INTO gene_names (external_id, name, source, primary_id, session_id) VALUES (?, ?, 'HGNC', ?, ?)") ||
 	$self->log->logdie("Error creating gene name insert: " . $DBI::errstr);
     $self->set_query('hgnc' => $sth);
 
@@ -74,8 +74,11 @@ sub load_hgnc {
     my $self = shift;
     my $hgnc_file = shift;
 
+    $self->log()->info("Starting HGNC load");
+
     my $in_fh;
     if($hgnc_file) {
+	$self->log()->info("Using HGNC file $hgnc_file");
 	$in_fh = Bio::EnsEMBL::Tark::FileHandle->open($hgnc_file);
     } else {
 	$in_fh = *STDIN;
@@ -92,23 +95,20 @@ sub load_hgnc {
 	# If there's no ensembl id, skip
 	next unless($hgnc_line[19]);
 
-	# Fetch the associated gene(s) for the symbol
-	$get_gene->execute($hgnc_line[19]);
+	my (undef, $hgnc_id) = split ':', $hgnc_line[0];
 
-	while(my @gen_row = $get_gene->fetchrow_array) {
-	    # Insert the hgnc symbol
-	    $insert_hgnc->execute($hgnc_line[1], $gen_row[0], $gen_row[1], 1, $self->session_id);
+	# Insert the hgnc symbol
+	$insert_hgnc->execute($hgnc_id, $hgnc_line[1], 1, $self->session_id);
 
-	    # Add any synomyms
-	    next unless($hgnc_line[8]);
+	# Add any synomyms
+	next unless($hgnc_line[8]);
 
-	    $hgnc_line[8] =~ s/^"//;
-	    $hgnc_line[8] =~ s/"$//;
-	    my @aliases = split '\|', $hgnc_line[8];
-	    foreach my $alias (@aliases) {
-		$insert_hgnc->execute($alias, $gen_row[0], $gen_row[1], 0, $self->session_id);
+	$hgnc_line[8] =~ s/^"//;
+	$hgnc_line[8] =~ s/"$//;
+	my @aliases = split '\|', $hgnc_line[8];
+	foreach my $alias (@aliases) {
+	    $insert_hgnc->execute($hgnc_id, $alias, 0, $self->session_id);
 		
-	    }
 	}
     }
 

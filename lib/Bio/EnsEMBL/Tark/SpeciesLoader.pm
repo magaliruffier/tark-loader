@@ -65,7 +65,7 @@ sub BUILD {
     $sth = $dbh->prepare("INSERT INTO assembly (genome_id, assembly_name, assembly_accession, assembly_version, session_id) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE assembly_id=LAST_INSERT_ID(assembly_id)");
     $self->set_query('assembly' => $sth);
 
-    $sth = $dbh->prepare("INSERT INTO gene (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, gene_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE gene_id=LAST_INSERT_ID(gene_id)");
+    $sth = $dbh->prepare("INSERT INTO gene (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, hgnc_id, gene_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE gene_id=LAST_INSERT_ID(gene_id)");
     $self->set_query('gene' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO transcript (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, transcript_checksum, exon_set_checksum, seq_checksum, gene_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE transcript_id=LAST_INSERT_ID(transcript_id)");
@@ -80,7 +80,7 @@ sub BUILD {
     $sth = $dbh->prepare("INSERT INTO translation (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, loc_checksum, translation_checksum, seq_checksum, transcript_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE translation_id=LAST_INSERT_ID(translation_id)");
     $self->set_query('translation' => $sth);
 
-    $sth = $dbh->prepare("INSERT IGNORE INTO sequence (seq_checksum, sequence, session_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE seq_checksum=LAST_INSERT_ID(seq_checksum)");
+    $sth = $dbh->prepare("INSERT IGNORE INTO sequence (seq_checksum, sequence, session_id) VALUES (?, ?, ?)");
     $self->set_query('sequence' => $sth);
 
     return;
@@ -141,9 +141,10 @@ sub _load_gene {
 		       $gene->seq_region_start(), $gene->seq_region_end(), $gene->seq_region_strand(),
 		       $gene->seq_region_name() );
     my $loc_checksum = Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
+    my $hgnc_id = $self->_fetch_hgnc_id($gene) | undef;
 
     my $sth = $self->get_insert('gene');
-    $sth->execute( @loc_pieces, $loc_checksum, $session_pkg->{session_id} ) or
+    $sth->execute( @loc_pieces, $hgnc_id, $loc_checksum, $session_pkg->{session_id} ) or
 	$self->log->logdie("Error inserting gene: $DBI::errstr");
     my $gene_id = $sth->{mysql_insertid};
 
@@ -282,6 +283,16 @@ sub _insert_sequence {
 
     return $sha1;
     
+}
+
+sub _fetch_hgnc_id {
+    my ( $self, $gene ) = @_;
+
+    foreach my $oxref (@{ $gene->get_all_object_xrefs() }) {
+	next unless($oxref->dbname eq 'HGNC');
+	my (undef, $hgnc_id) = split ':', $oxref->primary_id;
+	return $hgnc_id;
+    }
 }
 
 sub genes_to_metadata_iterator {
