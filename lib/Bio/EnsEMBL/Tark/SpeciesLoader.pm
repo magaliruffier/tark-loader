@@ -62,8 +62,11 @@ sub BUILD {
 	$self->log->logdie("Error creating genome insert: $DBI::errstr");
     $self->set_query('genome' => $sth);
 
-    $sth = $dbh->prepare("INSERT INTO assembly (genome_id, assembly_name, assembly_accession, assembly_version, session_id) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE assembly_id=LAST_INSERT_ID(assembly_id)");
+    $sth = $dbh->prepare("INSERT INTO assembly (genome_id, assembly_name, session_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE assembly_id=LAST_INSERT_ID(assembly_id)");
     $self->set_query('assembly' => $sth);
+
+    $sth = $dbh->prepare("INSERT INTO assembly_alias (genome_id, assembly_id, alias, session_id) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE assembly_id=LAST_INSERT_ID(assembly_id)");
+    $self->set_query('assembly_alias' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO gene (stable_id, stable_id_version, assembly_id, loc_start, loc_end, loc_strand, loc_region, hgnc_id, gene_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE gene_id=LAST_INSERT_ID(gene_id)");
     $self->set_query('gene' => $sth);
@@ -105,11 +108,16 @@ sub load_species {
     $sth = $self->get_insert('assembly');
     my $assembly_accession = $mc->single_value_by_key('assembly.accession');
     my $assembly_name = $mc->single_value_by_key('assembly.default');
-    my ($accession, $acc_ver) = split '\.', $assembly_accession;
-    $acc_ver ||= 1;
-    $sth->execute($genome_id, $assembly_name, $accession, $acc_ver, $session_id) or
+#    my ($accession, $acc_ver) = split '\.', $assembly_accession;
+#    $acc_ver ||= 1;
+    $sth->execute($genome_id, $assembly_name, $session_id) or
 	$self->log->logdie("Error inserting assembly: $DBI::errstr");
     my $assembly_id = $sth->{mysql_insertid};
+
+    $sth = $self->get_insert('assembly_alias');
+    $sth->execute($genome_id, $assembly_id, $assembly_accession, $session_id) or
+	$self->log->logdie("Error inserting assembly_alias: $DBI::errstr");
+
 
     # Initialize the tags we'll be using
     Bio::EnsEMBL::Tark::Tag->init_tags($assembly_id);
