@@ -104,7 +104,7 @@ sub load_species {
     my $genome_id = $sth->{mysql_insertid};
     $sth = $self->get_insert('assembly');
     my $assembly_accession = $mc->single_value_by_key('assembly.accession');
-    my $assembly_name = $mc->single_value_by_key('assembly.name');
+    my $assembly_name = $mc->single_value_by_key('assembly.default');
     my ($accession, $acc_ver) = split '\.', $assembly_accession;
     $acc_ver ||= 1;
     $sth->execute($genome_id, $assembly_name, $accession, $acc_ver, $session_id) or
