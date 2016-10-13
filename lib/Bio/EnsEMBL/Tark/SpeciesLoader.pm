@@ -110,9 +110,11 @@ sub load_species {
     my $assembly_name = $mc->single_value_by_key('assembly.default');
 #    my ($accession, $acc_ver) = split '\.', $assembly_accession;
 #    $acc_ver ||= 1;
+    $self->log->info("Inserting assembly $assembly_name");
     $sth->execute($genome_id, $assembly_name, $session_id) or
 	$self->log->logdie("Error inserting assembly: $DBI::errstr");
     my $assembly_id = $sth->{mysql_insertid};
+    $self->log->info("Using assembly_id $assembly_id");
 
     $sth = $self->get_insert('assembly_alias');
     $sth->execute($genome_id, $assembly_id, $assembly_accession, $session_id) or
