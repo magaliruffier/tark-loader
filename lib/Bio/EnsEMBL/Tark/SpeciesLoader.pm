@@ -266,7 +266,7 @@ sub _load_translation {
     # Insert the sequence and get back the checksum
     my $seq_checksum = $self->_insert_sequence($translation->seq(), $session_pkg->{session_id});
 
-    my @loc_pieces = ( $session_pkg->{assembly_id},$session_pkg->{transcript}->seq_region_name(),
+    my @loc_pieces = ( $session_pkg->{assembly_id}, $session_pkg->{transcript}->seq_region_name(),
 		       $translation->genomic_start(), $translation->genomic_end(),
 		       $session_pkg->{transcript}->seq_region_strand() );
 
@@ -274,7 +274,7 @@ sub _load_translation {
     my $translation_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $translation->stable_id(), $translation->version(), $seq_checksum );
 
     my $sth = $self->get_insert('translation');
-    $sth->execute( $translation->stable_id(), $translation->version(), $seq_checksum, @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{transcript_id}, $session_pkg->{session_id} ) or
+    $sth->execute( $translation->stable_id(), $translation->version(), @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{transcript_id}, $session_pkg->{session_id} ) or
 	$self->log->logdie("Error inserting translation: $DBI::errstr");
     my $translation_id = $sth->{mysql_insertid};
 
