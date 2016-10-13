@@ -274,7 +274,7 @@ sub _load_translation {
     my $translation_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $translation->stable_id(), $translation->version(), $seq_checksum );
 
     my $sth = $self->get_insert('translation');
-    $sth->execute( @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{transcript_id}, $session_pkg->{session_id} ) or
+    $sth->execute( $translation->stable_id(), $translation->version(), $seq_checksum, @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{transcript_id}, $session_pkg->{session_id} ) or
 	$self->log->logdie("Error inserting translation: $DBI::errstr");
     my $translation_id = $sth->{mysql_insertid};
 
