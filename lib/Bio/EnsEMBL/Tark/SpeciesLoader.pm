@@ -74,7 +74,7 @@ sub BUILD {
     $sth = $dbh->prepare("INSERT INTO transcript_gene (gene_id, transcript_id, session_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE transcript_gene_id=LAST_INSERT_ID(transcript_gene_id)");
     $self->set_query('transcript_gene' => $sth);
 
-    $sth = $dbh->prepare("INSERT INTO transcript (stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end, loc_strand, loc_checksum, transcript_checksum, exon_set_checksum, seq_checksum, gene_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE transcript_id=LAST_INSERT_ID(transcript_id)");
+    $sth = $dbh->prepare("INSERT INTO transcript (stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end, loc_strand, loc_checksum, transcript_checksum, exon_set_checksum, seq_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE transcript_id=LAST_INSERT_ID(transcript_id)");
     $self->set_query('transcript' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO exon_transcript (transcript_id, exon_id, exon_order, session_id) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE exon_transcript_id=LAST_INSERT_ID(exon_transcript_id)");
