@@ -93,7 +93,7 @@ sub load_hgnc {
 	my @hgnc_line = split '\t';
 
 	# If there's no ensembl id, skip
-	next unless($hgnc_line[19]);
+#	next unless($hgnc_line[19]);
 
 	my (undef, $hgnc_id) = split ':', $hgnc_line[0];
 
