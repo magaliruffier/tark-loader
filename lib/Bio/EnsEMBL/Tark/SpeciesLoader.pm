@@ -83,8 +83,11 @@ sub BUILD {
     $sth = $dbh->prepare("INSERT INTO exon (stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end, loc_strand, loc_checksum, exon_checksum, seq_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE exon_id=LAST_INSERT_ID(exon_id)");
     $self->set_query('exon' => $sth);
 
-    $sth = $dbh->prepare("INSERT INTO translation (stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end, loc_strand, loc_checksum, translation_checksum, seq_checksum, transcript_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE translation_id=LAST_INSERT_ID(translation_id)");
+    $sth = $dbh->prepare("INSERT INTO translation (stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end, loc_strand, loc_checksum, translation_checksum, seq_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE translation_id=LAST_INSERT_ID(translation_id)");
     $self->set_query('translation' => $sth);
+
+    $sth = $dbh->prepare("INSERT INTO translation_transcript (transcript_id, translation_id, session_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE translation_transcript_id=LAST_INSERT_ID(translation_transcript_id)");
+    $self->set_query('translation_transcript' => $sth);
 
     $sth = $dbh->prepare("INSERT IGNORE INTO sequence (seq_checksum, sequence, session_id) VALUES (?, ?, ?)");
     $self->set_query('sequence' => $sth);
@@ -281,9 +284,13 @@ sub _load_translation {
     my $translation_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $translation->stable_id(), $translation->version(), $seq_checksum );
 
     my $sth = $self->get_insert('translation');
-    $sth->execute( $translation->stable_id(), $translation->version(), $seq_checksum, @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{transcript_id}, $session_pkg->{session_id} ) or
+    $sth->execute( $translation->stable_id(), $translation->version(), $seq_checksum, @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{session_id} ) or
 	$self->log->logdie("Error inserting translation: $DBI::errstr");
     my $translation_id = $sth->{mysql_insertid};
+
+    $sth = $self->get_insert('translation_transcript');
+    $sth->execute( $session_pkg->{transcript_id}, $translation_id, $session_pkg->{session_id} ) or
+	$self->log->logdie("Error inserting translation_transcript: $DBI::errstr");
 
     # Apply tags to feature we've just inserted
     Bio::EnsEMBL::Tark::Tag->tag_feature($translation_id, 'translation');
