@@ -71,10 +71,10 @@ sub BUILD {
     $sth = $dbh->prepare("INSERT INTO gene (stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end, loc_strand, loc_checksum, hgnc_id, gene_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE gene_id=LAST_INSERT_ID(gene_id)");
     $self->set_query('gene' => $sth);
 
-    $sth = $dbh->prepare("INSERT INTO transcript_gene (gene_id, transcript_id, session_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE transcript_gene_id=LAST_INSERT_ID(transcript_gene_id)");
+    $sth = $dbh->prepare("INSERT INTO transcript_gene (gene_id, transcript_id, session_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE gene_transcript_id=LAST_INSERT_ID(gene_transcript_id)");
     $self->set_query('transcript_gene' => $sth);
 
-    $sth = $dbh->prepare("INSERT INTO transcript (stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end, loc_strand, loc_checksum, transcript_checksum, exon_set_checksum, seq_checksum, gene_id, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE transcript_id=LAST_INSERT_ID(transcript_id)");
+    $sth = $dbh->prepare("INSERT INTO transcript (stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end, loc_strand, loc_checksum, transcript_checksum, exon_set_checksum, seq_checksum, session_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE transcript_id=LAST_INSERT_ID(transcript_id)");
     $self->set_query('transcript' => $sth);
 
     $sth = $dbh->prepare("INSERT INTO exon_transcript (transcript_id, exon_id, exon_order, session_id) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE exon_transcript_id=LAST_INSERT_ID(exon_transcript_id)");
@@ -276,7 +276,7 @@ sub _load_translation {
     # Insert the sequence and get back the checksum
     my $seq_checksum = $self->_insert_sequence($translation->seq(), $session_pkg->{session_id});
 
-    my @loc_pieces = ( $session_pkg->{assembly_id},$session_pkg->{transcript}->seq_region_name(),
+    my @loc_pieces = ( $session_pkg->{assembly_id}, $session_pkg->{transcript}->seq_region_name(),
 		       $translation->genomic_start(), $translation->genomic_end(),
 		       $session_pkg->{transcript}->seq_region_strand() );
 
@@ -284,7 +284,7 @@ sub _load_translation {
     my $translation_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $translation->stable_id(), $translation->version(), $seq_checksum );
 
     my $sth = $self->get_insert('translation');
-    $sth->execute( $translation->stable_id(), $translation->version(), $seq_checksum, @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{session_id} ) or
+    $sth->execute( $translation->stable_id(), $translation->version(), @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{transcript_id}, $session_pkg->{session_id} ) or
 	$self->log->logdie("Error inserting translation: $DBI::errstr");
     my $translation_id = $sth->{mysql_insertid};
 
