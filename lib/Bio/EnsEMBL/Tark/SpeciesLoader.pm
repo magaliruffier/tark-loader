@@ -158,6 +158,7 @@ sub _load_gene {
     my $loc_checksum = Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
     my $hgnc_id = $self->_fetch_hgnc_id($gene);
     my $gene_checksum = Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces,
+								($hgnc_id ? $hgnc_id : undef),
 								$gene->stable_id(), $gene->version() );
 
     my $sth = $self->get_insert('gene');
