@@ -64,6 +64,16 @@ sub BUILD {
 
 }
 
+sub flush_hgnc {
+    my $self = shift;
+
+    $self->log()->info("Truncating gene names table");
+
+    my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+
+    $dbh->do("TRUNCATE gene_names");
+}
+
 # Col 1: hgnc_id
 # Col 2: symbol/name
 # Col 9: alias_symbols

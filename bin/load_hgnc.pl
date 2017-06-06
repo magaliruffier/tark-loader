@@ -26,7 +26,7 @@ use Bio::EnsEMBL::Tark::HGNC;
 use Bio::EnsEMBL::Tark::DB;
 
 my $dbuser; my $dbpass; my $dbhost; my $database; my $dbport = 3306;
-my $hgnc_file;
+my $hgnc_file; my $flush_names;
 
 Log::Log4perl->easy_init($DEBUG);
 
@@ -39,6 +39,10 @@ Bio::EnsEMBL::Tark::DB->initialize( dsn => "DBI:mysql:database=$database;host=$d
 my $session_id = Bio::EnsEMBL::Tark::DB->start_session("HGNC loader");
 
 my $loader = Bio::EnsEMBL::Tark::HGNC->new(session_id => $session_id);
+
+if($flush_names) {
+    $loader->flush_hgnc();
+}
 
 #eval {
     $loader->load_hgnc($hgnc_file);
@@ -61,6 +65,7 @@ sub get_options {
 	"database=s"             => \$database,
 	"dbport=s"               => \$dbport,
 	"hgnc=s"                 => \$hgnc_file,
+	"flush"                  => \$flush_names,
         "help"                   => \$help,
         );
     
