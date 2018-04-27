@@ -258,7 +258,8 @@ sub _load_exon {
 		       $exon->seq_region_start(), $exon->seq_region_end(), 
 		       $exon->seq_region_strand() );
     my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
-    my $exon_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $exon->stable_id(), $exon->version(), $seq_checksum );
+    # my $exon_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $exon->stable_id(), $exon->version(), $seq_checksum );
+    my $exon_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $seq_checksum );
 
     my $sth = $self->get_insert('exon');
     $sth->execute( $exon->stable_id(), $exon->version(), @loc_pieces, $loc_checksum, $exon_checksum, $seq_checksum, $session_pkg->{session_id} ) or

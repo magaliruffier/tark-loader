@@ -41,6 +41,7 @@ has 'blocks' => ( is => 'ro', isa => 'ArrayRef[Str]', writer => '_blocks',
 
 has 'assembly_id' => ( is => 'rw', isa => 'Int' );
 
+# removed                          'operon' => 5,
 has 'feature_type' => (
     traits    => ['Hash'],
     is        => 'ro',
@@ -48,8 +49,7 @@ has 'feature_type' => (
     default   => sub { { 'gene' => 1, 
                          'transcript' => 2,
                          'exon' => 3,
-                         'translation' => 4,
-                         'operon' => 5,
+                         'translation' => 4
                      } },
     handles   => {
         get_type       => 'get',
@@ -115,12 +115,13 @@ sub tag_feature {
     my ($self, $feature_id, $feature_type) = @_;
 
     foreach my $tag (@{$self->blocks()}) {
-	my $sth = $self->get_insert($tag);
+    my $feature_tag = $feature_type.'_'.$tag;
+	my $sth = $self->get_insert($feature_tag);
 
 	next if($feature_type ne 'transcript' && $tag ne 'release');
 
 	my @vals = ( $feature_id );
-	push(@vals, $self->get_type($feature_type)) if($tag eq 'release');
+	#push(@vals, $self->get_type($feature_type)) if($tag eq 'release');
 	$sth->execute(@vals);
     }
 }
@@ -204,10 +205,10 @@ sub checksum_feature_set {
     my $tagset_join_col = 'transcript_id';
     my $tagset_cond = '';
     if($set_type eq 'release') {
-	$tagset_table = 'release_tag';
+	$tagset_table = $feature_type.'_release_tag';
 	$tagset_col = 'release_id';
 	$tagset_join_col = 'feature_id';
-	$tagset_cond = ' AND release_tag.feature_type = ? ';
+	#$tagset_cond = ' AND '. $feature_type . '_release_tag.feature_type = ? ';
     } else {
 	# Don't let users do stupid things
 	$feature_type = 'transcript';
@@ -216,12 +217,14 @@ sub checksum_feature_set {
     my $key_col = $feature_type . "_id";
     my $checksum_col = $feature_type . "_checksum";
 
-    my $stmt = "SELECT $checksum_col FROM $feature_type, $tagset_table WHERE $tagset_table.$tagset_join_col = " . $feature_type . ".$key_col AND $tagset_table.$tagset_col = $tagset_id $tagset_cond ORDER BY " . $feature_type . ".$key_col";
+    #my $stmt = "SELECT $checksum_col FROM $feature_type, $tagset_table WHERE $tagset_table.$tagset_join_col = " . $feature_type . ".$key_col AND $tagset_table.$tagset_col = $tagset_id $tagset_cond ORDER BY " . $feature_type . ".$key_col";
+    my $stmt = "SELECT $checksum_col FROM $feature_type, $tagset_table WHERE $tagset_table.$tagset_join_col = " . $feature_type . ".$key_col AND $tagset_table.$tagset_col = $tagset_id ORDER BY " . $feature_type . ".$key_col";
     my $sth = $dbh->prepare($stmt);
 
-    my @params = ();
-    push( @params, $self->get_type($feature_type) ) if( $set_type eq 'release' );
-    $sth->execute(@params);
+#    my @params = ();
+#    push( @params, $self->get_type($feature_type) ) if( $set_type eq 'release' );
+#    $sth->execute(@params);
+	$sth->execute();
 
     # Don't do a checksum if no rows for that type
     return unless($sth->rows);
@@ -254,7 +257,8 @@ sub fetch_tag {
 	$table = 'release_set';
 	$keycol = 'release';
 	$tag_table = 'release_';
-	$feature_col = 'feature_id, feature_type';
+	#$feature_col = 'feature_id, feature_type';
+	$feature_col = 'feature_id';
 	$feature_val = '?,';
     }
 
@@ -271,9 +275,20 @@ sub fetch_tag {
     $self->config()->param("$tag.id", $tag_id);
 
     # Create the insert statement for later
-    $sth = $dbh->prepare("INSERT IGNORE INTO " . $tag_table . "tag ($feature_col, ${keycol}_id, session_id) VALUES (?, $feature_val $tag_id, $session_id)");
-    $self->set_insert($tag => $sth);
-
+    # Do it for all feature_type
+    
+    foreach my $feature_type ('gene','transcript','translation','exon'){
+      print ("feature type  $feature_type\n");
+      my $feature_tag_table = $feature_type.'_'.$tag_table;
+      my $feature_tag = $feature_type.'_'.$tag;
+      #$sth = $dbh->prepare("INSERT IGNORE INTO " . $tag_table . "tag ($feature_col, ${keycol}_id, session_id) VALUES (?, $feature_val $tag_id, $session_id)");
+      $sth = $dbh->prepare("INSERT IGNORE INTO " . $feature_tag_table . "tag ($feature_col, ${keycol}_id, session_id) VALUES (?, $tag_id, $session_id)");
+      use Data::Dumper;
+      print ("INSERT IGNORE INTO " . $feature_tag_table . "tag ($feature_col, ${keycol}_id, session_id) VALUES (?, $tag_id, $session_id)\n");
+      print "Setting insert for $feature_tag \n";
+      $self->set_insert($feature_tag => $sth);
+    }
+    #exit 0;
 }
 
 1;

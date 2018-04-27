@@ -98,13 +98,13 @@ sub load_hgnc {
     my $insert_hgnc = $self->get_query('hgnc');
 
     while(<$in_fh>) {
+    
 	chomp;
 
 	my @hgnc_line = split '\t';
-
+    next unless($hgnc_line[0]=~/^HGNC:/);
 	# If there's no ensembl id, skip
 #	next unless($hgnc_line[19]);
-
 	my (undef, $hgnc_id) = split ':', $hgnc_line[0];
 
 	# Insert the hgnc symbol
@@ -112,7 +112,7 @@ sub load_hgnc {
 
 	# Add any synomyms
 	next unless($hgnc_line[8]);
-
+    print "$hgnc_id $hgnc_line[1] \n";
 	$hgnc_line[8] =~ s/^"//;
 	$hgnc_line[8] =~ s/"$//;
 	my @aliases = split '\|', $hgnc_line[8];

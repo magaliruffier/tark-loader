@@ -438,6 +438,7 @@ CREATE INDEX `fk_release_tag_1_idx` ON `release_tag` (`release_id` ASC);
 CREATE INDEX `fk_release_tag_2_idx` ON `release_tag` (`session_id` ASC);
 
 
+
 -- -----------------------------------------------------
 -- Table `operon`
 -- -----------------------------------------------------
@@ -672,6 +673,70 @@ CREATE INDEX `fk_translation_transcript_3_idx` ON `translation_transcript` (`ses
 
 CREATE UNIQUE INDEX `transcript_translation_idx` ON `translation_transcript` (`transcript_id` ASC, `translation_id` ASC);
 
+-- -----------------------------------------------------
+-- Table `gene_release_tag`
+-- -----------------------------------------------------
+
+CREATE TABLE `gene_release_tag` (
+ `feature_id` int(10) unsigned NOT NULL,
+ `release_id` int(10) unsigned NOT NULL,
+ `session_id` INT UNSIGNED NULL,
+  PRIMARY KEY (`feature_id`,`release_id`),
+  CONSTRAINT `fk_gene_release_tag_1` FOREIGN KEY (`feature_id`) REFERENCES `gene` (`gene_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_gene_release_tag_2` FOREIGN KEY (`release_id`) REFERENCES `release_set` (`release_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE INDEX `fk_gene_release_tag_1_idx` ON `gene_release_tag` (`feature_id` ASC);
+CREATE INDEX `fk_gene_release_tag_2_idx` ON `gene_release_tag` (`release_id` ASC);
+
+-- -----------------------------------------------------
+-- Table `transcript_release_tag`
+-- -----------------------------------------------------
+
+CREATE TABLE `transcript_release_tag` (
+ `feature_id` int(10) unsigned NOT NULL,
+ `release_id` int(10) unsigned NOT NULL,
+ `session_id` INT UNSIGNED NULL,
+  PRIMARY KEY (`feature_id`,`release_id`),
+  CONSTRAINT `fk_transcript_release_tag_1` FOREIGN KEY (`feature_id`) REFERENCES `transcript` (`transcript_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_transcript_release_tag_2` FOREIGN KEY (`release_id`) REFERENCES `release_set` (`release_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE INDEX `fk_transcript_release_tag_1_idx` ON `transcript_release_tag` (`feature_id` ASC);
+CREATE INDEX `fk_transcript_release_tag_2_idx` ON `transcript_release_tag` (`release_id` ASC);
+
+-- -----------------------------------------------------
+-- Table `translation_release_tag`
+-- -----------------------------------------------------
+
+CREATE TABLE `translation_release_tag` (
+ `feature_id` int(10) unsigned NOT NULL,
+ `release_id` int(10) unsigned NOT NULL,
+ `session_id` INT UNSIGNED NULL,
+  PRIMARY KEY (`feature_id`,`release_id`),
+  CONSTRAINT `fk_translation_release_tag_1` FOREIGN KEY (`feature_id`) REFERENCES `translation` (`translation_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_translation_release_tag_2` FOREIGN KEY (`release_id`) REFERENCES `release_set` (`release_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE INDEX `fk_translation_release_tag_1_idx` ON `translation_release_tag` (`feature_id` ASC);
+CREATE INDEX `fk_translation_release_tag_2_idx` ON `translation_release_tag` (`release_id` ASC);
+
+-- -----------------------------------------------------
+-- Table `exon_release_tag`
+-- -----------------------------------------------------
+
+CREATE TABLE `exon_release_tag` (
+ `feature_id` int(10) unsigned NOT NULL,
+ `release_id` int(10) unsigned NOT NULL,
+ `session_id` INT UNSIGNED NULL,
+  PRIMARY KEY (`feature_id`,`release_id`),
+  CONSTRAINT `fk_exon_release_tag_1` FOREIGN KEY (`feature_id`) REFERENCES `exon` (`exon_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_exon_release_tag_2` FOREIGN KEY (`release_id`) REFERENCES `release_set` (`release_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+CREATE INDEX `fk_exon_release_tag_1_idx` ON `exon_release_tag` (`feature_id` ASC);
+CREATE INDEX `fk_exon_release_tag_2_idx` ON `exon_release_tag` (`release_id` ASC);
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
