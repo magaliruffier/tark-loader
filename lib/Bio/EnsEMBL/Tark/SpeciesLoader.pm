@@ -314,10 +314,14 @@ sub _insert_sequence {
 
 sub _fetch_hgnc_id {
     my ( $self, $gene ) = @_;
-
+    my $hgnc_id;
     foreach my $oxref (@{ $gene->get_all_object_xrefs() }) {
 	next unless($oxref->dbname eq 'HGNC');
-	my (undef, $hgnc_id) = split ':', $oxref->primary_id;
+	if ($oxref->primary_id =~ /^HGNC:\d+$/){
+		(undef, $hgnc_id) = split ':', $oxref->primary_id;
+	}else{
+		$hgnc_id = $oxref->primary_id;
+	}
 	return $hgnc_id;
     }
 }
