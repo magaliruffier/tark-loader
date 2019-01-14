@@ -27,7 +27,7 @@ use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::Tag;
 use Bio::EnsEMBL::Registry;
 
-my $dbuser; my $dbpass; my $dbhost; my $database; my $dbport = 3306;
+my $dbuser; my $dbpass; my $dbhost; my $database; my $dbport = 3306; my $source_name = "Ensembl";
 my $species;
 my $ensdbhost = 'mysql-ensembl-mirror.ebi.ac.uk';
 my $ensdbport = 4240;
@@ -52,14 +52,17 @@ Bio::EnsEMBL::Registry->load_registry_from_db(
     -db_version => $release
     );
 
+
 my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, "core" );
 
 my $session_id = Bio::EnsEMBL::Tark::DB->start_session("Test client");
 
 Bio::EnsEMBL::Tark::Tag->initialize( config_file => $config_file );
 
+
+
 #eval {
-    $loader->load_species($dba);
+    $loader->load_species($dba, $source_name);
 #};
 #if($@) {
 #    $loader->abort_session($session_id);
@@ -83,6 +86,7 @@ sub get_options {
 	"release=s"              => \$release,
 	"enshost=s"              => \$ensdbhost,
 	"ensport=s"              => \$ensdbport,
+	"source=s"              => \$source_name,
         "help"                   => \$help,
         );
     

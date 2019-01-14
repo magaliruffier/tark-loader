@@ -376,6 +376,23 @@ CREATE INDEX `transcript_id` ON `tag` (`transcript_id` ASC);
 
 CREATE INDEX `fk_Tag_2_idx` ON `tag` (`session_id` ASC);
 
+-- -----------------------------------------------------
+-- Table `release_source`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `release_source` ;
+
+CREATE TABLE IF NOT EXISTS `release_source` (
+  `source_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `shortname` VARCHAR(24) NULL,
+  `description` VARCHAR(256) NULL,
+  PRIMARY KEY (`source_id`)
+  )
+ENGINE = InnoDB;
+
+CREATE UNIQUE INDEX `shortname_idx` ON `release_source` (`shortname` ASC);
+
+INSERT INTO release_source(`shortname`, `description`) VALUES ('Ensembl', 'Ensembl data imports from Human Core DBs');
+INSERT INTO release_source(`shortname`, `description`) VALUES ('RefSeq', 'RefSeq data imports from Human otherfeatures DBs');
 
 -- -----------------------------------------------------
 -- Table `release_set`
@@ -390,6 +407,7 @@ CREATE TABLE IF NOT EXISTS `release_set` (
   `release_date` DATE NULL,
   `session_id` INT UNSIGNED NULL,
   `release_checksum` BINARY(20) NULL,
+  `source_id` INT UNSIGNED NULL,
   PRIMARY KEY (`release_id`),
   CONSTRAINT `fk_release_1`
     FOREIGN KEY (`assembly_id`)
@@ -400,15 +418,21 @@ CREATE TABLE IF NOT EXISTS `release_set` (
     FOREIGN KEY (`session_id`)
     REFERENCES `session` (`session_id`)
     ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_release_3`
+    FOREIGN KEY (`source_id`)
+    REFERENCES `release_source` (`source_id`)
+    ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
-CREATE UNIQUE INDEX `shortname_assembly_idx` ON `release_set` (`shortname` ASC, `assembly_id` ASC);
+CREATE UNIQUE INDEX `shortname_assembly_source_idx` ON `release_set` (`shortname` ASC, `assembly_id` ASC, `source_id` ASC);
 
 CREATE INDEX `fk_release_1_idx` ON `release_set` (`assembly_id` ASC);
 
 CREATE INDEX `fk_release_2_idx` ON `release_set` (`session_id` ASC);
 
+CREATE INDEX `fk_release_3_idx` ON `release_set` (`source_id` ASC);
 
 -- -----------------------------------------------------
 -- Table `release_tag`
@@ -436,7 +460,6 @@ ENGINE = InnoDB;
 CREATE INDEX `fk_release_tag_1_idx` ON `release_tag` (`release_id` ASC);
 
 CREATE INDEX `fk_release_tag_2_idx` ON `release_tag` (`session_id` ASC);
-
 
 
 -- -----------------------------------------------------

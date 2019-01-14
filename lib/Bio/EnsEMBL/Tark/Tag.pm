@@ -248,6 +248,10 @@ sub fetch_tag {
 
     my $shortname = $self->config()->param("$tag.shortname");
     my $desc = $self->config()->param("$tag.description");
+    my $source_id = $self->config()->param("$tag.source") or 1;
+    
+    print "From fetch_tag shortname $shortname desc $desc  source_id $source_id\n";
+
 
     my $assembly_field = ''; my $assembly_val = ''; my $table = 'tagset'; my $keycol = 'tagset';
     my $tag_table = ''; my $feature_col = 'transcript_id'; my $feature_val = '';
@@ -265,12 +269,12 @@ sub fetch_tag {
     my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
     my $session_id = Bio::EnsEMBL::Tark::DB->session_id();
 
-    my $sth = $dbh->prepare("INSERT INTO $table (shortname, description, $assembly_field session_id) VALUES (?, ?, $assembly_val $session_id) ON DUPLICATE KEY UPDATE ${keycol}_id=LAST_INSERT_ID(${keycol}_id)");
-
+    my $sth = $dbh->prepare("INSERT INTO $table (shortname, description, $assembly_field session_id, source_id) VALUES (?, ?, $assembly_val $session_id, $source_id) ON DUPLICATE KEY UPDATE ${keycol}_id=LAST_INSERT_ID(${keycol}_id)");
+	print  $sth->{Statement};
     # Create or find the release
     $sth->execute($shortname, $desc);
     my $tag_id = $sth->{mysql_insertid};
-
+	print "\nRelease id :   $tag_id\n";
     # Save the release_id for later
     $self->config()->param("$tag.id", $tag_id);
 

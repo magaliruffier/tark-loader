@@ -23,6 +23,7 @@ package Bio::EnsEMBL::Tark::SpeciesLoader;
 
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::Tag;
+use Data::Dumper;
 
 use Moose;
 with 'MooseX::Log::Log4perl';
@@ -98,6 +99,9 @@ sub BUILD {
 sub load_species {
     my $self = shift;
     my $dba = shift;
+    my $source_name = shift;
+
+    $source_name = defined($source_name) ? $source_name : "Ensembl";
 
     my $session_id = Bio::EnsEMBL::Tark::DB->session_id;
 
@@ -136,10 +140,11 @@ sub load_species {
     };
 
     # Fetch a gene iterator and cycle through loading the genes
-    my $iter = $self->genes_to_metadata_iterator($dba);
+    my $iter = $self->genes_to_metadata_iterator($dba, $source_name);
+
     while ( my $gene = $iter->next() ) {
 	$self->log->debug( "Loading gene " . $gene->{stable_id} );
-	$self->_load_gene($gene, $session_pkg);
+	$self->_load_gene($gene, $session_pkg, $source_name);
     }
     $self->log->info( "Completed dumping genes for " . $species );
 
@@ -151,7 +156,7 @@ sub load_species {
 }
 
 sub _load_gene {
-    my ( $self, $gene, $session_pkg ) = @_;
+    my ( $self, $gene, $session_pkg, $source_name ) = @_;
 
     my @loc_pieces = ( $session_pkg->{assembly_id}, $gene->seq_region_name(),
 		       $gene->seq_region_start(), $gene->seq_region_end(), $gene->seq_region_strand() );
@@ -326,8 +331,24 @@ sub _fetch_hgnc_id {
     }
 }
 
+sub genes_to_metadata_iterator_test {
+	my ( $self, $dba, $source_name ) = @_;
+	my $ga           = $dba->get_GeneAdaptor();
+	my $gene_features_ensembl = $ga->fetch_all_by_display_label("BRCA2");
+	my $len          = scalar(@$gene_features_ensembl);
+	print "Number of gene features ". $len. "\n";
+	my $current_gene = 0;
+	my $genes_i      = Bio::EnsEMBL::Utils::Iterator->new(
+		sub {
+			 return shift @$gene_features_ensembl;
+		}
+	);
+	return $genes_i;
+}
+
+# this is the place where you should try to get the gene iterator properly
 sub genes_to_metadata_iterator {
-	my ( $self, $dba ) = @_;
+	my ( $self, $dba, $source_name ) = @_;
 	my $ga           = $dba->get_GeneAdaptor();
 	my $gene_ids     = $ga->_list_dbIDs('gene');
 	my $len          = scalar(@$gene_ids);
@@ -344,6 +365,7 @@ sub genes_to_metadata_iterator {
 		}
 	);
 	return $genes_i;
+
 }
 
 1;
