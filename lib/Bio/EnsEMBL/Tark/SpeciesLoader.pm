@@ -228,7 +228,7 @@ sub _load_transcript {
 		       $transcript->seq_region_start(), $transcript->seq_region_end(), 
 		       $transcript->seq_region_strand() );
     my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
-    my $transcript_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $transcript->stable_id(), $transcript->version(),
+    my $transcript_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( $loc_checksum, $transcript->stable_id(), $transcript->version(),
 						     ($session_pkg->{exon_set_checksum} ? $session_pkg->{exon_set_checksum} : undef),
 						     $seq_checksum );
 
@@ -264,7 +264,9 @@ sub _load_exon {
 		       $exon->seq_region_strand() );
     my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
     # my $exon_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $exon->stable_id(), $exon->version(), $seq_checksum );
-    my $exon_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $seq_checksum );
+    
+    #my $exon_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $seq_checksum );
+    my $exon_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( $loc_checksum, $seq_checksum );
 
     my $sth = $self->get_insert('exon');
     $sth->execute( $exon->stable_id(), $exon->version(), @loc_pieces, $loc_checksum, $exon_checksum, $seq_checksum, $session_pkg->{session_id} ) or
@@ -288,7 +290,8 @@ sub _load_translation {
 		       $session_pkg->{transcript}->seq_region_strand() );
 
     my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
-    my $translation_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $translation->stable_id(), $translation->version(), $seq_checksum );
+    #my $translation_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces, $translation->stable_id(), $translation->version(), $seq_checksum );
+    my $translation_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( $loc_checksum, $translation->stable_id(), $translation->version(), $seq_checksum );
 
     my $sth = $self->get_insert('translation');
     $sth->execute( $translation->stable_id(), $translation->version(), @loc_pieces, $loc_checksum, $translation_checksum, $seq_checksum, $session_pkg->{session_id} ) or
