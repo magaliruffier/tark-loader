@@ -24,7 +24,8 @@ use Getopt::Long qw(:config no_ignore_case);
 
 use Bio::EnsEMBL::Tark::DB;
 
-my $dbuser; my $dbpass; my $dbhost; my $database; my $dbport = 3306;
+my ($dbuser, $dbpass, $dbhost, $database);
+my $dbport = 3306;
 
 Log::Log4perl->easy_init($DEBUG);
 
@@ -32,30 +33,32 @@ get_options();
 
 print "Passing:\nDBI:mysql:database=$database;host=$dbhost;port=$dbport\n$dbuser\n$dbpass\n";
 
-Bio::EnsEMBL::Tark::DB->initialize( dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
-				    dbuser => $dbuser,
-				    dbpass => $dbpass );
+Bio::EnsEMBL::Tark::DB->initialize(
+  dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
+  dbuser => $dbuser,
+  dbpass => $dbpass
+);
 
 my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
 
-my $session_id = Bio::EnsEMBL::Tark::DB->start_session("My processor");
+my $session_id = Bio::EnsEMBL::Tark::DB->start_session( 'My processor' );
 
 Bio::EnsEMBL::Tark::DB->abort_session();
 
 sub get_options {
-    my $help;
+  my $help;
 
-    GetOptions(
-	"dbuser=s"               => \$dbuser,
-	"dbpass=s"               => \$dbpass,
-	"dbhost=s"               => \$dbhost,
-	"database=s"             => \$database,
-	"dbport=s"               => \$dbport,
-        "help"                   => \$help,
-        );
-    
-    if ($help) {
-        exec('perldoc', $0);
-    }
+  GetOptions(
+  'dbuser=s'   => \$dbuser,
+  'dbpass=s'   => \$dbpass,
+  'dbhost=s'   => \$dbhost,
+  'database=s' => \$database,
+  'dbport=s'   => \$dbport,
+  'help'       => \$help,
+  );
+
+  if ($help) {
+    exec 'perldoc', $0;
+  }
 
 }

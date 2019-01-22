@@ -62,7 +62,7 @@ has 'query' => (
 sub BUILD {
   my ($self) = @_;
 
-  $self->log()->info("Initializing species loader");
+  $self->log()->info('Initializing species loader');
 
   # Attempt a connection to the database
   my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
