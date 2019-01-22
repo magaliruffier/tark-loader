@@ -25,52 +25,56 @@ use Getopt::Long qw(:config no_ignore_case);
 use Bio::EnsEMBL::Tark::HGNC;
 use Bio::EnsEMBL::Tark::DB;
 
-my $dbuser; my $dbpass; my $dbhost; my $database; my $dbport = 3306;
-my $hgnc_file; my $flush_names;
+my ( $dbuser, $dbpass, $dbhost, $database, $hgnc_file, $flush_names );
+my $dbport = 3306;
 
-Log::Log4perl->easy_init($DEBUG);
+Log::Log4perl->easy_init( $DEBUG );
 
 get_options();
 
-Bio::EnsEMBL::Tark::DB->initialize( dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
-				    dbuser => $dbuser,
-				    dbpass => $dbpass );
+Bio::EnsEMBL::Tark::DB->initialize(
+  dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
+  dbuser => $dbuser,
+  dbpass => $dbpass
+);
 
-my $session_id = Bio::EnsEMBL::Tark::DB->start_session("HGNC loader");
+my $session_id = Bio::EnsEMBL::Tark::DB->start_session( 'HGNC loader' );
 
-my $loader = Bio::EnsEMBL::Tark::HGNC->new(session_id => $session_id);
+my $loader = Bio::EnsEMBL::Tark::HGNC->new( session_id => $session_id );
 
 if($flush_names) {
-    $loader->flush_hgnc();
+  $loader->flush_hgnc();
 }
 
-#eval {
-    $loader->load_hgnc($hgnc_file);
-#};
-#if($@) {
-#    $loader->abort_session($session_id);
-#    die "Error loading species: $@";
-#}
+$loader->load_hgnc( $hgnc_file );
 
-Bio::EnsEMBL::Tark::DB->end_session($session_id);
+Bio::EnsEMBL::Tark::DB->end_session( $session_id );
+
+
+=head2 get_options
+  Description:
+  Returntype :
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 sub get_options {
-    my $help;
+  my $help;
 
-    GetOptions(
-#	"config=s"               => \$config_file,
-	"dbuser=s"               => \$dbuser,
-	"dbpass=s"               => \$dbpass,
-	"dbhost=s"               => \$dbhost,
-	"database=s"             => \$database,
-	"dbport=s"               => \$dbport,
-	"hgnc=s"                 => \$hgnc_file,
-	"flush"                  => \$flush_names,
-        "help"                   => \$help,
-        );
-    
-    if ($help) {
-        exec('perldoc', $0);
-    }
+  GetOptions(
+    # 'config=s' => \$config_file,
+    'dbuser=s'   => \$dbuser,
+    'dbpass=s'   => \$dbpass,
+    'dbhost=s'   => \$dbhost,
+    'database=s' => \$database,
+    'dbport=s'   => \$dbport,
+    'hgnc=s'     => \$hgnc_file,
+    'flush'      => \$flush_names,
+    'help'       => \$help,
+  );
 
-}
+  if ($help) {
+    exec 'perldoc', $0;
+  }
+} ## end sub get_options

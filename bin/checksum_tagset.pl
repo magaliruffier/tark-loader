@@ -24,17 +24,19 @@ use Getopt::Long qw(:config no_ignore_case);
 
 use Bio::EnsEMBL::Tark::Tag;
 
-my $dbuser; my $dbpass; my $dbhost; my $database; my $dbport = 3306;
-my $config_file;
-my $tagset_id; my $set_type = 'tag';
+my ( $dbuser, $dbpass, $dbhost, $database, $config_file, $tagset_id );
+my $dbport = 3306;
+my $set_type = 'tag';
 
 Log::Log4perl->easy_init($DEBUG);
 
 get_options();
 
-Bio::EnsEMBL::Tark::DB->initialize( dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
-				    dbuser => $dbuser,
-				    dbpass => $dbpass );
+Bio::EnsEMBL::Tark::DB->initialize(
+  dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
+  dbuser => $dbuser,
+  dbpass => $dbpass
+);
 
 Bio::EnsEMBL::Tark::Tag->initialize( config_file => $config_file );
 
@@ -45,22 +47,22 @@ print "\nFound checksum: " .  unpack("H*", $checksum) . "\n";
 Bio::EnsEMBL::Tark::Tag->write_checksum($tagset_id, $checksum, $set_type);
 
 sub get_options {
-    my $help;
+  my $help;
 
-    GetOptions(
-	"tagset=s"               => \$tagset_id,
-	"set_type=s"             => \$set_type,
-	"config=s"               => \$config_file,
-	"dbuser=s"               => \$dbuser,
-	"dbpass=s"               => \$dbpass,
-	"dbhost=s"               => \$dbhost,
-	"database=s"             => \$database,
-	"dbport=s"               => \$dbport,
-        "help"                   => \$help,
-        );
-    
-    if ($help) {
-        exec('perldoc', $0);
-    }
+  GetOptions(
+    'tagset=s'   => \$tagset_id,
+    'set_type=s' => \$set_type,
+    'config=s'   => \$config_file,
+    'dbuser=s'   => \$dbuser,
+    'dbpass=s'   => \$dbpass,
+    'dbhost=s'   => \$dbhost,
+    'database=s' => \$database,
+    'dbport=s'   => \$dbport,
+    'help'       => \$help,
+  );
+
+  if ($help) {
+    exec 'perldoc', $0;
+  }
 
 }

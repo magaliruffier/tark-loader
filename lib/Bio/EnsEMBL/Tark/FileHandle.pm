@@ -49,25 +49,34 @@ use warnings;
 
 use PerlIO::gzip;
 
+
+=head2 open
+  Description:
+  Returntype :
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub open {
-    my $class = shift;
-    my $filename = shift;
+  my $class = shift;
+  my $filename = shift;
 
-    my $mode = '<';
+  my $mode = '<';
 
-    if($filename =~ /^http/i) {
-	$mode = '-|';
-	$filename = 'curl -vs 2>/dev/null ' . $filename;
-    }
+  if($filename =~ /^http/i) {
+    $mode = '-|';
+    $filename = 'curl -vs 2>/dev/null ' . $filename;
+  }
 
-    if($filename =~ /gz/i) {
-	$mode .= ':gzip';
-    }
+  if($filename =~ /gz/i) {
+    $mode .= ':gzip';
+  }
 
-    open my $fh, $mode, $filename or
-	die "Error opening file $filename: $!";
+  open my $fh, $mode, $filename or
+    die "Error opening file $filename: $!";
 
-    return $fh;
-}
+  return $fh;
+} ## end sub open
 
 1;
