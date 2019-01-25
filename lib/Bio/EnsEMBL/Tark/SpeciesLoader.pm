@@ -50,6 +50,11 @@ has 'query' => (
   },
 );
 
+has session => (
+  is => 'rw',
+  isa => 'Bio::EnsEMBL::Tark::DB',
+);
+
 
 =head2 BUILD
   Description:
@@ -60,12 +65,13 @@ has 'query' => (
 =cut
 
 sub BUILD {
-  my ($self) = @_;
+  my ( $self, $args ) = @_;
 
   $self->log()->info('Initializing species loader');
 
   # Attempt a connection to the database
-  my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+  # my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+  my $dbh = $self->session->dbh();
 
   # Setup the insert queries
 

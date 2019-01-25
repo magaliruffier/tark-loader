@@ -32,7 +32,6 @@ use Bio::EnsEMBL::Tark::Schema;
 use Moose;
 with 'MooseX::Log::Log4perl';
 
-my $singleton;
 
 has dsn => (
   is => 'ro',

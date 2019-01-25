@@ -44,6 +44,14 @@ ok($db, 'TestDB ready to go');
 
 use_ok 'Bio::EnsEMBL::Tark::SpeciesLoader';
 
+# start_session
+my $session_id_start = $db->start_session();
+ok( $session_id_start, "start_session - $session_id_start");
+
+my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
+   session => $db
+);
+
 done_testing();
 
 1;
