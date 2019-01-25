@@ -70,7 +70,7 @@ sub BUILD {
   # Setup the insert queries
 
   # INSERT genome
-  $genome_sql = (<<'SQL')
+  my $genome_sql = (<<'SQL');
     INSERT INTO genome (name, tax_id, session_id)
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE genome_id=LAST_INSERT_ID(genome_id)
@@ -82,7 +82,7 @@ SQL
 
 
   # INSERT assembly
-  $assembly_sql = (<<'SQL');
+  my $assembly_sql = (<<'SQL');
     INSERT INTO assembly (genome_id, assembly_name, session_id)
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE assembly_id=LAST_INSERT_ID(assembly_id)
@@ -93,7 +93,7 @@ SQL
 
 
   # INSERT assembly_alias
-  $assembly_alias_sql = (<<'SQL');
+  my $assembly_alias_sql = (<<'SQL');
     INSERT INTO assembly_alias (genome_id, assembly_id, alias, session_id)
     VALUES (?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE assembly_id=LAST_INSERT_ID(assembly_id)
@@ -104,7 +104,7 @@ SQL
 
 
   # INSERT gene
-  $gene_sql = (<<'SQL');
+  my $gene_sql = (<<'SQL');
     INSERT INTO gene (
       stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end,
       loc_strand, loc_checksum, hgnc_id, gene_checksum, session_id)
@@ -116,7 +116,7 @@ SQL
 
 
   # INSERT transcript_gene
-  $transcript_gene_sql = (<<'SQL');
+  my $transcript_gene_sql = (<<'SQL');
     INSERT INTO transcript_gene (gene_id, transcript_id, session_id)
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE gene_transcript_id=LAST_INSERT_ID(gene_transcript_id)
@@ -126,7 +126,7 @@ SQL
 
 
   # INSERT transcript
-  $transcript_sql = (<<'SQL');
+  my $transcript_sql = (<<'SQL');
     INSERT INTO transcript (
       stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end,
       loc_strand, loc_checksum, transcript_checksum, exon_set_checksum,
@@ -139,7 +139,7 @@ SQL
 
 
   # INSERT exon_transcript
-  $exon_transcript_sql = (<<'SQL');
+  my $exon_transcript_sql = (<<'SQL');
     INSERT INTO exon_transcript (transcript_id, exon_id, exon_order, session_id)
     VALUES (?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE exon_transcript_id=LAST_INSERT_ID(exon_transcript_id)
@@ -149,7 +149,7 @@ SQL
 
 
   # INSERT exon
-  $exon_sql = (<<'SQL');
+  my $exon_sql = (<<'SQL');
     INSERT INTO exon (
       stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end,
       loc_strand, loc_checksum, exon_checksum, seq_checksum, session_id)
@@ -161,7 +161,7 @@ SQL
 
 
   # INSERT translation
-  $translation_sql = (<<'SQL');
+  my $translation_sql = (<<'SQL');
     INSERT INTO translation (
       stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end,
       loc_strand, loc_checksum, translation_checksum, seq_checksum, session_id)
@@ -173,7 +173,7 @@ SQL
 
 
   # INSERT translation_transcript
-  $translation_transcript_sql = (<<'SQL');
+  my $translation_transcript_sql = (<<'SQL');
     INSERT INTO translation_transcript (transcript_id, translation_id, session_id)
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE transcript_translation_id=LAST_INSERT_ID(transcript_translation_id)
@@ -183,7 +183,7 @@ SQL
 
 
   # INSERT sequence
-  $sequence_sql = (<<'SQL');
+  my $sequence_sql = (<<'SQL');
     INSERT IGNORE INTO sequence (seq_checksum, sequence, session_id)
     VALUES (?, ?, ?)
 SQL
