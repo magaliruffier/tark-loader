@@ -28,7 +28,7 @@ use Config::General;
 use Config::IniFiles; # FIXME normalise around one config format
 use Bio::EnsEMBL::Tark::Schema;
 
-#use MooseX::Singleton;
+# use MooseX::Singleton;
 use Moose;
 with 'MooseX::Log::Log4perl';
 
@@ -83,6 +83,8 @@ has config_file => (
 
 sub _init_db {
   my $self = shift;
+
+  $self->log()->info('Initializing DB');
 
   $self->_init_config if ! defined $self->config;
   $self->_validate_config($self->config);
@@ -213,8 +215,6 @@ sub _validate_config {
 sub dbh {
   my $self = shift;
   return $self->schema->storage->dbh;
-  # return DBI->connect_cached( $self->dsn, $self->dbuser, $self->dbpass )  or
-  #   $self->log()->die('Error connecting to ' . $self->dsn . ': '. $DBI::errstr);
 } ## end sub dbh
 
 
@@ -253,7 +253,7 @@ sub start_session {
 
   $self->session_id($sth->{mysql_insertid});
 
-  $self->log->info( "Starting session $self->session_id" );
+  $self->log->info( 'Starting session ' . $self->session_id );
 
   $dbh->do( 'SET FOREIGN_KEY_CHECKS = 0' );
 
