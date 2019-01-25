@@ -29,7 +29,7 @@ use Getopt::Long qw(:config no_ignore_case);
 
 use Bio::EnsEMBL::Tark::DB;
 
-my ($dbuser, $dbpass, $dbhost, $database);
+my ( $dbuser, $dbpass, $dbhost, $database );
 my $dbport = 3306;
 
 Log::Log4perl->easy_init($DEBUG);
