@@ -33,7 +33,16 @@ __PACKAGE__->load_components("InflateColumn::DateTime");
 
 __PACKAGE__->table("release_source");
 
-=head1 ACCESSORS
+=head1 ACCESSORSCREATE TABLE gene_release_tag (
+  feature_id integer unsigned NOT NULL,
+  release_id integer unsigned NOT NULL,
+  session_id integer unsigned NULL,
+  INDEX gene_release_tag_idx_feature_id (feature_id),
+  INDEX gene_release_tag_idx_release_id (release_id),
+  PRIMARY KEY (feature_id, release_id),
+  CONSTRAINT gene_release_tag_fk_feature_id FOREIGN KEY (feature_id) REFERENCES gene (gene_id) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT gene_release_tag_fk_release_id FOREIGN KEY (release_id) REFERENCES release_set (release_id) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB
 
 =head2 source_id
 

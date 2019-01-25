@@ -122,6 +122,11 @@ sub _init_db {
 
   if ( $conf{create} == 1 ) {
     $schema->deploy(\%deploy_opts);
+    $schema->resultset( 'ReleaseSource' )->populate( [
+      [ qw( shortname description ) ],
+      [ 'Ensembl', 'Ensembl data imports from Human Core DBs' ],
+      [ 'RefSeq', 'RefSeq data imports from Human otherfeatures DBs' ],
+    ] );
   }
 
   return $schema;

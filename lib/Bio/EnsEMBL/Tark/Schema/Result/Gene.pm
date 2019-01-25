@@ -281,6 +281,11 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07045 @ 2019-01-22 14:34:33
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:soU+BQDEoxTcfpREHOBuvw
 
+sub sqlt_deploy_hook {
+  my ($self, $sqlt_table) = @_;
+
+  $sqlt_table->add_index(name => 'stable_id', fields => ['stable_id', 'stable_id_version']);
+}
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;
