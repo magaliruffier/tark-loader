@@ -1,10 +1,12 @@
 requires 'Config::IniFiles';
+test_requires 'Config::Simple';
 requires 'DBD::mysql';
 requires 'DBI';
 requires 'DBIx::Class';
 requires 'Digest::SHA1';
 # requires 'HTTP::Tiny';
 requires 'List::Util', '>= 1.45';
+requires 'Log::Log4perl';
 requires 'Moose';
 requires 'MooseX::Log::Log4perl';
 requires 'MooseX::Singleton';
