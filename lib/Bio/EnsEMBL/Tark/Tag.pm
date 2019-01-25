@@ -368,7 +368,7 @@ SQL
     ON DUPLICATE KEY UPDATE release_id=LAST_INSERT_ID(release_id)
 SQL
 
-  my $sth, $tag_id;
+  my ( $sth, $tag_id );
   if ( $tag eq 'release' ) {
     $keycol = 'release';
     $tag_table = 'release_';
