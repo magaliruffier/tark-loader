@@ -206,10 +206,13 @@ sub load_species {
   my $self = shift;
   my $dba = shift;
   my $source_name = shift;
+  my $session_id = shift;
 
   $source_name = defined($source_name) ? $source_name : 'Ensembl';
 
-  my $session_id = Bio::EnsEMBL::Tark::DB->session_id;
+  my $session_dbh = Bio::EnsEMBL::Tark::DB->new();
+  #my $session_id = Bio::EnsEMBL::Tark::DB->session_id;
+  $session_dbh->session_dbh($session_id);
 
   $self->log->info( 'Starting loading process' );
 

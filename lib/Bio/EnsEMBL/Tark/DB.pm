@@ -90,15 +90,19 @@ sub _init_db {
   $self->_validate_config($self->config);
   my %conf = %{ $self->config };
   my %opts;
-  $opts{mysql_enable_utf8}    = 1 if ($conf{driver} eq 'mysql');
-  $opts{mysql_auto_reconnect} = 1 if ($conf{driver} eq 'mysql');
-  $opts{sqlite_unicode}       = 1 if($conf{driver} eq 'SQLite');
+  $opts{mysql_enable_utf8}    = 1 if ( $conf{driver} eq 'mysql' );
+  $opts{mysql_auto_reconnect} = 1 if ( $conf{driver} eq 'mysql' );
+  $opts{sqlite_unicode}       = 1 if ( $conf{driver} eq 'SQLite' );
   my $dsn;
-  if ($conf{driver} eq 'SQLite') {
-    $dsn = sprintf 'dbi:%s:database=%s',$conf{driver},$conf{file};
-    $self->now_function("date('now')");
+  if ( defined $self->dsn ) {
+    $dsn = $self->dsn;
   } else {
-    $dsn = sprintf 'dbi:%s:database=%s;host=%s;port=%s', $conf{driver}, $conf{db}, $conf{host}, $conf{port};
+    if ($conf{driver} eq 'SQLite') {
+      $dsn = sprintf 'dbi:%s:database=%s',$conf{driver},$conf{file};
+      $self->now_function("date('now')");
+    } else {
+      $dsn = sprintf 'dbi:%s:database=%s;host=%s;port=%s', $conf{driver}, $conf{db}, $conf{host}, $conf{port};
+    }
   }
 
   my %deploy_opts = ();
