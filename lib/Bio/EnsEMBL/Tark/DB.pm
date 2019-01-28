@@ -221,22 +221,6 @@ sub dbh {
 } ## end sub dbh
 
 
-=head2 checksum_array
-  Description: Join an array of values with a ':' delimeter and find a sha1
-               checksum of it
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub checksum_array {
-  my ($self, @values) = @_;
-
-  return Digest::SHA1::sha1( join ':', grep { defined } @values );
-} ## end sub checksum_array
-
-
 =head2 start_session
   Description:
   Returntype :

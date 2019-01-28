@@ -217,7 +217,6 @@ sub load_species {
   $source_name = defined($source_name) ? $source_name : 'Ensembl';
 
   my $session_dbh = Bio::EnsEMBL::Tark::DB->new();
-  #my $session_id = Bio::EnsEMBL::Tark::DB->session_id;
   $session_dbh->session_dbh($session_id);
 
   $self->log->info( 'Starting loading process' );
@@ -290,11 +289,12 @@ sub _load_gene {
     $gene->seq_region_strand(),
   );
 
-  my $loc_checksum = Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  my $loc_checksum = $utils->checksum_array( @loc_pieces );
 
   my $hgnc_id = $self->_fetch_hgnc_id($gene);
 
-  my $gene_checksum = Bio::EnsEMBL::Tark::DB->checksum_array(
+  my $gene_checksum = $utils->checksum_array(
     @loc_pieces, ($hgnc_id ? $hgnc_id : undef), $gene->stable_id(), $gene->version()
   );
 
@@ -321,7 +321,7 @@ sub _load_gene {
     }
 
     if( @exon_checksums ) {
-      $session_pkg->{exon_set_checksum} =  Bio::EnsEMBL::Tark::DB->checksum_array( @exon_checksums );
+      $session_pkg->{exon_set_checksum} =  $utils->checksum_array( @exon_checksums );
     }
 
     my $transcript_id = $self->_load_transcript( $transcript, $session_pkg );
@@ -377,8 +377,9 @@ sub _load_transcript {
     $transcript->seq_region_strand(),
   );
 
-  my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
-  my $transcript_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array(
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  my $loc_checksum = $utils->checksum_array( @loc_pieces );
+  my $transcript_checksum = $utils->checksum_array(
     $loc_checksum, $transcript->stable_id(), $transcript->version(),
     (
       $session_pkg->{exon_set_checksum} ? $session_pkg->{exon_set_checksum} : undef
@@ -429,9 +430,10 @@ sub _load_exon {
     $exon->seq_region_start(), $exon->seq_region_end(),
     $exon->seq_region_strand(),
   );
-  my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
 
-  my $exon_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( $loc_checksum, $seq_checksum );
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  my $loc_checksum = $utils->checksum_array( @loc_pieces );
+  my $exon_checksum = $utils->checksum_array( $loc_checksum, $seq_checksum );
 
   my $sth = $self->get_insert('exon');
   $sth->execute(
@@ -467,9 +469,9 @@ sub _load_translation {
     $session_pkg->{transcript}->seq_region_strand(),
   );
 
-  my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
-
-  my $translation_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array(
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  my $loc_checksum = $utils->checksum_array( @loc_pieces );
+  my $translation_checksum = $utils->checksum_array(
     $loc_checksum, $translation->stable_id(), $translation->version(), $seq_checksum
   );
 
@@ -501,7 +503,8 @@ sub _load_translation {
 sub _insert_sequence {
   my ( $self, $sequence, $session_id ) = @_;
 
-  my $sha1 =  Bio::EnsEMBL::Tark::DB->checksum_array($sequence);
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  my $sha1 =  $utils->checksum_array($sequence);
 
   my $sth = $self->get_insert('sequence');
   $sth->execute(
@@ -550,7 +553,7 @@ sub _fetch_hgnc_id {
 sub genes_to_metadata_iterator_test {
   my ( $self, $dba, $source_name ) = @_;
 
-  my $ga           = $dba->get_GeneAdaptor();
+  my $ga = $dba->get_GeneAdaptor();
   my $gene_features_ensembl = $ga->fetch_all_by_display_label('BRCA2');
 
   my $len = scalar @{ $gene_features_ensembl };
