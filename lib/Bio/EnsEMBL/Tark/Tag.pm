@@ -16,6 +16,28 @@ See the NOTICE file distributed with this work for additional information
 
 =cut
 
+=head1 Bio::EnsEMBL::Tark::Tag
+
+Have removed the initialize() function so that this can be done by the code in a
+lazy fashion using Moose for the building.
+
+What was:
+  Bio::EnsEMBL::Tark::Tag->initialize(config_file => $config_file);
+
+Should now be:
+
+  my $cfg = Config::Simple->new( filename=>$self->config_file );
+  Bio::EnsEMBL::Tark::Tag->new(
+    config  => $cfg,
+    session => $session
+  );
+
+The block creation is then done the first time that the blocks() are required
+rather than getting built at the beginning.
+
+=cut
+
+
 package Bio::EnsEMBL::Tark::Tag;
 
 use warnings;
@@ -24,20 +46,19 @@ use DBI;
 use Config::Simple;
 
 use Bio::EnsEMBL::Tark::DB;
+use Bio::EnsEMBL::Tark::Utils;
 
-use MooseX::Singleton;
+use Moose;
 with 'MooseX::Log::Log4perl';
 
 use Data::Dumper;
 
-my $singleton;
+has session => (
+  is => 'rw',
+  isa => 'Bio::EnsEMBL::Tark::DB',
+);
 
-has 'config_file' => ( is => 'ro', isa => 'Str' );
-
-has 'config' => ( is => 'ro', isa => 'Ref', writer => '_config' );
-
-has 'blocks' => ( is => 'ro', isa => 'ArrayRef[Str]', writer => '_blocks',
-                  default => sub { [] }, traits => ['Array'], );
+has 'config' => ( is => 'ro', isa => 'Bio::EnsEMBL::Tark::TagConfig' );
 
 has 'assembly_id' => ( is => 'rw', isa => 'Int' );
 
@@ -76,41 +97,6 @@ has 'inserts' => (
 );
 
 
-=head2 initialize
-  Description:
-  Returntype :
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub initialize {
-  my ($self, @args) = @_;
-
-  # Pass the arguments to the super class to set the ro object
-  $self->SUPER::initialize(@args);
-
-  print $self->config_file() . "\n";
-
-  my $cfg = Config::Simple->new( filename=>$self->config_file );
-
-  $self->_config($cfg);
-
-  my %blocks;
-  foreach my $block_var ($self->config()->param()) {
-    my ($block, $var) = split '\.', $block_var;
-    $blocks{$block} = 1;
-  }
-
-  my @blocks = keys %blocks;
-  $self->_blocks( \@blocks );
-
-  print 'Blocks: ' . join ',', $self->config()->param() . "\n";
-  print 'Blocks: ' . join ',', @{$self->blocks()} . "\n";
-
-} ## end sub initialize
-
-
 =head2 init_tags
   Description:
   Returntype :
@@ -124,7 +110,7 @@ sub init_tags {
 
   $self->assembly_id($assembly_id);
 
-  foreach my $block (@{$self->blocks()}) {
+  foreach my $block (@{$self->config->blocks()}) {
     $self->fetch_tag($block);
   }
 } ## end sub init_tags
@@ -141,8 +127,8 @@ sub init_tags {
 sub tag_feature {
   my ($self, $feature_id, $feature_type) = @_;
 
-  foreach my $tag (@{$self->blocks()}) {
-    my $feature_tag = $feature_type.'_'.$tag;
+  foreach my $tag (@{$self->config->blocks()}) {
+    my $feature_tag = $feature_type . '_' . $tag;
     my $sth = $self->get_insert($feature_tag);
 
     if ( $feature_type ne 'transcript' && $tag ne 'release' ) {
@@ -168,7 +154,7 @@ sub checksum_sets {
 
   $self->log->info('Checksumming tagging sets');
 
-  foreach my $tag (@{$self->blocks()}) {
+  foreach my $tag (@{$self->config->blocks()}) {
     $self->log("Checksumming tag set $tag");
     my $tagset_id = $self->config()->param("$tag.id");
 
@@ -198,12 +184,18 @@ sub write_checksum {
   my $checksum = shift;
   my $set_type = ( @_ ? shift : 'tag' );
 
-  my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+  # my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+  my $dbh = $self->session->dbh();
 
-  # Yes, yes, multiple compares, rarely called, deal with it
-  my $table = ( $set_type eq 'release' ? 'release_set' : 'tagset' );
-  my $checksum_col = ( $set_type eq 'release' ? 'release_checksum' : 'tagset_checksum' );
-  my $key_col = ( $set_type eq 'release' ? 'release_id' : 'tagset_id' );
+  my $table        = 'tagset';
+  my $checksum_col = 'tagset_checksum';
+  my $key_col      = 'tagset_id';
+
+  if ( $set_type eq 'release' ) {
+    $table        = 'release_set';
+    $checksum_col = 'release_checksum';
+    $key_col      = 'release_id';
+  }
 
   $dbh->do(
     "UPDATE $table SET $checksum_col = ? WHERE $key_col = ?",
@@ -246,14 +238,15 @@ sub checksum_set {
       next;
     }
 
-    $self->log->info( 'Found checksum of ' .  unpack("H*", $feature_checksum) );
+    $self->log->info( 'Found checksum of ' . unpack("H*", $feature_checksum) );
 
     # Now push it on to the features cumulative checksums
     push @cumulative_checksums, $feature_checksum;
   }
 
   # Find the final cumulative checksum
-  my $tag_checksum = ($#cumulative_checksums > 1 ? Bio::EnsEMBL::Tark::DB->checksum_array(@cumulative_checksums) : shift @cumulative_checksums);
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  my $tag_checksum = ($#cumulative_checksums > 1 ? $utils->checksum_array(@cumulative_checksums) : shift @cumulative_checksums);
 
   return $tag_checksum;
 } ## end sub checksum_set
@@ -275,7 +268,8 @@ sub checksum_feature_set {
   my $feature_type = shift;
   my $set_type = ( @_ ? shift : 'tag' );
 
-  my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+  # my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+  my $dbh = $self->session->dbh();
 
   my $tagset_table = 'tag';
   my $tagset_col = 'tagset_id';
@@ -324,7 +318,8 @@ SQL
   }
 
   # Find and send back the checksum of the checksums
-  return Bio::EnsEMBL::Tark::DB->checksum_array(
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  return $utils->checksum_array(
     @feature_checksums
   );
 } ## end sub checksum_feature_set
@@ -341,9 +336,9 @@ SQL
 sub fetch_tag {
   my ($self, $tag) = @_;
 
-  my $shortname = $self->config()->param("$tag.shortname");
-  my $desc      = $self->config()->param("$tag.description");
-  my $source_id = $self->config()->param("$tag.source") or 1;
+  my $shortname = $self->config->{ 'release' }->{ 'shortname' };
+  my $desc      = $self->config->{ 'release' }->{ 'description' };
+  my $source_id = $self->config->{ 'release' }->{ 'source' } or 1;
 
   print "From fetch_tag shortname $shortname desc $desc source_id $source_id\n";
 
@@ -351,8 +346,12 @@ sub fetch_tag {
   my $keycol = 'tagset';
   my $feature_col = 'transcript_id';
 
-  my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
-  my $session_id = Bio::EnsEMBL::Tark::DB->session_id();
+
+
+  my $dbh = $self->session->dbh();
+  my $session_id = $self->session->session_id;
+
+
 
   my $insert_tagset_sql = (<<'SQL');
     INSERT INTO tagset (
@@ -367,6 +366,8 @@ SQL
     ) VALUES (?, ?, ?, NOW(), ?, ?)
     ON DUPLICATE KEY UPDATE release_id=LAST_INSERT_ID(release_id)
 SQL
+
+
 
   my ( $sth, $tag_id );
   if ( $tag eq 'release' ) {
@@ -390,16 +391,16 @@ SQL
   print "\nRelease id :   $tag_id\n";
 
   # Save the release_id for later
-  $self->config()->param("$tag.id", $tag_id);
+  $self->config->set_id( $tag, $tag_id );
+
+
 
   # Create the insert statement for later
   # Do it for all feature_type
-
-  foreach my $feature_type ('gene','transcript','translation','exon'){
+  foreach my $feature_type ( qw / gene transcript translation exon / ) {
     print "feature type  $feature_type\n";
     my $feature_tag_table = $feature_type.'_'.$tag_table;
     my $feature_tag = $feature_type.'_'.$tag;
-    #$sth = $dbh->prepare("INSERT IGNORE INTO " . $tag_table . "tag ($feature_col, ${keycol}_id, session_id) VALUES (?, $feature_val $tag_id, $session_id)");
 
     my $insert_table = $feature_tag_table . 'tag';
     my $sql = (<<"SQL");
