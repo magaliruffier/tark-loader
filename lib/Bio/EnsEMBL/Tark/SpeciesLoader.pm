@@ -23,6 +23,7 @@ package Bio::EnsEMBL::Tark::SpeciesLoader;
 
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::Tag;
+use Bio::EnsEMBL::Tark::Utils;
 use Data::Dumper;
 
 use Moose;
@@ -212,12 +213,10 @@ sub load_species {
   my $self = shift;
   my $dba = shift;
   my $source_name = shift;
-  my $session_id = shift;
+
+  my $session_id = $self->session->session_id;
 
   $source_name = defined($source_name) ? $source_name : 'Ensembl';
-
-  my $session_dbh = Bio::EnsEMBL::Tark::DB->new();
-  $session_dbh->session_dbh($session_id);
 
   $self->log->info( 'Starting loading process' );
 
@@ -269,6 +268,8 @@ sub load_species {
   Bio::EnsEMBL::Tark::Tag->checksum_sets();
 
   $self->log->info( 'Completed tagging sets for ' . $species );
+
+  return;
 } ## end sub load_species
 
 
@@ -493,8 +494,11 @@ sub _load_translation {
 
 
 =head2 _insert_sequence
-  Description:
-  Returntype :
+  Arg [1]    : string - sequence
+  Arg [2]    : integer - session_id
+  Description: Load a sequence into the sequence tark schema table with the
+               matching session_id and calculated checksum value
+  Returntype : binary - sha1
   Exceptions : none
   Caller     : general
 
@@ -504,7 +508,7 @@ sub _insert_sequence {
   my ( $self, $sequence, $session_id ) = @_;
 
   my $utils = Bio::EnsEMBL::Tark::Utils->new();
-  my $sha1 =  $utils->checksum_array($sequence);
+  my $sha1 =  $utils->checksum_array( $sequence );
 
   my $sth = $self->get_insert('sequence');
   $sth->execute(

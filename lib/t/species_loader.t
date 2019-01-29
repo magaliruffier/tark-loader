@@ -29,14 +29,15 @@ use Test::Exception;
 use Test::Warnings;
 use Bio::EnsEMBL::Tark::Test::TestDB;
 use Bio::EnsEMBL::Tark::SpeciesLoader;
+use Bio::EnsEMBL::Tark::Utils;
 
-# use Bio::EnsEMBL::Test::MultiTestDB;
+use Bio::EnsEMBL::Test::MultiTestDB;
 
 # Check that the modules loaded correctly
 use_ok 'Bio::EnsEMBL::Tark::DB';
 
-# my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new;
-# my $dba = $multi_db->get_DBAdaptor('core');
+my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new;
+my $dba = $multi_db->get_DBAdaptor('core');
 
 my $db = Bio::EnsEMBL::Tark::Test::TestDB->new();
 
@@ -49,9 +50,52 @@ my $session_id_start = $db->start_session();
 ok( $session_id_start, "start_session - $session_id_start");
 
 my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
-   session => $db
+  session => $db
 );
 
+my $utils = Bio::EnsEMBL::Tark::Utils->new();
+
+my $loaded_checksum = $loader->_insert_sequence( 'acgt', $db->session_id );
+my $result =  _check_db(
+  $db, 'Sequence', { session_id => $db->session_id }
+);
+
+# There is no getter for the row in DBIx
+# is(
+#    $result->sequence, 'acgt',
+#   '_insert_sequence'
+# );
+is(
+  $result->seq_checksum, $utils->checksum_array( 'acgt' ),
+  '_insert_sequence'
+);
+is(
+  $result->session_id, $db->session_id,
+  '_insert_sequence'
+);
+
+ok( !defined $loader->load_species( $dba, 'Ensembl' ), 'load_species' );
+my $result_count_00 =  _check_db(
+  $db, 'Gene', {}, 1
+);
+is( $result_count_00, 21, 'load_species' );
+
+ok( !defined $loader->load_species( $dba, 'Ensembl' ), 'load_species' );
+my $result_count_01 =  _check_db(
+  $db, 'Gene', {}, 1
+);
+is( $result_count_01, $result_count_00, 'load_species - Check for duplicates' );
+
 done_testing();
+
+sub _check_db {
+  my ( $check_db_dba, $table, $search_conditions, $count ) = @_;
+
+  my $result_set = $check_db_dba->schema->resultset( $table )->search( $search_conditions );
+  if ( defined $count and $count == 1 ) {
+    return $result_set->count;
+  }
+  return $result_set->next;
+}
 
 1;
