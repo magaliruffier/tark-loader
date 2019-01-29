@@ -16,10 +16,11 @@ See the NOTICE file distributed with this work for additional information
 
 =cut
 
+package Bio::EnsEMBL::Tark::SpeciesLoader;
+
 use warnings;
 use strict;
 use DBI;
-package Bio::EnsEMBL::Tark::SpeciesLoader;
 
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::Tag;
@@ -52,8 +53,13 @@ has 'query' => (
 );
 
 has session => (
-  is => 'rw',
+  is  => 'rw',
   isa => 'Bio::EnsEMBL::Tark::DB',
+);
+
+has tag_config => (
+  is  => 'rw',
+  isa => 'Bio::EnsEMBL::Tark::TagConfig'
 );
 
 
@@ -71,7 +77,6 @@ sub BUILD {
   $self->log()->info('Initializing species loader');
 
   # Attempt a connection to the database
-  # my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
   my $dbh = $self->session->dbh();
 
   # Setup the insert queries

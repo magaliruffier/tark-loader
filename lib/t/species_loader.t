@@ -29,6 +29,7 @@ use Test::Exception;
 use Test::Warnings;
 use Bio::EnsEMBL::Tark::Test::TestDB;
 use Bio::EnsEMBL::Tark::SpeciesLoader;
+use Bio::EnsEMBL::Tark::TagConfig;
 use Bio::EnsEMBL::Tark::Utils;
 
 use Bio::EnsEMBL::Test::MultiTestDB;
@@ -54,6 +55,9 @@ my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
 );
 
 my $utils = Bio::EnsEMBL::Tark::Utils->new();
+
+my $tag = Bio::EnsEMBL::Tark::TagConfig->new();
+ok( !defined $tag->load_config_file( 'etc/release84.ini' ), 'load_config_file' );
 
 my $loaded_checksum = $loader->_insert_sequence( 'acgt', $db->session_id );
 my $result =  _check_db(
