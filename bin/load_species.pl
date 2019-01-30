@@ -42,11 +42,21 @@ Log::Log4perl->easy_init($DEBUG);
 
 get_options();
 
-Bio::EnsEMBL::Tark::DB->initialize(
-  dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
-  dbuser => $dbuser,
-  dbpass => $dbpass
+my $db = Bio::EnsEMBL::Tark::DB->new(
+  config => {
+    driver => 'mysql',
+    host   => $dbhost,
+    port   => $dbport,
+    user   => $dbuser,
+    pass   => $dbpass,
+    db     => $database,
+  }
 );
+# Bio::EnsEMBL::Tark::DB->initialize(
+#   dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
+#   dbuser => $dbuser,
+#   dbpass => $dbpass
+# );
 
 my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new();
 
@@ -63,9 +73,15 @@ my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, 'core' );
 
 my $session_id = Bio::EnsEMBL::Tark::DB->start_session('Test client');
 
-Bio::EnsEMBL::Tark::Tag->initialize( config_file => $config_file );
+# Bio::EnsEMBL::Tark::Tag->initialize( config_file => $config_file );
+my $tag_config = Bio::EnsEMBL::Tark::TagConfig->new();
+$tag_config->load_config_file( $config_file );
 
-$loader->load_species($dba, $source_name);
+my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
+  session    => $db,
+  tag_config => $tag_config
+);
+$loader->load_species( $dba, $source_name );
 
 Bio::EnsEMBL::Tark::DB->end_session($session_id);
 
