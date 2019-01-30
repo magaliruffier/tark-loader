@@ -252,7 +252,11 @@ sub load_species {
 
 
   # Initialize the tags we'll be using
-  Bio::EnsEMBL::Tark::Tag->init_tags( $assembly_id );
+  my $tag = Bio::EnsEMBL::Tark::Tag->new(
+    config  => $self->tag_config,
+    session => $self->session
+  );
+  $tag->init_tags( $assembly_id );
 
   my $session_pkg = {
     session_id  => $session_id,
@@ -265,12 +269,12 @@ sub load_species {
 
   while ( my $gene = $iter->next() ) {
     $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
-    $self->_load_gene($gene, $session_pkg, $source_name);
+    $self->_load_gene($gene, $session_pkg, $source_name, $tag);
   }
   $self->log->info( 'Completed dumping genes for ' . $species );
 
   $self->log->info( 'Tagging sets for ' . $species );
-  Bio::EnsEMBL::Tark::Tag->checksum_sets();
+  $tag->checksum_sets();
 
   $self->log->info( 'Completed tagging sets for ' . $species );
 
@@ -287,7 +291,7 @@ sub load_species {
 =cut
 
 sub _load_gene {
-  my ( $self, $gene, $session_pkg, $source_name ) = @_;
+  my ( $self, $gene, $session_pkg, $source_name, $tag ) = @_;
 
   my @loc_pieces = (
     $session_pkg->{assembly_id}, $gene->seq_region_name(),
@@ -313,7 +317,7 @@ sub _load_gene {
   my $gene_id = $sth->{mysql_insertid};
 
   # Apply tags to feature we've just inserted
-  Bio::EnsEMBL::Tark::Tag->tag_feature($gene_id, 'gene');
+  $tag->tag_feature($gene_id, 'gene');
 
   my $exons = {};
   $session_pkg->{gene_id} = $gene_id;
@@ -321,7 +325,7 @@ sub _load_gene {
 
     my @exon_checksums; my @exon_ids;
     for my $exon (@{ $transcript->get_all_Exons() }) {
-      my ($exon_id, $exon_checksum) = $self->_load_exon( $exon, $session_pkg );
+      my ($exon_id, $exon_checksum) = $self->_load_exon( $exon, $session_pkg, $tag );
       push @exon_checksums, $exon_checksum;
       push @exon_ids, $exon_id;
     }
@@ -330,7 +334,7 @@ sub _load_gene {
       $session_pkg->{exon_set_checksum} =  $utils->checksum_array( @exon_checksums );
     }
 
-    my $transcript_id = $self->_load_transcript( $transcript, $session_pkg );
+    my $transcript_id = $self->_load_transcript( $transcript, $session_pkg, $tag );
 
     my $exon_order = 1;
     for my $exon_id (@exon_ids) {
@@ -346,7 +350,7 @@ sub _load_gene {
 
     my $translation = $transcript->translation();
     if ( defined $translation ) {
-      $self->_load_translation( $translation, $session_pkg );
+      $self->_load_translation( $translation, $session_pkg, $tag );
     }
 
     delete $session_pkg->{transcript_id};
@@ -366,7 +370,7 @@ sub _load_gene {
 =cut
 
 sub _load_transcript {
-  my ($self, $transcript, $session_pkg) = @_;
+  my ( $self, $transcript, $session_pkg, $tag ) = @_;
 
   # Insert the sequence and get back the checksum
   my $seq_obj = $transcript->seq();
@@ -407,7 +411,7 @@ sub _load_transcript {
   ) or $self->log->logdie("Error inserting transcript_gene: $DBI::errstr");
 
   # Apply tags to feature we've just inserted
-  Bio::EnsEMBL::Tark::Tag->tag_feature($transcript_id, 'transcript');
+  $tag->tag_feature($transcript_id, 'transcript');
 
   return $transcript_id;
 } ## end sub _load_transcript
@@ -422,7 +426,7 @@ sub _load_transcript {
 =cut
 
 sub _load_exon {
-  my ($self, $exon, $session_pkg) = @_;
+  my ( $self, $exon, $session_pkg, $tag ) = @_;
 
   # Insert the sequence and get back the checksum
   my $seq_obj = $exon->seq();
@@ -449,7 +453,7 @@ sub _load_exon {
   my $exon_id = $sth->{mysql_insertid};
 
   # Apply tags to feature we've just inserted
-  Bio::EnsEMBL::Tark::Tag->tag_feature($exon_id, 'exon');
+  $tag->tag_feature($exon_id, 'exon');
 
   return ($exon_id, $exon_checksum);
 } ## end sub _load_exon
@@ -464,7 +468,7 @@ sub _load_exon {
 =cut
 
 sub _load_translation {
-  my ($self, $translation, $session_pkg) = @_;
+  my ( $self, $translation, $session_pkg, $tag ) = @_;
 
   # Insert the sequence and get back the checksum
   my $seq_checksum = $self->_insert_sequence($translation->seq(), $session_pkg->{session_id});
@@ -494,7 +498,7 @@ sub _load_translation {
   ) or $self->log->logdie("Error inserting translation_transcript: $DBI::errstr");
 
   # Apply tags to feature we've just inserted
-  Bio::EnsEMBL::Tark::Tag->tag_feature($translation_id, 'translation');
+  $tag->tag_feature($translation_id, 'translation');
 } ## end sub _load_translation
 
 

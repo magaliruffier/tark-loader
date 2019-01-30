@@ -126,18 +126,22 @@ sub init_tags {
 
 sub tag_feature {
   my ($self, $feature_id, $feature_type) = @_;
-
   foreach my $tag (@{$self->config->blocks()}) {
-    my $feature_tag = $feature_type . '_' . $tag;
-    my $sth = $self->get_insert($feature_tag);
-
     if ( $feature_type ne 'transcript' && $tag ne 'release' ) {
       next;
     }
 
+    my $feature_tag = 'transcript_tag';
+    if ( $tag eq 'release' ) {
+      $feature_tag = $feature_type . '_' . $tag;
+    }
+    my $sth = $self->get_insert($feature_tag);
+
     my @vals = ( $feature_id );
     $sth->execute(@vals);
   }
+
+  return;
 } ## end sub tag_feature
 
 
@@ -155,11 +159,13 @@ sub checksum_sets {
   $self->log->info('Checksumming tagging sets');
 
   foreach my $tag (@{$self->config->blocks()}) {
+    print "Checksumming tag set $tag\n";
     $self->log("Checksumming tag set $tag");
-    my $tagset_id = $self->config()->param("$tag.id");
+    my $tagset_id = $self->config->config->{$tag}->{'id'};
 
     if ( !defined $tagset_id ) {
       $self->log->warn( "No tagset id for $tag" );
+      next;
     }
 
     my $tagset_checksum = $self->checksum_set($tagset_id, $tag);
@@ -284,24 +290,23 @@ sub checksum_feature_set {
     $feature_type = 'transcript';
   }
 
-  my $key_col = "$feature_type . _id";
-  my $checksum_col = "$feature_type . _checksum";
+  my $key_col = "${feature_type}_id";
+  my $checksum_col = "${feature_type}_checksum";
 
   my $stmt = (<<"SQL");
     SELECT
-      $checksum_col
+      $feature_type.$checksum_col
     FROM
       $feature_type, $tagset_table
     WHERE
-          $tagset_table.$tagset_join_col = ?
+          $tagset_table.$tagset_join_col = $feature_type.$key_col
       AND $tagset_table.$tagset_col = ?
     ORDER BY
-      $feature_type . $key_col
+      $feature_type.$key_col
 SQL
 
   my $sth = $dbh->prepare($stmt);
   $sth->execute(
-    $feature_type . $key_col,
     $tagset_id
   );
 
@@ -336,27 +341,22 @@ SQL
 sub fetch_tag {
   my ($self, $tag) = @_;
 
-  my $shortname = $self->config->{ 'release' }->{ 'shortname' };
-  my $desc      = $self->config->{ 'release' }->{ 'description' };
-  my $source_id = $self->config->{ 'release' }->{ 'source' } or 1;
+  my $shortname = $self->config->config->{ 'release' }->{ 'shortname' };
+  my $desc      = $self->config->config->{ 'release' }->{ 'description' };
+  my $source_id = 1;
+  if ( defined $self->config->config->{ 'release' }->{ 'source' } ) {
+    $source_id = $self->config->config->{ 'release' }->{ 'source' };
+  }
 
   print "From fetch_tag shortname $shortname desc $desc source_id $source_id\n";
-
-  my $tag_table = q{};
-  my $keycol = 'tagset';
-  my $feature_col = 'transcript_id';
-
-
 
   my $dbh = $self->session->dbh();
   my $session_id = $self->session->session_id;
 
-
-
   my $insert_tagset_sql = (<<'SQL');
     INSERT INTO tagset (
-      shortname, description, session_id, source_id
-    ) VALUES (?, ?, ?, ?)
+      shortname, description, session_id
+    ) VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE tagset_id=LAST_INSERT_ID(tagset_id)
 SQL
 
@@ -367,25 +367,19 @@ SQL
     ON DUPLICATE KEY UPDATE release_id=LAST_INSERT_ID(release_id)
 SQL
 
-
-
   my ( $sth, $tag_id );
   if ( $tag eq 'release' ) {
-    $keycol = 'release';
-    $tag_table = 'release_';
-    $feature_col = 'feature_id';
-
     $sth = $dbh->prepare( $insert_release_sql );
-    print $sth->{Statement};
+
     # Create or find the release
     $sth->execute($shortname, $desc, $self->assembly_id(), $session_id, $source_id);
     $tag_id = $sth->{mysql_insertid};
   }
   else {
     $sth = $dbh->prepare( $insert_tagset_sql );
-    print $sth->{Statement};
+
     # Create or find the release
-    $sth->execute($shortname, $desc, $session_id, $source_id);
+    $sth->execute($shortname, $desc, $session_id);
     $tag_id = $sth->{mysql_insertid};
   }
   print "\nRelease id :   $tag_id\n";
@@ -393,25 +387,33 @@ SQL
   # Save the release_id for later
   $self->config->set_id( $tag, $tag_id );
 
-
-
   # Create the insert statement for later
   # Do it for all feature_type
-  foreach my $feature_type ( qw / gene transcript translation exon / ) {
-    print "feature type  $feature_type\n";
-    my $feature_tag_table = $feature_type.'_'.$tag_table;
-    my $feature_tag = $feature_type.'_'.$tag;
+  if ( $tag eq 'release' ) {
+    foreach my $feature_type ( qw / gene transcript translation exon / ) {
+      my $feature_tag = $feature_type.'_'.$tag;
 
-    my $insert_table = $feature_tag_table . 'tag';
+      my $insert_table = $feature_type . '_release_tag';
+      my $sql = (<<"SQL");
+        INSERT IGNORE INTO $insert_table (feature_id, release_id, session_id)
+        VALUES (?, $tag_id, $session_id)
+SQL
+
+      $sth = $dbh->prepare( $sql );
+      print $sth->{Statement};
+      print "Setting insert for $feature_tag \n";
+      $self->set_insert($feature_tag => $sth);
+    }
+  } else {
     my $sql = (<<"SQL");
-      INSERT IGNORE INTO $insert_table ($feature_col, ${keycol}_id, session_id)
+      INSERT IGNORE INTO tag (transcript_id, tagset_id, session_id)
       VALUES (?, $tag_id, $session_id)
 SQL
 
     $sth = $dbh->prepare( $sql );
     print $sth->{Statement};
-    print "Setting insert for $feature_tag \n";
-    $self->set_insert($feature_tag => $sth);
+    print "Setting insert for transcript_tag (tag) \n";
+    $self->set_insert( transcript_tag => $sth );
   }
   #exit 0;
 } ## end sub fetch_tag
