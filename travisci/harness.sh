@@ -9,7 +9,7 @@ echo "Running test suite"
 if [ "$COVERALLS" = 'true' ]; then
   PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl-test,+ignore,ensembl' perl $ENSDIR/ensembl-test/scripts/runtests.pl -verbose modules/t
 else
-  perl $ENSDIR/ensembl-test/scripts/runtests.pl modules/t
+  perl $ENSDIR/ensembl-test/scripts/runtests.pl lib/t
 fi
 
 rt=$?

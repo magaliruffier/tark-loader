@@ -382,7 +382,7 @@ SQL
     $sth->execute($shortname, $desc, $session_id);
     $tag_id = $sth->{mysql_insertid};
   }
-  print "\nRelease id :   $tag_id\n";
+  print "Release id :   $tag_id\n";
 
   # Save the release_id for later
   $self->config->set_id( $tag, $tag_id );
@@ -400,7 +400,7 @@ SQL
 SQL
 
       $sth = $dbh->prepare( $sql );
-      print $sth->{Statement};
+
       print "Setting insert for $feature_tag \n";
       $self->set_insert($feature_tag => $sth);
     }
@@ -411,7 +411,7 @@ SQL
 SQL
 
     $sth = $dbh->prepare( $sql );
-    print $sth->{Statement};
+
     print "Setting insert for transcript_tag (tag) \n";
     $self->set_insert( transcript_tag => $sth );
   }
