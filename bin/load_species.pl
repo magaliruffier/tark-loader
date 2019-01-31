@@ -30,6 +30,7 @@ use Getopt::Long qw(:config no_ignore_case);
 use Bio::EnsEMBL::Tark::SpeciesLoader;
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::Tag;
+use Bio::EnsEMBL::Tark::TagConfig;
 use Bio::EnsEMBL::Registry;
 
 my ($dbuser, $dbpass, $dbhost, $database, $species, $release, $config_file);
