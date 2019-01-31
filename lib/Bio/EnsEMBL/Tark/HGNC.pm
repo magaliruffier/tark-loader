@@ -47,8 +47,8 @@ has 'session_id' => ( is => 'ro', isa => 'Int' );
 
 
 =head2 BUILD
-  Description:
-  Returntype :
+  Description: Initialise the creation of the object
+  Returntype : undef
   Exceptions : none
   Caller     : general
 
@@ -83,6 +83,15 @@ SQL
   return;
 } ## end sub BUILD
 
+
+=head2 flush_hgnc
+  Description: Truncate the gene_names table
+  Returntype : undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub flush_hgnc {
   my $self = shift;
 
@@ -98,8 +107,8 @@ sub flush_hgnc {
 
 =head2 load_hgnc
 
-  Description:
-  Returntype :
+  Description: Extract HGNC names and aliases from the HGNC dump files
+  Returntype : undef
   Exceptions : none
   Caller     : general
   Notes      : Col 1: hgnc_id

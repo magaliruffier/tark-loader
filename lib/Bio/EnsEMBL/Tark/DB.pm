@@ -183,11 +183,11 @@ sub _init_config {
 =cut
 
 sub _validate_config {
-  my ($self,$config) = @_;
+  my ( $self, $config ) = @_;
   my @required_keys = qw/driver/;
-  if ($config->{driver} eq 'mysql') {
+  if ( $config->{driver} eq 'mysql' ) {
     push @required_keys, qw/db host port user pass/;
-  } elsif ($config->{driver} eq 'SQLite') {
+  } elsif ( $config->{driver} eq 'SQLite' ) {
     push @required_keys, qw/file/;
   } else {
     confess q(TestDB config requires parameter 'driver' with value mysql or SQLite);
@@ -198,17 +198,17 @@ sub _validate_config {
       push @errors, "Missing argument '$constraint'";
     }
   }
-  if (scalar @errors > 0) {
+  if ( scalar @errors > 0 ) {
     confess sprintf "%s \n%s",
-      ($self->config_file) ? 'Missing options in '.$self->config_file. ': ' : 'Missing options in supplied config: ',
+      ( $self->config_file ) ? 'Missing options in '.$self->config_file. ': ' : 'Missing options in supplied config: ',
       join ';', @errors;
   }
 } ## end sub _validate_config
 
 
 =head2
-  Description:
-  Returntype :
+  Description: Get the database handle from the schema
+  Returntype : Database Handle
   Exceptions : none
   Caller     : general
 
@@ -221,16 +221,17 @@ sub dbh {
 
 
 =head2 start_session
-  Description:
-  Returntype :
+  Arg [1]    : $client_name : string
+  Description: Initialise the session. This is required for the loading of other
+               features including the genome
+  Returntype : integer
   Exceptions : none
   Caller     : general
 
 =cut
 
 sub start_session {
-  my $self = shift;
-  my $client_name = shift;
+  my ( $self, $client_name ) = @_;
 
   my $dbh = $self->dbh();
   my $sth = $dbh->prepare( 'INSERT INTO session (client_id, status) VALUES(?, 1)' );
@@ -248,8 +249,8 @@ sub start_session {
 
 
 =head2 end_session
-  Description:
-  Returntype :
+  Description: Update the session parameter to show that it has completed
+  Returntype : undef
   Exceptions : none
   Caller     : general
 
@@ -270,8 +271,9 @@ sub end_session {
 
 
 =head2 abort_session
-  Description:
-  Returntype :
+  Description: Highlight that something has gone wrong and the session has
+               aborted
+  Returntype : undef
   Exceptions : none
   Caller     : general
 

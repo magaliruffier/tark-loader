@@ -322,7 +322,7 @@ SQL
   # Now we loop through and create a checksum of the checksums
   my @feature_checksums;
 
-  while(my ($checksum) = $sth->fetchrow_array) {
+  while( my ($checksum) = $sth->fetchrow_array ) {
     push @feature_checksums, $checksum;
   }
 

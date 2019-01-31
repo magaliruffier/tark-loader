@@ -64,8 +64,8 @@ has tag_config => (
 
 
 =head2 BUILD
-  Description:
-  Returntype :
+  Description: Initialise the creation of the prepared statements
+  Returntype : undef
   Exceptions : none
   Caller     : general
 
@@ -207,8 +207,9 @@ SQL
 
 
 =head2 load_species
-  Description:
-  Returntype :
+  Description: Load a species worth of genomic featues into the Tark DB from an
+               ensmbl core db.
+  Returntype : undef
   Exceptions : none
   Caller     : general
 
@@ -283,8 +284,13 @@ sub load_species {
 
 
 =head2 _load_gene
-  Description:
-  Returntype :
+  Arg [1]    : $gene        : Bio::EnsEMBL::Gene
+  Arg [2]    : $session_pkg : Bio::EnsEMBL::Tark::DB
+  Arg [4]    : $source_name : string
+  Arg [4]    : $tag         : Bio::EnsEMBL::Tark::Tag
+  Description: For each gene generate the matching checksum and initiate the
+               creation of checksums for the exons, transcripts and translations
+  Returntype : undef
   Exceptions : none
   Caller     : general
 
@@ -323,7 +329,8 @@ sub _load_gene {
   $session_pkg->{gene_id} = $gene_id;
   for my $transcript ( @{ $gene->get_all_Transcripts() } ) {
 
-    my @exon_checksums; my @exon_ids;
+    my @exon_checksums;
+    my @exon_ids;
     for my $exon (@{ $transcript->get_all_Exons() }) {
       my ($exon_id, $exon_checksum) = $self->_load_exon( $exon, $session_pkg, $tag );
       push @exon_checksums, $exon_checksum;
@@ -362,8 +369,11 @@ sub _load_gene {
 
 
 =head2 _load_transcript
-  Description:
-  Returntype :
+  Arg [1]    : $transcript  : Bio::EnsEMBL::Transcript
+  Arg [2]    : $session_pkg : Bio::EnsEMBL::Tark::DB
+  Arg [3]    : $tag         : Bio::EnsEMBL::Tark::Tag
+  Description: For each transcript generate and load the checksum
+  Returntype : $transcript_id : integer
   Exceptions : none
   Caller     : general
 
@@ -418,8 +428,11 @@ sub _load_transcript {
 
 
 =head2 _load_exon
-  Description:
-  Returntype :
+  Arg [1]    : $exon        : Bio::EnsEMBL::Exon
+  Arg [2]    : $session_pkg : Bio::EnsEMBL::Tark::DB
+  Arg [3]    : $tag         : Bio::EnsEMBL::Tark::Tag
+  Description: For an exon generate the matching checksum
+  Returntype : Array ($exon_id, $exon_checksum)
   Exceptions : none
   Caller     : general
 
@@ -460,7 +473,10 @@ sub _load_exon {
 
 
 =head2 _load_translation
-  Description:
+  Arg [1]    : $translation : Bio::EnsEMBL::Translation
+  Arg [2]    : $session_pkg : Bio::EnsEMBL::Tark::DB
+  Arg [3]    : $tag         : Bio::EnsEMBL::Tark::Tag
+  Description: For a translation generate and load the matching checksum
   Returntype :
   Exceptions : none
   Caller     : general
