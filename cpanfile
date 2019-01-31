@@ -29,4 +29,3 @@ test_requires 'Test::Exception';
 test_requires 'Test::Perl::Critic';
 test_requires 'Test::Pod::Coverage';
 test_requires 'Test::Warnings';
-' ]
