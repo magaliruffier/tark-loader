@@ -28,7 +28,6 @@ use Config::General;
 use Config::IniFiles; # FIXME normalise around one config format
 use Bio::EnsEMBL::Tark::Schema;
 
-# use MooseX::Singleton;
 use Moose;
 with 'MooseX::Log::Log4perl';
 
