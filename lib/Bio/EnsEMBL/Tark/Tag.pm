@@ -113,6 +113,8 @@ sub init_tags {
   foreach my $block (@{$self->config->blocks()}) {
     $self->fetch_tag($block);
   }
+
+  return;
 } ## end sub init_tags
 
 
@@ -173,6 +175,8 @@ sub checksum_sets {
 
     $self->write_checksum($tagset_id, $tagset_checksum, $tag);
   }
+
+  return;
 } ## end sub checksum_sets
 
 
@@ -185,10 +189,10 @@ sub checksum_sets {
 =cut
 
 sub write_checksum {
-  my $self = shift;
-  my $tagset_id = shift;
-  my $checksum = shift;
-  my $set_type = ( @_ ? shift : 'tag' );
+  my ( $self, $tagset_id, $checksum, $set_type ) = @_;
+  if ( !defined $set_type ) {
+    $set_type = 'tag';
+  }
 
   # my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
   my $dbh = $self->session->dbh();
@@ -208,6 +212,7 @@ sub write_checksum {
     undef, $checksum, $tagset_id
   );
 
+  return;
 } ## end sub write_checksum
 
 
@@ -269,12 +274,11 @@ sub checksum_set {
 =cut
 
 sub checksum_feature_set {
-  my $self = shift;
-  my $tagset_id = shift;
-  my $feature_type = shift;
-  my $set_type = ( @_ ? shift : 'tag' );
+  my ( $self, $tagset_id, $feature_type, $set_type ) = @_;
+  if ( !defined $set_type ) {
+    $set_type = 'tag';
+  }
 
-  # my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
   my $dbh = $self->session->dbh();
 
   my $tagset_table = 'tag';
@@ -415,7 +419,8 @@ SQL
     print "Setting insert for transcript_tag (tag) \n";
     $self->set_insert( transcript_tag => $sth );
   }
-  #exit 0;
+
+  return;
 } ## end sub fetch_tag
 
 1;

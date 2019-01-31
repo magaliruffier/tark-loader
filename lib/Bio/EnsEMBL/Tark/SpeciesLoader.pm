@@ -499,6 +499,8 @@ sub _load_translation {
 
   # Apply tags to feature we've just inserted
   $tag->tag_feature($translation_id, 'translation');
+
+  return;
 } ## end sub _load_translation
 
 
@@ -552,6 +554,8 @@ sub _fetch_hgnc_id {
 
     return $hgnc_id;
   }
+
+  return;
 } ## end sub _fetch_hgnc_id
 
 

@@ -202,7 +202,7 @@ sub _validate_config {
   if (scalar @errors > 0) {
     confess sprintf "%s \n%s",
       ($self->config_file) ? 'Missing options in '.$self->config_file. ': ' : 'Missing options in supplied config: ',
-      join ';',@errors;
+      join ';', @errors;
   }
 } ## end sub _validate_config
 
@@ -265,6 +265,8 @@ sub end_session {
 
     $self->session_id(0);
   }
+
+  return;
 } ## end sub end_session
 
 
@@ -288,6 +290,8 @@ sub abort_session {
     $dbh->do( 'SET UNIQUE_CHECKS = 1' );
     $dbh->do( 'SET FOREIGN_KEY_CHECKS = 1' );
   }
+
+  return;
 } ## end sub abort_session
 
 1;
