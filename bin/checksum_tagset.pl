@@ -27,7 +27,9 @@ use strict;
 use Log::Log4perl qw(:easy);
 use Getopt::Long qw(:config no_ignore_case);
 
+use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::Tag;
+use Bio::EnsEMBL::Tark::TagConfig
 
 my ( $dbuser, $dbpass, $dbhost, $database, $config_file, $tagset_id );
 my $dbport = 3306;
@@ -37,19 +39,30 @@ Log::Log4perl->easy_init($DEBUG);
 
 get_options();
 
-Bio::EnsEMBL::Tark::DB->initialize(
-  dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
-  dbuser => $dbuser,
-  dbpass => $dbpass
+my $db = Bio::EnsEMBL::Tark::DB->new(
+  config => {
+    driver => 'mysql',
+    host   => $dbhost,
+    port   => $dbport,
+    user   => $dbuser,
+    pass   => $dbpass,
+    db     => $database,
+  }
 );
 
-Bio::EnsEMBL::Tark::Tag->initialize( config_file => $config_file );
+my $tag_config = Bio::EnsEMBL::Tark::TagConfig->new();
+$tag_config->load_config_file( $config_file );
 
-my $checksum = Bio::EnsEMBL::Tark::Tag->checksum_set($tagset_id, $set_type);
+my $tag = Bio::EnsEMBL::Tark::Tag->new(
+  config  => $tag_config,
+  session => $db
+);
+
+my $checksum = $tag->checksum_set($tagset_id, $set_type);
 
 print "\nFound checksum: " .  unpack("H*", $checksum) . "\n";
 
-Bio::EnsEMBL::Tark::Tag->write_checksum($tagset_id, $checksum, $set_type);
+$tag->write_checksum($tagset_id, $checksum, $set_type);
 
 sub get_options {
   my $help;
