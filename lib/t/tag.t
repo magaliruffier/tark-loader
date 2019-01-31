@@ -97,6 +97,8 @@ is( $result, 1, 'init_tags: ReleaseSet' );
 $result = $test_utils->check_db( $db, 'Tagset', { }, 1 );
 is( $result, 1, 'init_tags: Tagset' );
 
+
+
 # ok( $utils->checksum_array( 'acgt' ) eq Digest::SHA1::sha1( 'acgt' ), 'checksum_array');
 done_testing();
 
