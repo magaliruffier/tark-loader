@@ -176,6 +176,8 @@ sub sqlt_deploy_hook {
   $sqlt_table->add_index(name => 'name_idx', fields => ['name']);
   $sqlt_table->add_index(name => 'external_id_idx', fields => ['external_id']);
   $sqlt_table->add_index(name => 'source_idx', fields => ['source']);
+
+  return;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
