@@ -28,6 +28,8 @@ use Test::More;
 use Test::Exception;
 use Test::Warnings;
 use Bio::EnsEMBL::Tark::Test::TestDB;
+use Bio::EnsEMBL::Tark::Test::Utils;
+
 use Bio::EnsEMBL::Tark::Tag;
 use Bio::EnsEMBL::Tark::TagConfig;
 
@@ -81,7 +83,13 @@ my $tag = Bio::EnsEMBL::Tark::Tag->new(
   config  => $tag_config,
   session => $db
 );
-$tag->init_tags( 1 );
+
+my $test_utils = Bio::EnsEMBL::Tark::Test::Utils->new();
+
+# This should run the tests for loading the initial tags via fetch_tag
+$tag->init_tags( $assembly_id );
+
+$test_utils->check_db();
 
 # ok( $utils->checksum_array( 'acgt' ) eq Digest::SHA1::sha1( 'acgt' ), 'checksum_array');
 done_testing();

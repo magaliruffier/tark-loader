@@ -28,6 +28,7 @@ use Test::More;
 use Test::Exception;
 use Test::Warnings;
 use Bio::EnsEMBL::Tark::Test::TestDB;
+use Bio::EnsEMBL::Tark::Test::Utils;
 use Bio::EnsEMBL::Tark::SpeciesLoader;
 use Bio::EnsEMBL::Tark::TagConfig;
 use Bio::EnsEMBL::Tark::Utils;
@@ -41,6 +42,8 @@ my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new;
 my $dba = $multi_db->get_DBAdaptor('core');
 
 my $db = Bio::EnsEMBL::Tark::Test::TestDB->new();
+
+my $test_utils = Bio::EnsEMBL::Tark::Test::Utils->new();
 
 ok($db, 'TestDB ready to go');
 
@@ -61,7 +64,7 @@ my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
 my $utils = Bio::EnsEMBL::Tark::Utils->new();
 
 my $loaded_checksum = $loader->_insert_sequence( 'acgt', $db->session_id );
-my $result =  _check_db(
+my $result = $test_utils->check_db(
   $db, 'Sequence', { session_id => $db->session_id }
 );
 
@@ -80,27 +83,17 @@ is(
 );
 
 ok( !defined $loader->load_species( $dba, 'Ensembl' ), 'load_species' );
-my $result_count_00 =  _check_db(
+my $result_count_00 = $test_utils->check_db(
   $db, 'Gene', {}, 1
 );
 is( $result_count_00, 21, 'load_species' );
 
 # ok( !defined $loader->load_species( $dba, 'Ensembl' ), 'load_species' );
-# my $result_count_01 =  _check_db(
+# my $result_count_01 = $test_utils->check_db(
 #   $db, 'Gene', {}, 1
 # );
 # is( $result_count_01, $result_count_00, 'load_species - Check for duplicates' );
 
 done_testing();
-
-sub _check_db {
-  my ( $check_db_dba, $table, $search_conditions, $count ) = @_;
-
-  my $result_set = $check_db_dba->schema->resultset( $table )->search( $search_conditions );
-  if ( defined $count and $count == 1 ) {
-    return $result_set->count;
-  }
-  return $result_set->next;
-}
 
 1;
