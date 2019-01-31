@@ -89,7 +89,13 @@ my $test_utils = Bio::EnsEMBL::Tark::Test::Utils->new();
 # This should run the tests for loading the initial tags via fetch_tag
 $tag->init_tags( $assembly_id );
 
-$test_utils->check_db();
+my $utils = Bio::EnsEMBL::Tark::Utils->new();
+
+my $result = $test_utils->check_db( $db, 'ReleaseSet', { }, 1 );
+is( $result, 1, 'init_tags: ReleaseSet' );
+
+$result = $test_utils->check_db( $db, 'Tagset', { }, 1 );
+is( $result, 1, 'init_tags: Tagset' );
 
 # ok( $utils->checksum_array( 'acgt' ) eq Digest::SHA1::sha1( 'acgt' ), 'checksum_array');
 done_testing();
