@@ -131,7 +131,8 @@ sub load_hgnc {
   my $in_fh;
   if($hgnc_file) {
     $self->log()->info("Using HGNC file $hgnc_file");
-    $file_handle = Bio::EnsEMBL::Tark::FileHandle->new();
+
+    my $file_handle = Bio::EnsEMBL::Tark::FileHandle->new();
     $in_fh = $file_handle->get_file_handle($hgnc_file);
   } else {
     $in_fh = *STDIN;
