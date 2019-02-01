@@ -26,8 +26,9 @@ What was:
 
 Should now be:
 
-  my $cfg = Config::Simple->new( filename=>$self->config_file );
-  Bio::EnsEMBL::Tark::Tag->new(
+  my $cfg = Bio::EnsEMBL::Tark::TagConfig->new();
+  $cfg->load_config_file( $self->config_file );
+  my $tag = Bio::EnsEMBL::Tark::Tag->new(
     config  => $cfg,
     session => $session
   );
@@ -98,8 +99,10 @@ has 'inserts' => (
 
 
 =head2 init_tags
-  Description:
-  Returntype :
+  Arg [1]    : $assembly_id : string
+  Description: Initialize the tags in the db and prepare the relevant insert
+               statements
+  Returntype : undef
   Exceptions : none
   Caller     : general
 
@@ -119,8 +122,10 @@ sub init_tags {
 
 
 =head2 tag_feature
-  Description:
-  Returntype :
+  Arg [1]    : $feature_id : integer
+  Arg [2]    : $feature_type : string
+  Description: Tag a specific feature with the relevant tags
+  Returntype : undef
   Exceptions : none
   Caller     : general
 
@@ -148,8 +153,9 @@ sub tag_feature {
 
 
 =head2 checksum_sets
-  Description:
-  Returntype :
+  Description: Iterate through the tags and generate the checksums. These then
+               get written to the Tark db
+  Returntype : undef
   Exceptions : none
   Caller     : general
 
@@ -161,7 +167,6 @@ sub checksum_sets {
   $self->log->info('Checksumming tagging sets');
 
   foreach my $tag (@{$self->config->blocks()}) {
-    print "Checksumming tag set $tag\n";
     $self->log("Checksumming tag set $tag");
     my $tagset_id = $self->config->config->{$tag}->{'id'};
 
@@ -181,8 +186,11 @@ sub checksum_sets {
 
 
 =head2 write_checksum
-  Description:
-  Returntype :
+  Arg [1]    : $tagset_id : integer
+  Arg [2]    : $checksum  : binary
+  Arg [3]    : $set_type  : string
+  Description: Write the checksums for a tagset to the Tark db
+  Returntype : undef
   Exceptions : none
   Caller     : general
 
@@ -217,8 +225,10 @@ sub write_checksum {
 
 
 =head2 checksum_set
-  Description:
-  Returntype :
+  Arg [1]    : $tagset_id : integer
+  Arg [2]    : $set_type  : string
+  Description: For a tag set generate the list matching checksums
+  Returntype : binary
   Exceptions : none
   Caller     : general
 
@@ -264,6 +274,9 @@ sub checksum_set {
 
 
 =head2 checksum_feature_set
+  Arg [1]    : $tagset_id : integer
+  Arg [2]    : $checksum  : binary
+  Arg [3]    : $set_type  : string
   Description: Optional $set_type can be 'release' or 'tag' (anything non-'release'
                is considered 'tag')
                $feature_type is the word, 'gene', 'transcript',...
@@ -335,8 +348,10 @@ SQL
 
 
 =head2 fetch_tag
-  Description:
-  Returntype :
+  Arg [1]    : $tag : string
+  Description: Add the tag to the Tark db and prepare statements for adding tags
+               to features
+  Returntype : undef
   Exceptions : none
   Caller     : general
 

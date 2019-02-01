@@ -23,14 +23,28 @@ use warnings;
 use Moose;
 
 
-sub check_db {
-  my ( $self, $check_db_dba, $table, $search_conditions, $count ) = @_;
+=head2 check_db
+  Arg [1]    : $dba : Bio::EnsEMBL::Tark::DB
+  Arg [2]    : $table : string
+  Arg [3]    : $search_conditions : HashRef
+  Arg [4]    : $count : integer [OPTIONAL]
+  Description: Run a query for a given table and set of conditions. By default
+               this returns the first row only. If the $count value is set to `1`
+               this returns a count of the number of matching rows.
+  Returntype : HashRef | integer
+  Exceptions : none
+  Caller     : general
 
-  my $result_set = $check_db_dba->schema->resultset( $table )->search( $search_conditions );
+=cut
+
+sub check_db {
+  my ( $self, $dba, $table, $search_conditions, $count ) = @_;
+
+  my $result_set = $dba->schema->resultset( $table )->search( $search_conditions );
   if ( defined $count and $count == 1 ) {
     return $result_set->count;
   }
   return $result_set->next;
-}
+} ## end sub check_db
 
 1;

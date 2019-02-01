@@ -206,7 +206,7 @@ sub _validate_config {
 } ## end sub _validate_config
 
 
-=head2
+=head2 dbh
   Description: Get the database handle from the schema
   Returntype : Database Handle
   Exceptions : none
