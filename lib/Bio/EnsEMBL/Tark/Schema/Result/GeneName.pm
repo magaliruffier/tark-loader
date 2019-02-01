@@ -65,6 +65,7 @@ __PACKAGE__->table("gene_names");
   data_type: 'integer'
   extra: {unsigned => 1}
   is_nullable: 1
+  is_foreign_key: 1
 
 =head2 name
 
@@ -101,7 +102,12 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "external_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+    is_foreign_key => 1,
+  },
   "name",
   { data_type => "varchar", is_nullable => 1, size => 32 },
   "source",
@@ -139,11 +145,16 @@ Related object: L<Bio::EnsEMBL::Tark::Schema::Result::Gene>
 
 =cut
 
-__PACKAGE__->has_many(
+__PACKAGE__->belongs_to(
   "genes",
   "Bio::EnsEMBL::Tark::Schema::Result::Gene",
-  { "foreign.hgnc_id" => "self.external_id" },
-  { cascade_copy => 0, cascade_delete => 0 },
+  { hgnc_id => "external_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "NO ACTION",
+    on_update     => "NO ACTION",
+  },
 );
 
 =head2 session

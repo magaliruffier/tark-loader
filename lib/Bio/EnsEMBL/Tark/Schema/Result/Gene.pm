@@ -163,7 +163,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "integer",
     extra => { unsigned => 1 },
-    is_foreign_key => 1,
+    # is_foreign_key => 1,
     is_nullable => 1,
   },
   "gene_checksum",
@@ -248,16 +248,11 @@ Related object: L<Bio::EnsEMBL::Tark::Schema::Result::GeneName>
 
 =cut
 
-__PACKAGE__->belongs_to(
+__PACKAGE__->has_many(
   "hgnc",
   "Bio::EnsEMBL::Tark::Schema::Result::GeneName",
-  { external_id => "hgnc_id" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "NO ACTION",
-    on_update     => "NO ACTION",
-  },
+  { "foreign.external_id" => "self.hgnc_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
 );
 
 =head2 session
@@ -311,6 +306,7 @@ __PACKAGE__->has_many(
 sub sqlt_deploy_hook {
   my ($self, $sqlt_table) = @_;
 
+  $sqlt_table->add_index(name => 'hgnc_id', fields => ['hgnc_id']);
   $sqlt_table->add_index(name => 'stable_id', fields => ['stable_id', 'stable_id_version']);
 
   return;
