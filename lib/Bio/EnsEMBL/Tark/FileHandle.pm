@@ -46,7 +46,7 @@ package Bio::EnsEMBL::Tark::FileHandle;
 
 use strict;
 use warnings;
-
+use Moose;
 use Carp;
 
 use PerlIO::gzip;

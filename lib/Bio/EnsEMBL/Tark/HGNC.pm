@@ -106,7 +106,7 @@ sub flush_hgnc {
 
 
 =head2 load_hgnc
-
+  Arg [1]    : $hgnc_file : string
   Description: Extract HGNC names and aliases from the HGNC dump files
   Returntype : undef
   Exceptions : none
@@ -127,10 +127,11 @@ sub load_hgnc {
 
   my $in_fh;
   if($hgnc_file) {
-  $self->log()->info("Using HGNC file $hgnc_file");
-  $in_fh = Bio::EnsEMBL::Tark::FileHandle->get_file_handle($hgnc_file);
+    $self->log()->info("Using HGNC file $hgnc_file");
+    $file_handle = Bio::EnsEMBL::Tark::FileHandle->new();
+    $in_fh = $file_handle->get_file_handle($hgnc_file);
   } else {
-  $in_fh = *STDIN;
+    $in_fh = *STDIN;
   }
 
   my $get_gene = $self->get_query('gene');
