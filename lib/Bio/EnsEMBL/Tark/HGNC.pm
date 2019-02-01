@@ -43,7 +43,10 @@ has 'query' => (
   },
 );
 
-has 'session_id' => ( is => 'ro', isa => 'Int' );
+has session => (
+  is  => 'rw',
+  isa => 'Bio::EnsEMBL::Tark::DB',
+);
 
 
 =head2 BUILD
@@ -60,7 +63,7 @@ sub BUILD {
   $self->log()->info('Initializing HGNC loader');
 
   # Attempt a connection to the database
-  my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+  my $dbh = $self->session->dbh();
 
   # Setup the insert queries
   my $insert_gene_name_sql = (<<'SQL');
@@ -97,7 +100,7 @@ sub flush_hgnc {
 
   $self->log()->info('Truncating gene names table');
 
-  my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+  my $dbh = $self->session->dbh();
 
   $dbh->do('TRUNCATE gene_names');
 
@@ -147,7 +150,7 @@ sub load_hgnc {
     my (undef, $hgnc_id) = split ':', $hgnc_line[0];
 
     # Insert the hgnc symbol
-    $insert_hgnc->execute($hgnc_id, $hgnc_line[1], 1, $self->session_id);
+    $insert_hgnc->execute($hgnc_id, $hgnc_line[1], 1, $self->session->session_id);
 
     # Add any synomyms
     next unless($hgnc_line[8]);
@@ -158,7 +161,7 @@ sub load_hgnc {
 
     my @aliases = split '\|', $hgnc_line[8];
     foreach my $alias (@aliases) {
-      $insert_hgnc->execute($hgnc_id, $alias, 0, $self->session_id);
+      $insert_hgnc->execute($hgnc_id, $alias, 0, $self->session->session_id);
     }
   }
 
