@@ -77,17 +77,17 @@ Description: It's a destructor. It cleans up databases left behind by the test
              Behaviour is overridden with $self->reuse(1)
 
 =cut
-# sub DEMOLISH {
-#   my $self = shift;
-#   if ($self->reuse == 0 && defined $self->config) {
-#     if ( $self->config->{driver} eq 'SQLite') {
-#       unlink $self->config->{file};
-#     } elsif ($self->config->{driver} eq 'mysql') {
-#       $self->schema->storage->dbh->do('DROP DATABASE '.$self->config->{db});
-#     }
-#   }
-#   return;
-# }
+sub DEMOLISH {
+  my $self = shift;
+  if ($self->reuse == 0 && defined $self->config) {
+    if ( $self->config->{driver} eq 'SQLite') {
+      unlink $self->config->{file};
+    } elsif ($self->config->{driver} eq 'mysql') {
+      $self->schema->storage->dbh->do('DROP DATABASE '.$self->config->{db});
+    }
+  }
+  return;
+}
 
 __PACKAGE__->meta->make_immutable;
 

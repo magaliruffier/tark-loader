@@ -53,12 +53,12 @@ use_ok 'Bio::EnsEMBL::Tark::SpeciesLoader';
 my $session_id_start = $db->start_session();
 ok( $session_id_start, "start_session - $session_id_start");
 
-my $tag = Bio::EnsEMBL::Tark::TagConfig->new();
-ok( !defined $tag->load_config_file( 'etc/release84.ini' ), 'load_config_file' );
+my $tag_config = Bio::EnsEMBL::Tark::TagConfig->new();
+ok( !defined $tag_config->load_config_file( 'etc/release84.ini' ), 'load_config_file' );
 
 my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
   session    => $db,
-  tag_config => $tag
+  tag_config => $tag_config
 );
 
 my $utils = Bio::EnsEMBL::Tark::Utils->new();
@@ -88,11 +88,66 @@ my $result_count_00 = $test_utils->check_db(
 );
 is( $result_count_00, 21, 'load_species' );
 
-# ok( !defined $loader->load_species( $dba, 'Ensembl' ), 'load_species' );
-# my $result_count_01 = $test_utils->check_db(
-#   $db, 'Gene', {}, 1
-# );
-# is( $result_count_01, $result_count_00, 'load_species - Check for duplicates' );
+ok( !defined $loader->load_species( $dba, 'Ensembl' ), 'load_species' );
+my $result_count_01 = $test_utils->check_db(
+  $db, 'Gene', {}, 1
+);
+is( $result_count_01, $result_count_00, 'load_species - Check for duplicates' );
+
+my $ga       = $dba->get_GeneAdaptor();
+my $gene_ids = $ga->_list_dbIDs('gene');
+
+my $gene = $ga->fetch_by_dbID( $gene_ids->[ 0 ] );
+
+$result = $test_utils->check_db(
+  $db, 'Assembly', {}
+);
+
+# Initialize the tags we'll be using
+  my $tag = Bio::EnsEMBL::Tark::Tag->new(
+    config  => $tag_config,
+    session => $db
+  );
+  $tag->init_tags( $result->assembly_id );
+
+my $session_pkg = {
+  session_id  => $db->session_id,
+  genome_id   => $result->genome_id,
+  assembly_id => $result->assembly_id
+};
+
+ok(
+  !defined $loader->_load_gene($gene, $session_pkg, 'Ensembl', $tag),
+  '_load_gene'
+);
+
+my @transcripts = @{ $gene->get_all_Transcripts() };
+
+my @exon_checksums;
+my @exon_ids;
+for my $exon (@{ $transcripts[0]->get_all_Exons() }) {
+  my ($exon_id, $exon_checksum) = $loader->_load_exon( $exon, $session_pkg, $tag );
+
+  push @exon_checksums, $exon_checksum;
+  push @exon_ids, $exon_id;
+
+  ok( defined $exon_id, "_load_exon: $exon_id");
+}
+
+$session_pkg->{exon_set_checksum} =  $utils->checksum_array( @exon_checksums );
+ok( defined $session_pkg->{exon_set_checksum}, "checksum_array" );
+
+my $transcript_id = $loader->_load_transcript( $transcripts[0], $session_pkg, $tag );
+
+ok( defined $transcript_id, "_load_transcript: $transcript_id");
+
+$session_pkg->{transcript_id} = $transcript_id;
+$session_pkg->{transcript} = $transcripts[0];
+
+ok(
+  !defined $loader->_load_translation( $transcripts[0]->translation(), $session_pkg, $tag ),
+  '_load_translation'
+);
 
 done_testing();
 
