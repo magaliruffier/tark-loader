@@ -30,16 +30,6 @@ See the NOTICE file distributed with this work for additional information
 
 Bio::EnsEMBL::Tark::FileHandle
 
-=head1 SYNOPSIS
-
-  use Bio::EnsEMBL::Tark::FileHandle;
-
-  my $ft = Bio::FormatTranscriber->new(
-
-=head1 DESCRIPTION
-
-
-
 =cut
 
 package Bio::EnsEMBL::Tark::FileHandle;
