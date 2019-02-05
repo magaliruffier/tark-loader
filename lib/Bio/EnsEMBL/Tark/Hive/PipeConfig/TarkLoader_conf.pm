@@ -44,41 +44,54 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 =cut
 
 sub pipeline_analyses {
-    my ($self) = @_;
-    return [
-      {
-        -logic_name => 'get_databases',
-        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-        -parameters => {
-          'inputquery'   => q{SHOW DATABASES LIKE "}.$self->o('only_databases').q{"},
-          'column_names' => [ 'dbname' ],
-        },
-        -input_ids => [
-          { 'db_conn' => $self->o('source_server1') },
-          { 'db_conn' => $self->o('source_server2') },
-        ],
-        -flow_into => {
-          2 => { 'run_sql' => { 'db_conn' => '#db_conn##dbname#' },
-          }
-        },
-      },
+  my ($self) = @_;
+  return [
+    # {
+    #   -logic_name => 'get_databases',
+    #   -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+    #   -parameters => {
+    #     'inputquery'   => q{SHOW DATABASES LIKE "}.$self->o('only_databases').q{"},
+    #     'column_names' => [ 'dbname' ],
+    #   },
+    #   -input_ids => [
+    #     { 'db_conn' => $self->o('source_server1') },
+    #     { 'db_conn' => $self->o('source_server2') },
+    #   ],
+    #   -flow_into => {
+    #     2 => { 'run_sql' => { 'db_conn' => '#db_conn##dbname#' },
+    #     }
+    #   },
+    # },
 
-        {   -logic_name => 'count_atgc',
-            -module     => 'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CountATGC',
-            -analysis_capacity  =>  4,  # use per-analysis limiter
-            -flow_into => {
-               1 => ['?accu_name=at_count&accu_address=[]',
-                 '?accu_name=gc_count&accu_address=[]']
-            },
-        },
+    {
+      -logic_name => 'load_tark',
+      -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
+      -parameters => {
+        tark_host => '#tark_host#',
+        tark_port => '#tark_port#',
+        tark_user => '#tark_user#',
+        tark_pass => '#tark_pass#',
+        tark_db => '#tark_db#',
+      }
+      -analysis_capacity  =>  4,  # use per-analysis limiter
+      # -flow_into => {
+      #   1 => [
+      #     '?accu_name=at_count&accu_address=[]',
+      #     '?accu_name=gc_count&accu_address=[]'
+      #   ]
+      # },
+    },
 
-        {   -logic_name => 'calc_overall_percentage',
-            -module     => 'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CalcOverallPercentage',
-            -flow_into => {
-                1 => [ '?table_name=final_result' ], #Flows output into the DB table 'final_result'
-            },
-        },
-     ];
+    # {
+    #   -logic_name => 'load_hgnc',
+    #   -module     => 'Bio::EnsEMBL::Tark::HiveRunnableDB::HGNCLoader',
+    #   -flow_into => {
+    #     1 => [
+    #       '?table_name=final_result' #Flows output into the DB table 'final_result'
+    #     ]
+    #   },
+    # },
+  ];
 }
 
 1;
