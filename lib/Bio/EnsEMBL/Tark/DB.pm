@@ -56,7 +56,8 @@ has session_id => (
 has schema => (
   isa => 'Bio::EnsEMBL::Tark::Schema',
   is => 'ro',
-  builder => '_init_db'
+  builder => '_init_db',
+  lazy => 1,
 );
 
 has config => (
@@ -67,7 +68,8 @@ has config => (
 has config_file => (
   isa => 'Str',
   is => 'rw',
-  builder => '_guess_config'
+  builder => '_guess_config',
+  lazy => 1,
 );
 
 
@@ -84,8 +86,12 @@ sub _init_db {
 
   $self->log()->info('Initializing DB');
 
-  $self->_init_config if ! defined $self->config;
+  if ( !defined $self->config ) {
+    $self->_init_config;
+  }
+
   $self->_validate_config($self->config);
+
   my %conf = %{ $self->config };
   my %opts;
   $opts{mysql_enable_utf8}    = 1 if ( $conf{driver} eq 'mysql' );
@@ -199,9 +205,7 @@ sub _validate_config {
     }
   }
   if (scalar @errors > 0) {
-    confess sprintf "%s \n%s",
-      ($self->config_file) ? 'Missing options in '.$self->config_file. ': ' : 'Missing options in supplied config: ',
-      join ';', @errors;
+    confess "Error in validation\n%s", join "\n", @errors;
   }
 } ## end sub _validate_config
 
