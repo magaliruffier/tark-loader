@@ -153,7 +153,7 @@ sub _init_db {
 =cut
 
 sub _guess_config {
-  return;
+  confess 'Undefined method: _guess_config';
 } ## end sub _guess_config
 
 
