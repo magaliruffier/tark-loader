@@ -38,11 +38,17 @@ sub param_defaults {
     'user' => 'travis',
     'pass' => q{},
     'db'   => 'species_core_test',
+
     'tark_host' => 'localhost',
     'tark_port' => '3306',
     'tark_user' => 'travis',
     'tark_pass' => q{},
     'tark_db'   => 'test_tark',
+
+    # 'tag_block'        => 'Ensembl',
+    # 'tag_shortname'    => 84,
+    # 'tag_description'  => 'Ensembl release 84',
+    # 'tag_feature_type' => 'all',
   };
 }
 
@@ -61,7 +67,7 @@ sub run {
 
   my $species  = $self->param('species');
   # my $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, 'core' );
-  my $core_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(
+  my $core_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -host   => $self->param('host'),
     -port   => $self->param('port'),
     -user   => $self->param('user'),
@@ -85,13 +91,14 @@ sub run {
   my $session_id_start = $tark_dba->start_session();
 
   my %tag_config_hash;
-  $tag_config_hash{ 'tag_block' } = $self->param_required( 'tag_block' );
+  my $tag_block = $self->param_required( 'tag_block' );
+  $tag_config_hash{ $tag_block } = {};
 
   foreach my $tag_label (
     qw/ tag_shortname tag_description tag_feature_type tag_version /
   ) {
-    if ( $self->param_defined( $tag_label ) ) {
-      $tag_config_hash{ $tag_label } = $self->param( $tag_label );
+    if ( $self->param_is_defined( $tag_label ) ) {
+      $tag_config_hash{ $tag_block }{ $tag_label } = $self->param( $tag_label );
     }
   }
 

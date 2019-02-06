@@ -401,7 +401,6 @@ SQL
     $sth->execute($shortname, $desc, $session_id);
     $tag_id = $sth->{mysql_insertid};
   }
-  print "Release id :   $tag_id\n";
 
   # Save the release_id for later
   $self->config->set_id( $tag, $tag_id );

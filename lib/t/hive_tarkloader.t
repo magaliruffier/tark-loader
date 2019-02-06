@@ -48,6 +48,19 @@ my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new;
 my $core_dba = $multi_db->get_DBAdaptor('core');
 
 my $tark_dba = Bio::EnsEMBL::Tark::Test::TestDB->new();
+$tark_dba->schema();
+
+print $core_dba->dbc->host . "\n";
+print $core_dba->dbc->port . "\n";
+print $core_dba->dbc->user . "\n";
+print $core_dba->dbc->pass . "\n";
+print $core_dba->dbc->dbname . "\n";
+
+print $tark_dba->config->{host} . "\n";
+print $tark_dba->config->{port} . "\n";
+print $tark_dba->config->{user} . "\n";
+print $tark_dba->config->{pass} . "\n";
+print $tark_dba->config->{db} . "\n";
 
 standaloneJob(
   'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
@@ -58,12 +71,18 @@ standaloneJob(
     'user' => $core_dba->dbc->user,
     'pass' => $core_dba->dbc->pass,
     'db'   => $core_dba->dbc->dbname,
+
     'tark_host' => $tark_dba->config->{host},
     'tark_port' => $tark_dba->config->{port},
     'tark_user' => $tark_dba->config->{user},
     'tark_pass' => $tark_dba->config->{pass},
     'tark_db'   => $tark_dba->config->{db},
-  }
+
+    'tag_block'        => 'release',
+    'tag_shortname'    => 84,
+    'tag_description'  => 'Ensembl release 84',
+    'tag_feature_type' => 'all',
+  },
 );
 
 
