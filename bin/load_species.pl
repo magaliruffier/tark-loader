@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
 
-
 =head1 LICENSE
 
 See the NOTICE file distributed with this work for additional information
@@ -18,8 +17,6 @@ See the NOTICE file distributed with this work for additional information
    limitations under the License.
 
 =cut
-
-$|++;
 
 use warnings;
 use strict;
@@ -53,8 +50,6 @@ my $db = Bio::EnsEMBL::Tark::DB->new(
     db     => $database,
   }
 );
-
-my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new();
 
 # Connect to the Ensembl Registry to access the databases
 Bio::EnsEMBL::Registry->load_registry_from_db(
