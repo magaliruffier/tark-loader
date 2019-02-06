@@ -24,6 +24,7 @@ use Carp;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::SpeciesLoader;
 use Bio::EnsEMBL::Tark::TagConfig;
@@ -36,6 +37,12 @@ sub param_defaults {
     'port' => '3306',
     'user' => 'travis',
     'pass' => q{},
+    'db'   => 'species_core_test',
+    'tark_host' => 'localhost',
+    'tark_port' => '3306',
+    'tark_user' => 'travis',
+    'tark_pass' => q{},
+    'tark_db'   => 'test_tark',
   };
 }
 
@@ -53,7 +60,16 @@ sub run {
   my $self = shift @_;
 
   my $species  = $self->param('species');
-  my $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, 'core' );
+  # my $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, 'core' );
+  my $core_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(
+    -host   => $self->param('host'),
+    -port   => $self->param('port'),
+    -user   => $self->param('user'),
+    -pass   => $self->param('pass'),
+    -group  => 'core',
+    -dbname => $self->param('db'),
+  );
+
   my $tark_dba = Bio::EnsEMBL::Tark::DB->new(
     config => {
       driver => 'mysql',
@@ -69,13 +85,13 @@ sub run {
   my $session_id_start = $tark_dba->start_session();
 
   my %tag_config_hash;
-  $tag_config_hash[ 'tag_block' ] = $self->param_required( 'tag_block' );
+  $tag_config_hash{ 'tag_block' } = $self->param_required( 'tag_block' );
 
   foreach my $tag_label (
     qw/ tag_shortname tag_description tag_feature_type tag_version /
   ) {
     if ( $self->param_defined( $tag_label ) ) {
-      $tag_config_hash[ $tag_label ] = $self->param( $tag_label );
+      $tag_config_hash{ $tag_label } = $self->param( $tag_label );
     }
   }
 

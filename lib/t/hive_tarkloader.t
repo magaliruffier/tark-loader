@@ -19,12 +19,16 @@ See the NOTICE file distributed with this work for additional information
 use strict;
 use warnings;
 
+use Log::Log4perl qw(:easy);
+Log::Log4perl->easy_init($DEBUG);
+
 use Cwd;
 use Test::More;
 
 use Data::Dumper;
 
 use Bio::EnsEMBL::Tark::Test::TestDB;
+use Bio::EnsEMBL::Test::MultiTestDB;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob get_test_url_or_die make_new_db_from_sqls run_sql_on_db);
@@ -39,70 +43,32 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname(
     )
   )
 );
-my $input_job_factory = File::Basename::dirname( Cwd::realpath($0) ) . '/input_job_factory.sql';
+
+my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new;
+my $core_dba = $multi_db->get_DBAdaptor('core');
+
+my $tark_dba = Bio::EnsEMBL::Tark::Test::TestDB->new();
 
 standaloneJob(
   'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
   {
-    'tark_host' => '',
-    'tark_host' => '',
-    'tark_host' => '',
-    'tark_host' => '',
-    'tark_db'   => '',
-  },
-  [
-    [
-      'DATAFLOW',
-      [
-        {
-          _range_start => 10,
-          _range_end   => 14,
-          _range_count => 4,
-          _range_list  => [10,11,12,14],
-          _start_foo   => 10,
-          _end_foo     => 14,
-        },
-        {
-          _range_start => 15,
-          _range_end   => 18,
-          _range_count => 4,
-          _range_list  => [15,16,17,18],
-          _start_foo   => 15,
-          _end_foo     => 18,
-        },
-        {
-          _range_start => 19,
-          _range_end   => 23,
-          _range_count => 4,
-          _range_list  => [19,21,22,23],
-          _start_foo   => 19,
-          _end_foo     => 23,
-        },
-        {
-          _range_start => 24,
-          _range_end   => 27,
-          _range_count => 4,
-          _range_list  => [24,25,26,27],
-          _start_foo   => 24,
-          _end_foo     => 27,
-        },
-        {
-          _range_start => 28,
-          _range_end   => 29,
-          _range_count => 2,
-          _range_list  => [28,29],
-          _start_foo   => 28,
-          _end_foo     => 29,
-        },
-      ],
-      2
-    ]
-  ]
+    'species'   => 'homo_sapiens',
+    'host' => $core_dba->dbc->host,
+    'port' => $core_dba->dbc->port,
+    'user' => $core_dba->dbc->user,
+    'pass' => $core_dba->dbc->pass,
+    'db'   => $core_dba->dbc->dbname,
+    'tark_host' => $tark_dba->config->{host},
+    'tark_port' => $tark_dba->config->{port},
+    'tark_user' => $tark_dba->config->{user},
+    'tark_pass' => $tark_dba->config->{pass},
+    'tark_db'   => $tark_dba->config->{db},
+  }
 );
 
 
-run_sql_on_db($test_url, 'DROP DATABASE');
+# run_sql_on_db($test_url, 'DROP DATABASE');
 
 done_testing();
 
-chdir $original;
+1;
