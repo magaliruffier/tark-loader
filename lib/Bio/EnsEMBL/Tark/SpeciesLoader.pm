@@ -62,6 +62,12 @@ has tag_config => (
   isa => 'Bio::EnsEMBL::Tark::TagConfig'
 );
 
+has block_size  => ( is => 'ro', isa => 'Int' );
+
+has start_block => ( is => 'ro', isa => 'Int' );
+
+has max_gene_id => ( is => 'ro', isa => 'Int' );
+
 
 =head2 BUILD
   Description: Initialise the creation of the prepared statements
@@ -265,13 +271,33 @@ sub load_species {
     assembly_id => $assembly_id
   };
 
-  # Fetch a gene iterator and cycle through loading the genes
-  my $iter = $self->genes_to_metadata_iterator($dba, $source_name);
+  my $iter;
+  if ( defined $self->block_size ) {
+    # Fetch and load genes within a defined ID range
+    my $start_block_id = ( ( $self->start_block - 1 ) * $self->block_size ) + 1;
+    my $end_block_id  = $self->start_block * $self->block_size;
+    if ( $end_block_id > $self->max_gene_id ) {
+      $end_block_id = $self->max_gene_id;
+    }
 
-  while ( my $gene = $iter->next() ) {
-    $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
-    $self->_load_gene($gene, $session_pkg, $source_name, $tag);
+    my $ga   = $dba->get_GeneAdaptor();
+    foreach my $current_gene ( $start_block_id..$end_block_id ) {
+      my $gene = $ga->fetch_by_dbID( $current_gene );
+      if ( $gene ) {
+        $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
+        $self->_load_gene($gene, $session_pkg, $source_name, $tag);
+      }
+    }
+  } else {
+    # Fetch a gene iterator and cycle through loading the genes
+    $iter = $self->genes_to_metadata_iterator( $dba, $source_name );
+
+    while ( my $gene = $iter->next() ) {
+      $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
+      $self->_load_gene($gene, $session_pkg, $source_name, $tag);
+    }
   }
+
   $self->log->info( 'Completed dumping genes for ' . $species );
 
   $self->log->info( 'Tagging sets for ' . $species );
@@ -584,9 +610,15 @@ sub _fetch_hgnc_id {
 =cut
 
 sub genes_to_metadata_iterator {
-  my ( $self, $dba, $source_name ) = @_;
+  my ( $self, $dba, $source_name, $gene_ids ) = @_;
   my $ga           = $dba->get_GeneAdaptor();
-  my $gene_ids     = $ga->_list_dbIDs('gene');
+
+  # print Dumper $gene_ids;
+
+  if ( !defined $gene_ids ) {
+    $gene_ids = $ga->_list_dbIDs('gene');
+  }
+
   my $len          = scalar @{ $gene_ids };
   my $current_gene = 0;
   my $genes_i      = Bio::EnsEMBL::Utils::Iterator->new(

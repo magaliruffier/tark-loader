@@ -63,6 +63,22 @@ my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
 
 my $utils = Bio::EnsEMBL::Tark::Utils->new();
 
+my $iter = $loader->genes_to_metadata_iterator( $dba, 'Ensembl' );
+my $gene = $iter->next();
+my $gene_test_id = $gene->{stable_id};
+ok( defined $gene->{stable_id}, "genes_to_metadata_iterator: ${gene_test_id}");
+
+$iter = $loader->genes_to_metadata_iterator( $dba, 'Ensembl', [ 18260..18264 ] );
+my $iter_counter = 0;
+while ( my $gene_iter = $iter->next() ) {
+  ok(
+    defined $gene_iter->{stable_id},
+    'genes_to_metadata_iterator - ARRAY: ' . $gene_iter->{stable_id}
+  );
+  $iter_counter++;
+}
+is( $iter_counter, 5, "genes_to_metadata_iterator - Count ARRAY: $iter_counter");
+
 my $loaded_checksum = $loader->_insert_sequence( 'acgt', $db->session_id );
 my $result = $test_utils->check_db(
   $db, 'Sequence', { session_id => $db->session_id }
@@ -97,7 +113,7 @@ is( $result_count_01, $result_count_00, 'load_species - Check for duplicates' );
 my $ga       = $dba->get_GeneAdaptor();
 my $gene_ids = $ga->_list_dbIDs('gene');
 
-my $gene = $ga->fetch_by_dbID( $gene_ids->[ 0 ] );
+$gene = $ga->fetch_by_dbID( $gene_ids->[ 0 ] );
 
 $result = $test_utils->check_db(
   $db, 'Assembly', {}

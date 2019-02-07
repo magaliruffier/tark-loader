@@ -49,6 +49,10 @@ sub param_defaults {
     # 'tag_shortname'    => 84,
     # 'tag_description'  => 'Ensembl release 84',
     # 'tag_feature_type' => 'all',
+
+    # block_size => 1000,
+    # start_block => 1,
+    # max_gene_id => 1000,
   };
 }
 
@@ -111,12 +115,20 @@ sub run {
     tag_config => $tag_config
   );
 
+  foreach my $block_label (
+    qw/ block_size start_block max_gene_id /
+  ) {
+    if ($self->param_is_defined( $block_label ) ) {
+      print "PARAM: $block_label - " . $self->param( $block_label ) . "\n";
+      $loader->{$block_label} = $self->param( $block_label );
+    }
+  }
+
   $loader->load_species( $core_dba, 'Ensembl' );
 
   $tark_dba->end_session();
 }
 
 ################################### main functionality starts here ###################
-
 
 1;

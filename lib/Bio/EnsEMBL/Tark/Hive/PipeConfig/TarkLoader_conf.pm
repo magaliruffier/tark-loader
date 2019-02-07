@@ -45,33 +45,71 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 
 sub pipeline_analyses {
   my ($self) = @_;
+
+  my $sql = (<<'SQL');
+    SELECT
+      @rownum:=@rownum+1 AS start_block,
+      mr.max_gene_id
+    FROM
+      gene,
+      ( SELECT @rownum:=0 ) r,
+      ( SELECT
+          CEILING(
+            COUNT( gene_id )/$self->o( 'block_size' )
+          ) maxline,
+          max(gene_id) max_gene_id
+        FROM
+          gene
+      ) mr
+    WHERE
+      @rownum<mr.maxline;
+SQL
+
   return [
-    # {
-    #   -logic_name => 'get_databases',
-    #   -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-    #   -parameters => {
-    #     'inputquery'   => q{SHOW DATABASES LIKE "}.$self->o('only_databases').q{"},
-    #     'column_names' => [ 'dbname' ],
-    #   },
-    #   -input_ids => [
-    #     { 'db_conn' => $self->o('source_server1') },
-    #     { 'db_conn' => $self->o('source_server2') },
-    #   ],
-    #   -flow_into => {
-    #     2 => { 'run_sql' => { 'db_conn' => '#db_conn##dbname#' },
-    #     }
-    #   },
-    # },
+    {
+      -logic_name => 'generate_job_list',
+      -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+      -parameters => {
+        'db_conn'      => '#target_db#',
+        'column_names' => [ 'start_block' ],
+        'inputquery'   => $sql,
+      },
+      -input_ids => [
+        {
+          'target_db'     => $self->o('target_db'),
+        }
+      ],
+
+      -flow_into  => { 2 => { 'load_tark' => INPUT_PLUS() } },
+    },
 
     {
       -logic_name => 'load_tark',
       -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
       -parameters => {
+
+        # Worker block size params
+        block_size  => $self->o( 'block_size' ),
+        start_block => '#start_block#',
+        max_gene_id => '#max_gene_id#',
+
+        # Species name
+        species     => '#species#',
+
+        # Core db params
+        host => '#host#',
+        port => '#port#',
+        user => '#user#',
+        pass => '#pass#',
+        db   => '#dbname#',
+
+        # Tark db params
         tark_host => '#tark_host#',
         tark_port => '#tark_port#',
         tark_user => '#tark_user#',
         tark_pass => '#tark_pass#',
-        tark_db => '#tark_db#',
+        tark_db   => '#tark_db#',
+
       }
       -analysis_capacity  =>  4,  # use per-analysis limiter
       # -flow_into => {

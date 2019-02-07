@@ -86,6 +86,36 @@ standaloneJob(
 );
 
 
+print "\n\nUSING BLOACK SIZE\n\n";
+standaloneJob(
+  'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
+  {
+    'species'   => 'homo_sapiens',
+    'host' => $core_dba->dbc->host,
+    'port' => $core_dba->dbc->port,
+    'user' => $core_dba->dbc->user,
+    'pass' => $core_dba->dbc->pass,
+    'db'   => $core_dba->dbc->dbname,
+
+    'tark_host' => $tark_dba->config->{host},
+    'tark_port' => $tark_dba->config->{port},
+    'tark_user' => $tark_dba->config->{user},
+    'tark_pass' => $tark_dba->config->{pass},
+    'tark_db'   => $tark_dba->config->{db},
+
+    'tag_block'        => 'release',
+    'tag_shortname'    => 84,
+    'tag_description'  => 'Ensembl release 84',
+    'tag_feature_type' => 'all',
+
+    'block_size'  => 1000,
+    'start_block' => 19,
+    'max_gene_id' => 18270,
+  },
+);
+
+
+
 # run_sql_on_db($test_url, 'DROP DATABASE');
 
 done_testing();
