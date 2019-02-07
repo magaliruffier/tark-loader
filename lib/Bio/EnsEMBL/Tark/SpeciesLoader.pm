@@ -16,13 +16,15 @@ See the NOTICE file distributed with this work for additional information
 
 =cut
 
+package Bio::EnsEMBL::Tark::SpeciesLoader;
+
 use warnings;
 use strict;
 use DBI;
-package Bio::EnsEMBL::Tark::SpeciesLoader;
 
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::Tag;
+use Bio::EnsEMBL::Tark::Utils;
 use Data::Dumper;
 
 use Moose;
@@ -50,6 +52,16 @@ has 'query' => (
   },
 );
 
+has session => (
+  is  => 'rw',
+  isa => 'Bio::EnsEMBL::Tark::DB',
+);
+
+has tag_config => (
+  is  => 'rw',
+  isa => 'Bio::EnsEMBL::Tark::TagConfig'
+);
+
 
 =head2 BUILD
   Description:
@@ -60,12 +72,12 @@ has 'query' => (
 =cut
 
 sub BUILD {
-  my ($self) = @_;
+  my ( $self, $args ) = @_;
 
   $self->log()->info('Initializing species loader');
 
   # Attempt a connection to the database
-  my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+  my $dbh = $self->session->dbh();
 
   # Setup the insert queries
 
@@ -207,9 +219,9 @@ sub load_species {
   my $dba = shift;
   my $source_name = shift;
 
-  $source_name = defined($source_name) ? $source_name : 'Ensembl';
+  my $session_id = $self->session->session_id;
 
-  my $session_id = Bio::EnsEMBL::Tark::DB->session_id;
+  $source_name = defined($source_name) ? $source_name : 'Ensembl';
 
   $self->log->info( 'Starting loading process' );
 
@@ -240,7 +252,11 @@ sub load_species {
 
 
   # Initialize the tags we'll be using
-  Bio::EnsEMBL::Tark::Tag->init_tags( $assembly_id );
+  my $tag = Bio::EnsEMBL::Tark::Tag->new(
+    config  => $self->tag_config,
+    session => $self->session
+  );
+  $tag->init_tags( $assembly_id );
 
   my $session_pkg = {
     session_id  => $session_id,
@@ -253,14 +269,16 @@ sub load_species {
 
   while ( my $gene = $iter->next() ) {
     $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
-    $self->_load_gene($gene, $session_pkg, $source_name);
+    $self->_load_gene($gene, $session_pkg, $source_name, $tag);
   }
   $self->log->info( 'Completed dumping genes for ' . $species );
 
   $self->log->info( 'Tagging sets for ' . $species );
-  Bio::EnsEMBL::Tark::Tag->checksum_sets();
+  $tag->checksum_sets();
 
   $self->log->info( 'Completed tagging sets for ' . $species );
+
+  return;
 } ## end sub load_species
 
 
@@ -273,7 +291,7 @@ sub load_species {
 =cut
 
 sub _load_gene {
-  my ( $self, $gene, $session_pkg, $source_name ) = @_;
+  my ( $self, $gene, $session_pkg, $source_name, $tag ) = @_;
 
   my @loc_pieces = (
     $session_pkg->{assembly_id}, $gene->seq_region_name(),
@@ -281,11 +299,12 @@ sub _load_gene {
     $gene->seq_region_strand(),
   );
 
-  my $loc_checksum = Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  my $loc_checksum = $utils->checksum_array( @loc_pieces );
 
   my $hgnc_id = $self->_fetch_hgnc_id($gene);
 
-  my $gene_checksum = Bio::EnsEMBL::Tark::DB->checksum_array(
+  my $gene_checksum = $utils->checksum_array(
     @loc_pieces, ($hgnc_id ? $hgnc_id : undef), $gene->stable_id(), $gene->version()
   );
 
@@ -298,7 +317,7 @@ sub _load_gene {
   my $gene_id = $sth->{mysql_insertid};
 
   # Apply tags to feature we've just inserted
-  Bio::EnsEMBL::Tark::Tag->tag_feature($gene_id, 'gene');
+  $tag->tag_feature($gene_id, 'gene');
 
   my $exons = {};
   $session_pkg->{gene_id} = $gene_id;
@@ -306,16 +325,16 @@ sub _load_gene {
 
     my @exon_checksums; my @exon_ids;
     for my $exon (@{ $transcript->get_all_Exons() }) {
-      my ($exon_id, $exon_checksum) = $self->_load_exon( $exon, $session_pkg );
+      my ($exon_id, $exon_checksum) = $self->_load_exon( $exon, $session_pkg, $tag );
       push @exon_checksums, $exon_checksum;
       push @exon_ids, $exon_id;
     }
 
     if( @exon_checksums ) {
-      $session_pkg->{exon_set_checksum} =  Bio::EnsEMBL::Tark::DB->checksum_array( @exon_checksums );
+      $session_pkg->{exon_set_checksum} =  $utils->checksum_array( @exon_checksums );
     }
 
-    my $transcript_id = $self->_load_transcript( $transcript, $session_pkg );
+    my $transcript_id = $self->_load_transcript( $transcript, $session_pkg, $tag );
 
     my $exon_order = 1;
     for my $exon_id (@exon_ids) {
@@ -331,7 +350,7 @@ sub _load_gene {
 
     my $translation = $transcript->translation();
     if ( defined $translation ) {
-      $self->_load_translation( $translation, $session_pkg );
+      $self->_load_translation( $translation, $session_pkg, $tag );
     }
 
     delete $session_pkg->{transcript_id};
@@ -351,7 +370,7 @@ sub _load_gene {
 =cut
 
 sub _load_transcript {
-  my ($self, $transcript, $session_pkg) = @_;
+  my ( $self, $transcript, $session_pkg, $tag ) = @_;
 
   # Insert the sequence and get back the checksum
   my $seq_obj = $transcript->seq();
@@ -368,8 +387,9 @@ sub _load_transcript {
     $transcript->seq_region_strand(),
   );
 
-  my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
-  my $transcript_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array(
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  my $loc_checksum = $utils->checksum_array( @loc_pieces );
+  my $transcript_checksum = $utils->checksum_array(
     $loc_checksum, $transcript->stable_id(), $transcript->version(),
     (
       $session_pkg->{exon_set_checksum} ? $session_pkg->{exon_set_checksum} : undef
@@ -391,7 +411,7 @@ sub _load_transcript {
   ) or $self->log->logdie("Error inserting transcript_gene: $DBI::errstr");
 
   # Apply tags to feature we've just inserted
-  Bio::EnsEMBL::Tark::Tag->tag_feature($transcript_id, 'transcript');
+  $tag->tag_feature($transcript_id, 'transcript');
 
   return $transcript_id;
 } ## end sub _load_transcript
@@ -406,7 +426,7 @@ sub _load_transcript {
 =cut
 
 sub _load_exon {
-  my ($self, $exon, $session_pkg) = @_;
+  my ( $self, $exon, $session_pkg, $tag ) = @_;
 
   # Insert the sequence and get back the checksum
   my $seq_obj = $exon->seq();
@@ -420,9 +440,10 @@ sub _load_exon {
     $exon->seq_region_start(), $exon->seq_region_end(),
     $exon->seq_region_strand(),
   );
-  my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
 
-  my $exon_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( $loc_checksum, $seq_checksum );
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  my $loc_checksum = $utils->checksum_array( @loc_pieces );
+  my $exon_checksum = $utils->checksum_array( $loc_checksum, $seq_checksum );
 
   my $sth = $self->get_insert('exon');
   $sth->execute(
@@ -432,7 +453,7 @@ sub _load_exon {
   my $exon_id = $sth->{mysql_insertid};
 
   # Apply tags to feature we've just inserted
-  Bio::EnsEMBL::Tark::Tag->tag_feature($exon_id, 'exon');
+  $tag->tag_feature($exon_id, 'exon');
 
   return ($exon_id, $exon_checksum);
 } ## end sub _load_exon
@@ -447,7 +468,7 @@ sub _load_exon {
 =cut
 
 sub _load_translation {
-  my ($self, $translation, $session_pkg) = @_;
+  my ( $self, $translation, $session_pkg, $tag ) = @_;
 
   # Insert the sequence and get back the checksum
   my $seq_checksum = $self->_insert_sequence($translation->seq(), $session_pkg->{session_id});
@@ -458,9 +479,9 @@ sub _load_translation {
     $session_pkg->{transcript}->seq_region_strand(),
   );
 
-  my $loc_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array( @loc_pieces );
-
-  my $translation_checksum =  Bio::EnsEMBL::Tark::DB->checksum_array(
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  my $loc_checksum = $utils->checksum_array( @loc_pieces );
+  my $translation_checksum = $utils->checksum_array(
     $loc_checksum, $translation->stable_id(), $translation->version(), $seq_checksum
   );
 
@@ -477,13 +498,18 @@ sub _load_translation {
   ) or $self->log->logdie("Error inserting translation_transcript: $DBI::errstr");
 
   # Apply tags to feature we've just inserted
-  Bio::EnsEMBL::Tark::Tag->tag_feature($translation_id, 'translation');
+  $tag->tag_feature($translation_id, 'translation');
+
+  return;
 } ## end sub _load_translation
 
 
 =head2 _insert_sequence
-  Description:
-  Returntype :
+  Arg [1]    : string - sequence
+  Arg [2]    : integer - session_id
+  Description: Load a sequence into the sequence tark schema table with the
+               matching session_id and calculated checksum value
+  Returntype : binary - sha1
   Exceptions : none
   Caller     : general
 
@@ -492,7 +518,8 @@ sub _load_translation {
 sub _insert_sequence {
   my ( $self, $sequence, $session_id ) = @_;
 
-  my $sha1 =  Bio::EnsEMBL::Tark::DB->checksum_array($sequence);
+  my $utils = Bio::EnsEMBL::Tark::Utils->new();
+  my $sha1 =  $utils->checksum_array( $sequence );
 
   my $sth = $self->get_insert('sequence');
   $sth->execute(
@@ -527,6 +554,8 @@ sub _fetch_hgnc_id {
 
     return $hgnc_id;
   }
+
+  return;
 } ## end sub _fetch_hgnc_id
 
 
@@ -541,7 +570,7 @@ sub _fetch_hgnc_id {
 sub genes_to_metadata_iterator_test {
   my ( $self, $dba, $source_name ) = @_;
 
-  my $ga           = $dba->get_GeneAdaptor();
+  my $ga = $dba->get_GeneAdaptor();
   my $gene_features_ensembl = $ga->fetch_all_by_display_label('BRCA2');
 
   my $len = scalar @{ $gene_features_ensembl };

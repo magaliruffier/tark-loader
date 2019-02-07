@@ -47,10 +47,12 @@ package Bio::EnsEMBL::Tark::FileHandle;
 use strict;
 use warnings;
 
+use Carp;
+
 use PerlIO::gzip;
 
 
-=head2 open
+=head2 get_file_handle
   Description:
   Returntype :
   Exceptions : none
@@ -58,7 +60,7 @@ use PerlIO::gzip;
 
 =cut
 
-sub open {
+sub get_file_handle {
   my $class = shift;
   my $filename = shift;
 
@@ -74,9 +76,9 @@ sub open {
   }
 
   open my $fh, $mode, $filename or
-    die "Error opening file $filename: $!";
+    confess "Error opening file $filename: $!";
 
   return $fh;
-} ## end sub open
+} ## end sub get_file_handle
 
 1;

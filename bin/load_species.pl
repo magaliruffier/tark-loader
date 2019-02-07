@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
 
-
 =head1 LICENSE
 
 See the NOTICE file distributed with this work for additional information
@@ -19,8 +18,6 @@ See the NOTICE file distributed with this work for additional information
 
 =cut
 
-$|++;
-
 use warnings;
 use strict;
 
@@ -30,6 +27,7 @@ use Getopt::Long qw(:config no_ignore_case);
 use Bio::EnsEMBL::Tark::SpeciesLoader;
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::Tag;
+use Bio::EnsEMBL::Tark::TagConfig;
 use Bio::EnsEMBL::Registry;
 
 my ($dbuser, $dbpass, $dbhost, $database, $species, $release, $config_file);
@@ -42,30 +40,38 @@ Log::Log4perl->easy_init($DEBUG);
 
 get_options();
 
-Bio::EnsEMBL::Tark::DB->initialize(
-  dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
-  dbuser => $dbuser,
-  dbpass => $dbpass
+my $db = Bio::EnsEMBL::Tark::DB->new(
+  config => {
+    driver => 'mysql',
+    host   => $dbhost,
+    port   => $dbport,
+    user   => $dbuser,
+    pass   => $dbpass,
+    db     => $database,
+  }
 );
-
-my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new();
 
 # Connect to the Ensembl Registry to access the databases
 Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host => $ensdbhost,
-    -port => $ensdbport,
-    -user => 'anonymous',
-    -db_version => $release
-    );
+  -host => $ensdbhost,
+  -port => $ensdbport,
+  -user => 'anonymous',
+  -db_version => $release
+);
 
 
 my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, 'core' );
 
-my $session_id = Bio::EnsEMBL::Tark::DB->start_session('Test client');
+my $session_id = $db->start_session('Test client');
 
-Bio::EnsEMBL::Tark::Tag->initialize( config_file => $config_file );
+my $tag_config = Bio::EnsEMBL::Tark::TagConfig->new();
+$tag_config->load_config_file( $config_file );
 
-$loader->load_species($dba, $source_name);
+my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
+  session    => $db,
+  tag_config => $tag_config
+);
+$loader->load_species( $dba, $source_name );
 
 Bio::EnsEMBL::Tark::DB->end_session($session_id);
 

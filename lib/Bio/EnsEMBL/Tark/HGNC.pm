@@ -79,6 +79,8 @@ SQL
   $sth = $dbh->prepare( $get_ids_sql ) or
     $self->log->logdie("Error creating gene select: $DBI::errstr");
   $self->set_query('gene' => $sth);
+
+  return;
 } ## end sub BUILD
 
 sub flush_hgnc {
@@ -89,6 +91,8 @@ sub flush_hgnc {
   my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
 
   $dbh->do('TRUNCATE gene_names');
+
+  return;
 } ## end sub flush_hgnc
 
 
@@ -115,7 +119,7 @@ sub load_hgnc {
   my $in_fh;
   if($hgnc_file) {
   $self->log()->info("Using HGNC file $hgnc_file");
-  $in_fh = Bio::EnsEMBL::Tark::FileHandle->open($hgnc_file);
+  $in_fh = Bio::EnsEMBL::Tark::FileHandle->get_file_handle($hgnc_file);
   } else {
   $in_fh = *STDIN;
   }
@@ -147,6 +151,8 @@ sub load_hgnc {
       $insert_hgnc->execute($hgnc_id, $alias, 0, $self->session_id);
     }
   }
+
+  return;
 } ## end sub load_hgnc
 
 1;

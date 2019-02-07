@@ -28,12 +28,12 @@ use Test::More;
 use Test::Exception;
 use Test::Warnings;
 use Bio::EnsEMBL::Tark::Test::TestDB;
-use Bio::EnsEMBL::Tark::DB;
+# use Bio::EnsEMBL::Tark::DB;
 
 # use Bio::EnsEMBL::Test::MultiTestDB;
 
 # Check that the modules loaded correctly
-use_ok 'Bio::EnsEMBL::Tark::DB';
+# use_ok 'Bio::EnsEMBL::Tark::DB';
 
 # my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new;
 # my $dba = $multi_db->get_DBAdaptor('core');

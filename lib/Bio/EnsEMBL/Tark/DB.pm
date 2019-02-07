@@ -28,11 +28,9 @@ use Config::General;
 use Config::IniFiles; # FIXME normalise around one config format
 use Bio::EnsEMBL::Tark::Schema;
 
-# use MooseX::Singleton;
 use Moose;
 with 'MooseX::Log::Log4perl';
 
-my $singleton;
 
 has dsn => (
   is => 'ro',
@@ -58,7 +56,8 @@ has session_id => (
 has schema => (
   isa => 'Bio::EnsEMBL::Tark::Schema',
   is => 'ro',
-  builder => '_init_db'
+  builder => '_init_db',
+  lazy => 1,
 );
 
 has config => (
@@ -69,7 +68,8 @@ has config => (
 has config_file => (
   isa => 'Str',
   is => 'rw',
-  builder => '_guess_config'
+  builder => '_guess_config',
+  lazy => 1,
 );
 
 
@@ -86,19 +86,27 @@ sub _init_db {
 
   $self->log()->info('Initializing DB');
 
-  $self->_init_config if ! defined $self->config;
+  if ( !defined $self->config ) {
+    $self->_init_config;
+  }
+
   $self->_validate_config($self->config);
+
   my %conf = %{ $self->config };
   my %opts;
-  $opts{mysql_enable_utf8}    = 1 if ($conf{driver} eq 'mysql');
-  $opts{mysql_auto_reconnect} = 1 if ($conf{driver} eq 'mysql');
-  $opts{sqlite_unicode}       = 1 if($conf{driver} eq 'SQLite');
+  $opts{mysql_enable_utf8}    = 1 if ( $conf{driver} eq 'mysql' );
+  $opts{mysql_auto_reconnect} = 1 if ( $conf{driver} eq 'mysql' );
+  $opts{sqlite_unicode}       = 1 if ( $conf{driver} eq 'SQLite' );
   my $dsn;
-  if ($conf{driver} eq 'SQLite') {
-    $dsn = sprintf 'dbi:%s:database=%s',$conf{driver},$conf{file};
-    $self->now_function("date('now')");
+  if ( defined $self->dsn ) {
+    $dsn = $self->dsn;
   } else {
-    $dsn = sprintf 'dbi:%s:database=%s;host=%s;port=%s', $conf{driver}, $conf{db}, $conf{host}, $conf{port};
+    if ($conf{driver} eq 'SQLite') {
+      $dsn = sprintf 'dbi:%s:database=%s',$conf{driver},$conf{file};
+      $self->now_function("date('now')");
+    } else {
+      $dsn = sprintf 'dbi:%s:database=%s;host=%s;port=%s', $conf{driver}, $conf{db}, $conf{host}, $conf{port};
+    }
   }
 
   my %deploy_opts = ();
@@ -145,7 +153,7 @@ sub _init_db {
 =cut
 
 sub _guess_config {
-  return;
+  confess 'Undefined method: _guess_config';
 } ## end sub _guess_config
 
 
@@ -197,9 +205,7 @@ sub _validate_config {
     }
   }
   if (scalar @errors > 0) {
-    confess sprintf "%s \n%s",
-      ($self->config_file) ? 'Missing options in '.$self->config_file. ': ' : 'Missing options in supplied config: ',
-      join ';',@errors;
+    confess "Error in validation\n%s", join "\n", @errors;
   }
 } ## end sub _validate_config
 
@@ -216,22 +222,6 @@ sub dbh {
   my $self = shift;
   return $self->schema->storage->dbh;
 } ## end sub dbh
-
-
-=head2 checksum_array
-  Description: Join an array of values with a ':' delimeter and find a sha1
-               checksum of it
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub checksum_array {
-  my ($self, @values) = @_;
-
-  return Digest::SHA1::sha1( join ':', grep { defined } @values );
-} ## end sub checksum_array
 
 
 =head2 start_session
@@ -278,6 +268,8 @@ sub end_session {
 
     $self->session_id(0);
   }
+
+  return;
 } ## end sub end_session
 
 
@@ -301,6 +293,8 @@ sub abort_session {
     $dbh->do( 'SET UNIQUE_CHECKS = 1' );
     $dbh->do( 'SET FOREIGN_KEY_CHECKS = 1' );
   }
+
+  return;
 } ## end sub abort_session
 
 1;

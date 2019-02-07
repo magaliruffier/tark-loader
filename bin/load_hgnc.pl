@@ -37,15 +37,22 @@ Log::Log4perl->easy_init( $DEBUG );
 
 get_options();
 
-Bio::EnsEMBL::Tark::DB->initialize(
-  dsn => "DBI:mysql:database=$database;host=$dbhost;port=$dbport",
-  dbuser => $dbuser,
-  dbpass => $dbpass
+my $db = Bio::EnsEMBL::Tark::DB->new(
+  config => {
+    driver => 'mysql',
+    host   => $dbhost,
+    port   => $dbport,
+    user   => $dbuser,
+    pass   => $dbpass,
+    db     => $database,
+  }
 );
 
-my $session_id = Bio::EnsEMBL::Tark::DB->start_session( 'HGNC loader' );
+my $session_id = $db->start_session( 'HGNC loader' );
 
-my $loader = Bio::EnsEMBL::Tark::HGNC->new( session_id => $session_id );
+my $loader = Bio::EnsEMBL::Tark::HGNC->new(
+  session_id => $session_id
+);
 
 if($flush_names) {
   $loader->flush_hgnc();
@@ -53,7 +60,7 @@ if($flush_names) {
 
 $loader->load_hgnc( $hgnc_file );
 
-Bio::EnsEMBL::Tark::DB->end_session( $session_id );
+$db->end_session( $session_id );
 
 
 =head2 get_options
