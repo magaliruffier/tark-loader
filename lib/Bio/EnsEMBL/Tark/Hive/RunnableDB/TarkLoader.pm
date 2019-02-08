@@ -45,11 +45,13 @@ sub param_defaults {
     'tark_pass' => q{},
     'tark_db'   => 'test_tark',
 
+    # Examples of the remaining tag parameters:
     # 'tag_block'        => 'Ensembl',
     # 'tag_shortname'    => 84,
     # 'tag_description'  => 'Ensembl release 84',
     # 'tag_feature_type' => 'all',
 
+    # Examples of the remaining block parameters:
     # block_size => 1000,
     # start_block => 1,
     # max_gene_id => 1000,
@@ -67,7 +69,7 @@ sub param_defaults {
 =cut
 
 sub run {
-  my $self = shift @_;
+  my ( $self ) = @_;
 
   my $species  = $self->param('species');
   # my $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, 'core' );
@@ -119,7 +121,6 @@ sub run {
     qw/ block_size start_block max_gene_id /
   ) {
     if ($self->param_is_defined( $block_label ) ) {
-      print "PARAM: $block_label - " . $self->param( $block_label ) . "\n";
       $loader->{$block_label} = $self->param( $block_label );
     }
   }
@@ -127,6 +128,8 @@ sub run {
   $loader->load_species( $core_dba, 'Ensembl' );
 
   $tark_dba->end_session();
+
+  return;
 }
 
 ################################### main functionality starts here ###################

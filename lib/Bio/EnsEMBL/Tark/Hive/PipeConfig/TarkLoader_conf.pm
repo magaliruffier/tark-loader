@@ -25,6 +25,33 @@ use warnings;
 # or indirectly
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 
+# Allow this particular config to use conditional dataflow and INPUT_PLUS
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+
+
+
+=head2 default_options
+    Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
+                  In addition to the standard things it defines four options:
+                    o('concurrent_jobs')   defines how many tables can be worked on in parallel
+=cut
+
+sub default_options {
+    my ($self) = @_;
+
+    return {
+        %{$self->SUPER::default_options(@_)},
+
+        'core_db'  => {
+          -host   => $self->o( 'core_host' ),
+          -port   => $self->o( 'core_port' ),
+          -user   => $self->o( 'core_user' ),
+          -pass   => q{},
+          -dbname => $self->o( 'core_dbname' ),
+          -driver => 'mysql',
+        },
+    };
+}
 
 =head2 pipeline_analyses
   Description : Implements pipeline_analyses() interface method of
@@ -55,9 +82,9 @@ sub pipeline_analyses {
       ( SELECT @rownum:=0 ) r,
       ( SELECT
           CEILING(
-            COUNT( gene_id )/$self->o( 'block_size' )
+            MAX(gene_id)/$self->o( 'block_size' )
           ) maxline,
-          max(gene_id) max_gene_id
+          MAX(gene_id) max_gene_id
         FROM
           gene
       ) mr
@@ -70,13 +97,13 @@ SQL
       -logic_name => 'generate_job_list',
       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
       -parameters => {
-        'db_conn'      => '#target_db#',
-        'column_names' => [ 'start_block' ],
+        'db_conn'      => $self->dbconn_2_url( 'core_db' ),
+        'column_names' => [ 'start_block', 'max_gene_id' ],
         'inputquery'   => $sql,
       },
       -input_ids => [
         {
-          'target_db'     => $self->o('target_db'),
+          'target_db'  => $self->dbconn_2_url( 'core_db' ),
         }
       ],
 
@@ -90,34 +117,25 @@ SQL
 
         # Worker block size params
         block_size  => $self->o( 'block_size' ),
-        start_block => '#start_block#',
-        max_gene_id => '#max_gene_id#',
 
         # Species name
-        species     => '#species#',
+        species     => $self->o( 'species' ),
 
         # Core db params
-        host => '#host#',
-        port => '#port#',
-        user => '#user#',
-        pass => '#pass#',
-        db   => '#dbname#',
+        host => $self->o( 'core_host' ),
+        port => $self->o( 'core_port' ),
+        user => $self->o( 'core_user' ),
+        pass => $self->o( 'core_pass' ),
+        db   => $self->o( 'core_dbname' ),
 
         # Tark db params
-        tark_host => '#tark_host#',
-        tark_port => '#tark_port#',
-        tark_user => '#tark_user#',
-        tark_pass => '#tark_pass#',
-        tark_db   => '#tark_db#',
+        tark_host => $self->o( 'tark_host' ),
+        tark_port => $self->o( 'tark_port' ),
+        tark_user => $self->o( 'tark_user' ),
+        tark_pass => $self->o( 'tark_pass' ),
+        tark_db   => $self->o( 'tark_db' ),
 
-      }
-      -analysis_capacity  =>  4,  # use per-analysis limiter
-      # -flow_into => {
-      #   1 => [
-      #     '?accu_name=at_count&accu_address=[]',
-      #     '?accu_name=gc_count&accu_address=[]'
-      #   ]
-      # },
+      },
     },
 
     # {
