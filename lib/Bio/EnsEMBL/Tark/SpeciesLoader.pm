@@ -274,6 +274,10 @@ sub load_species {
   my $iter;
   if ( defined $self->block_size ) {
     # Fetch and load genes within a defined ID range
+    print 'BLOCK SIZE:  ' . $self->block_size . "\n";
+    print 'START BLOCK: ' . $self->start_block . "\n";
+    print 'MAX GENE ID: ' . $self->max_gene_id . "\n";
+
     my $start_block_id = ( ( $self->start_block - 1 ) * $self->block_size ) + 1;
     my $end_block_id  = $self->start_block * $self->block_size;
     if ( $end_block_id > $self->max_gene_id ) {
@@ -283,6 +287,7 @@ sub load_species {
     my $ga   = $dba->get_GeneAdaptor();
     foreach my $current_gene ( $start_block_id..$end_block_id ) {
       my $gene = $ga->fetch_by_dbID( $current_gene );
+      print $current_gene . "\n";
       if ( $gene ) {
         $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
         $self->_load_gene($gene, $session_pkg, $source_name, $tag);

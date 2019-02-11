@@ -30,6 +30,9 @@ use Bio::EnsEMBL::Tark::SpeciesLoader;
 use Bio::EnsEMBL::Tark::TagConfig;
 use Bio::EnsEMBL::Tark::Utils;
 
+use Log::Log4perl qw(:easy);
+Log::Log4perl->easy_init($DEBUG);
+
 
 sub param_defaults {
   return {
@@ -73,6 +76,7 @@ sub run {
 
   my $species  = $self->param('species');
   # my $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, 'core' );
+
   my $core_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -host   => $self->param('host'),
     -port   => $self->param('port'),
@@ -101,10 +105,10 @@ sub run {
   $tag_config_hash{ $tag_block } = {};
 
   foreach my $tag_label (
-    qw/ tag_shortname tag_description tag_feature_type tag_version /
+    qw/ shortname description feature_type version /
   ) {
-    if ( $self->param_is_defined( $tag_label ) ) {
-      $tag_config_hash{ $tag_block }{ $tag_label } = $self->param( $tag_label );
+    if ( $self->param_is_defined( 'tag_' . $tag_label ) ) {
+      $tag_config_hash{ $tag_block }{ $tag_label } = $self->param( 'tag_' . $tag_label );
     }
   }
 
@@ -113,8 +117,11 @@ sub run {
   );
 
   my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
-    session    => $tark_dba,
-    tag_config => $tag_config
+    session     =>  $tark_dba,
+    tag_config  =>  $tag_config,
+    start_block => $self->param_required( 'start_block' ),
+    block_size  => $self->param_required( 'block_size' ),
+    max_gene_id => $self->param_required( 'max_gene_id' ),
   );
 
   foreach my $block_label (

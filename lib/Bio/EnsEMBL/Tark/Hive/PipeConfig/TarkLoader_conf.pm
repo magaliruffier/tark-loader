@@ -28,6 +28,8 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 # Allow this particular config to use conditional dataflow and INPUT_PLUS
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
+
 
 
 =head2 default_options
@@ -73,40 +75,42 @@ sub default_options {
 sub pipeline_analyses {
   my ($self) = @_;
 
+  use Data::Dumper;
+
   my $sql = (<<'SQL');
     SELECT
-      @rownum:=@rownum+1 AS start_block,
-      mr.max_gene_id
+      CEILING(
+        MAX(gene_id) / %d
+      ) maxjob,
+      MAX(gene_id) max_gene_id
     FROM
-      gene,
-      ( SELECT @rownum:=0 ) r,
-      ( SELECT
-          CEILING(
-            MAX(gene_id)/$self->o( 'block_size' )
-          ) maxline,
-          MAX(gene_id) max_gene_id
-        FROM
-          gene
-      ) mr
-    WHERE
-      @rownum<mr.maxline;
+      gene
 SQL
+  $sql = sprintf $sql, $self->o('block_size');
 
   return [
     {
-      -logic_name => 'generate_job_list',
+      -logic_name => 'generate_sql_params',
       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
       -parameters => {
         'db_conn'      => $self->dbconn_2_url( 'core_db' ),
-        'column_names' => [ 'start_block', 'max_gene_id' ],
+        'column_names' => [ 'maxjob', 'max_gene_id' ],
         'inputquery'   => $sql,
-      },
+        },
       -input_ids => [
         {
           'target_db'  => $self->dbconn_2_url( 'core_db' ),
         }
       ],
-
+      -flow_into  => { 2 => { 'generate_job_list' => INPUT_PLUS() } },
+    },
+    {
+      -logic_name => 'generate_job_list',
+      -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+      -parameters => {
+        'column_names' => [ 'start_block' ],
+        'inputlist'    => '#expr( [ 1..#maxjob# ] )expr#',
+      },
       -flow_into  => { 2 => { 'load_tark' => INPUT_PLUS() } },
     },
 
@@ -116,7 +120,12 @@ SQL
       -parameters => {
 
         # Worker block size params
-        block_size  => $self->o( 'block_size' ),
+        tag_block        => $self->o( 'tag_block' ),
+        tag_shortname    => $self->o( 'tag_shortname' ),
+        tag_description  => $self->o( 'tag_description' ),
+        tag_feature_type => $self->o( 'tag_feature_type' ),
+        tag_version      => $self->o( 'tag_version' ),
+        block_size       => $self->o( 'block_size' ),
 
         # Species name
         species     => $self->o( 'species' ),
