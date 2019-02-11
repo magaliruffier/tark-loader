@@ -86,7 +86,6 @@ standaloneJob(
 );
 
 
-print "\n\nUSING BLOACK SIZE\n\n";
 standaloneJob(
   'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
   {
@@ -108,9 +107,8 @@ standaloneJob(
     'tag_description'  => 'Ensembl release 84',
     'tag_feature_type' => 'all',
 
-    'block_size'  => 1000,
-    'start_block' => 19,
-    'max_gene_id' => 18270,
+    'block_size'   => 10,
+    'gene_id_list' => '18271,18256,18262'
   },
 );
 

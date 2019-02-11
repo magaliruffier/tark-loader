@@ -79,12 +79,13 @@ sub pipeline_analyses {
 
   my $sql = (<<'SQL');
     SELECT
-      CEILING(
-        MAX(gene_id) / %d
-      ) maxjob,
-      MAX(gene_id) max_gene_id
+      GROUP_CONCAT(gene_grp.gene_id SEPARATOR ',')
     FROM
-      gene
+      (
+        SELECT gene_id, CEILING( RAND() * %d ) AS grp FROM gene
+      ) gene_grp
+    GROUP BY
+      gene_grp.grp
 SQL
   $sql = sprintf $sql, $self->o('block_size');
 
@@ -94,7 +95,7 @@ SQL
       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
       -parameters => {
         'db_conn'      => $self->dbconn_2_url( 'core_db' ),
-        'column_names' => [ 'maxjob', 'max_gene_id' ],
+        'column_names' => [ 'gene_id_list' ],
         'inputquery'   => $sql,
         },
       -input_ids => [
@@ -102,15 +103,6 @@ SQL
           'target_db'  => $self->dbconn_2_url( 'core_db' ),
         }
       ],
-      -flow_into  => { 2 => { 'generate_job_list' => INPUT_PLUS() } },
-    },
-    {
-      -logic_name => 'generate_job_list',
-      -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-      -parameters => {
-        'column_names' => [ 'start_block' ],
-        'inputlist'    => '#expr( [ 1..#maxjob# ] )expr#',
-      },
       -flow_into  => { 2 => { 'load_tark' => INPUT_PLUS() } },
     },
 
@@ -125,7 +117,6 @@ SQL
         tag_description  => $self->o( 'tag_description' ),
         tag_feature_type => $self->o( 'tag_feature_type' ),
         tag_version      => $self->o( 'tag_version' ),
-        block_size       => $self->o( 'block_size' ),
 
         # Species name
         species     => $self->o( 'species' ),

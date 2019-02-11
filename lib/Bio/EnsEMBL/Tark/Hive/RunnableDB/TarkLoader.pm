@@ -116,13 +116,22 @@ sub run {
     config => \%tag_config_hash
   );
 
-  my $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
-    session     =>  $tark_dba,
-    tag_config  =>  $tag_config,
-    start_block => $self->param_required( 'start_block' ),
-    block_size  => $self->param_required( 'block_size' ),
-    max_gene_id => $self->param_required( 'max_gene_id' ),
-  );
+  my $loader;
+
+  if ( $self->param_is_defined( 'gene_id_list' ) ) {
+    my @gene_id_list = split /,/, $self->param( 'gene_id_list' ) ;
+
+    $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
+      session     =>  $tark_dba,
+      tag_config  =>  $tag_config,
+      gene_id_list => \@gene_id_list,
+    );
+  } else {
+    $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
+      session     =>  $tark_dba,
+      tag_config  =>  $tag_config,
+    );
+  }
 
   foreach my $block_label (
     qw/ block_size start_block max_gene_id /
