@@ -28,6 +28,8 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 # Allow this particular config to use conditional dataflow and INPUT_PLUS
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
+use Bio::EnsEMBL::Tark::Hive::PipeConfig::SQL;
+
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 
@@ -75,19 +77,9 @@ sub default_options {
 sub pipeline_analyses {
   my ($self) = @_;
 
-  use Data::Dumper;
+  my $sql_handle = Bio::EnsEMBL::Tark::Hive::PipeConfig::SQL->new();
 
-  my $sql = (<<'SQL');
-    SELECT
-      GROUP_CONCAT(gene_grp.gene_id SEPARATOR ',')
-    FROM
-      (
-        SELECT gene_id, CEILING( RAND() * %d ) AS grp FROM gene
-      ) gene_grp
-    GROUP BY
-      gene_grp.grp
-SQL
-  $sql = sprintf $sql, $self->o('block_size');
+  my $sql = sprintf $sql_handle->gene_grouping(), $self->o('block_size');
 
   return [
     {
