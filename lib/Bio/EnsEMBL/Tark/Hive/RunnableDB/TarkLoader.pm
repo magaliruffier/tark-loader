@@ -14,7 +14,48 @@ See the NOTICE file distributed with this work for additional information
    See the License for the specific language governing permissions and
    limitations under the License.
 
+
+=head NAME
+
+  Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf
+
+
+=head1 SYNOPSIS
+
+  # Prepare the pipeline
+  init_pipeline.pl Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf
+    --tark_host 127.0.0.1
+    --tark_port 3306
+    --tark_user travis
+    --tark_pass ''
+    --tark_db $TARK_SPP_DB
+    --core_host 127.0.0.1
+    --core_port 3306
+    --core_user travis
+    --core_pass ''
+    --core_dbname $ENS_SPP_CORE_DB
+    --host 127.0.0.1
+    --port 3306
+    --user travis
+    --password ''
+    --pipeline_name test_hive_1234
+    --species homo_sapiens
+    --tag_block release
+    --tag_shortname 84
+    --tag_description 'Ensembl release 84'
+    --tag_feature_type all
+    --tag_version 1
+    --block_size 10
+
+  runWorker.pl -url $EHIVE_URL
+
+
+=head1 DESCRIPTION
+
+  A pipeline for loading ensembl genomic features into the Tark DB.
+
 =cut
+
 
 package Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader;
 
