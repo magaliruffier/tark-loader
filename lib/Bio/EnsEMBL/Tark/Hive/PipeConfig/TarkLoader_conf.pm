@@ -48,7 +48,7 @@ sub default_options {
           -host   => $self->o( 'core_host' ),
           -port   => $self->o( 'core_port' ),
           -user   => $self->o( 'core_user' ),
-          -pass   => q{},
+          -pass   => $self->o( 'core_pass' ),
           -dbname => $self->o( 'core_dbname' ),
           -driver => 'mysql',
         },

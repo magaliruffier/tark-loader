@@ -45,7 +45,7 @@ See the NOTICE file distributed with this work for additional information
     --tag_description 'Ensembl release 84'
     --tag_feature_type all
     --tag_version 1
-    --block_size 10
+    --block_size 1000
 
   runWorker.pl -url $EHIVE_URL
 
