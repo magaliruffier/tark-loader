@@ -84,7 +84,7 @@ SQL
 =cut
 
 sub gene_grouping_inclusion {
-  my ($self) = @_;
+  my ($self, $list_length) = @_;
 
   my $sub_string = '"%s"' . ', "%s"' x $list_length-1;
 
