@@ -68,15 +68,15 @@ sub run {
 
   my $sql = q{};
 
-  if ( defined $self->o('exclude_source') ) {
-    my @source_list = split /,/, $self->o('exclude_source');
+  if ( defined $self->param_is_defined('exclude_source') ) {
+    my @source_list = split /,/, $self->param('exclude_source');
     $sql = sprintf $sql_handle->gene_grouping_exclusion(),
-      $self->o('block_size'), scalar @source_list;
+      $self->param('block_size'), scalar @source_list;
   }
-  elsif ( defined $self->o('include_source') ) {
-    my @source_list = split /,/, $self->o('include_source');
+  elsif ( defined $self->param_is_defined('include_source') ) {
+    my @source_list = split /,/, $self->param('include_source');
     $sql = sprintf $sql_handle->gene_grouping_inclusion(),
-      $self->o('block_size'), scalar @source_list;
+      $self->param('block_size'), scalar @source_list;
   }
   else {
     $sql = sprintf $sql_handle->gene_grouping(), $self->o('block_size');
@@ -100,7 +100,7 @@ sub write_output {  # but this time we have something to store
   $self->dataflow_output_id(
     {
       'sql' => $self->param('sql'),
-    }, 1
+    }, 2
   );
 }
 

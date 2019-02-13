@@ -107,6 +107,11 @@ sub pipeline_analyses {
     {
       -logic_name => 'generate_sql',
       -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::GeneSetSQL',
+      -input_ids => [
+        {
+          'target_db'  => $self->dbconn_2_url( 'core_db' ),
+        }
+      ],
       -flow_into  => { 2 => { 'generate_sql_params' => INPUT_PLUS() } },
     },
     {
@@ -117,11 +122,6 @@ sub pipeline_analyses {
         'column_names' => [ 'gene_id_list' ],
         'inputquery'   => '#sql#',
         },
-      -input_ids => [
-        {
-          'target_db'  => $self->dbconn_2_url( 'core_db' ),
-        }
-      ],
       -flow_into  => { 2 => { 'load_tark' => INPUT_PLUS() } },
     },
 
