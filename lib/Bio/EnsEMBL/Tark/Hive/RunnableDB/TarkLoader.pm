@@ -189,6 +189,4 @@ sub run {
   return;
 }
 
-################################### main functionality starts here ###################
-
 1;

@@ -61,17 +61,12 @@ sub default_options {
   Description : Implements pipeline_analyses() interface method of
                 Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the
                 structure of the pipeline: analyses, jobs, rules, etc.
-                Here it defines three analyses:
-                  * 'chunk_sequences' which uses the FastaFactory runnable to split
-                     sequences in an input file into smaller chunks
-                  * 'count_atgc' which takes a chunk produced by chunk_sequences,
-                    and tallies the number of occurrences of each base in the
-                    sequence(s) in the file
-                  * 'calc_overall_percentage' which takes the base count subtotals
-                    from all count_atgc jobs and calculates the overall %GC in the
-                    sequence(s) in the original input file. The
-                    'calc_overall_percentage' job is blocked by a semaphore until
-                    all count_atgc jobs have completed.
+                Here it defines two analyses:
+                  * 'job_factory' which uses the JobFactory runnable to optain a
+                    chunked set of lists of gene_ids from the Core db.
+                  * 'TarkLoader' which takes a chunk produced by the JobFactory
+                    and loads the listed genes into the Tark db.
+
 =cut
 
 sub pipeline_analyses {
@@ -126,19 +121,9 @@ sub pipeline_analyses {
         tark_user => $self->o( 'tark_user' ),
         tark_pass => $self->o( 'tark_pass' ),
         tark_db   => $self->o( 'tark_db' ),
-
       },
+      -analysis_capacity => 50,
     },
-
-    # {
-    #   -logic_name => 'load_hgnc',
-    #   -module     => 'Bio::EnsEMBL::Tark::HiveRunnableDB::HGNCLoader',
-    #   -flow_into => {
-    #     1 => [
-    #       '?table_name=final_result' #Flows output into the DB table 'final_result'
-    #     ]
-    #   },
-    # },
   ];
 }
 
