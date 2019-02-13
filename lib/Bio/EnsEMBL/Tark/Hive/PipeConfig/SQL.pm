@@ -46,4 +46,50 @@ SQL
   return $sql;
 } ## end sub gene_grouping
 
+
+=head2 gene_grouping_exclusion
+  Description : Query for getting lists of genes split into n batches. Genes are
+               Randomly assigned to each group
+=cut
+
+sub gene_grouping_exclusion {
+  my ($self) = @_;
+
+  my $sql = (<<'SQL');
+    SELECT
+      GROUP_CONCAT(gene_grp.gene_id SEPARATOR ',')
+    FROM
+      (
+        SELECT gene_id, CEILING( RAND() * %d ) AS grp FROM gene WHERE source NOT IN ( %s )
+      ) gene_grp
+    GROUP BY
+      gene_grp.grp
+SQL
+
+  return $sql;
+} ## end sub gene_grouping_exclusion
+
+
+=head2 gene_grouping_inclusion
+  Description : Query for getting lists of genes split into n batches. Genes are
+               Randomly assigned to each group
+=cut
+
+sub gene_grouping_inclusion {
+  my ($self) = @_;
+
+  my $sql = (<<'SQL');
+    SELECT
+      GROUP_CONCAT(gene_grp.gene_id SEPARATOR ',')
+    FROM
+      (
+        SELECT gene_id, CEILING( RAND() * %d ) AS grp FROM gene WHERE source IN ( %s )
+      ) gene_grp
+    GROUP BY
+      gene_grp.grp
+SQL
+
+  return $sql;
+} ## end sub gene_grouping_inclusion
+
 1;
