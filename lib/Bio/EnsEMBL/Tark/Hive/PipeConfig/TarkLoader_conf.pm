@@ -103,23 +103,19 @@ sub default_options {
 sub pipeline_analyses {
   my ($self) = @_;
 
-  my $sql_handle = Bio::EnsEMBL::Tark::Hive::PipeConfig::SQL->new();
-
-  my $sql = sprintf $sql_handle->gene_grouping(), $self->o('block_size');
-
   return [
     {
       -logic_name => 'generate_sql',
       -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
       -flow_into  => { 2 => { 'generate_sql_params' => INPUT_PLUS() } },
-    }
+    },
     {
       -logic_name => 'generate_sql_params',
       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
       -parameters => {
         'db_conn'      => $self->dbconn_2_url( 'core_db' ),
         'column_names' => [ 'gene_id_list' ],
-        'inputquery'   => $sql,
+        'inputquery'   => '#sql#',
         },
       -input_ids => [
         {
