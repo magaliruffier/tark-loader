@@ -55,7 +55,7 @@ SQL
 sub gene_grouping_exclusion {
   my ($self, $list_length) = @_;
 
-  my $sub_string = '"%s"' . ', "%s"' x $list_length-1;
+  my $sub_string = '"%s"' . ', "%s"' x ($list_length-1);
 
   my $sql = (<<"SQL");
     SELECT
@@ -86,7 +86,7 @@ SQL
 sub gene_grouping_inclusion {
   my ($self, $list_length) = @_;
 
-  my $sub_string = '"%s"' . ', "%s"' x $list_length-1;
+  my $sub_string = '"%s"' . ', "%s"' x ($list_length-1);
 
   my $sql = (<<"SQL");
     SELECT

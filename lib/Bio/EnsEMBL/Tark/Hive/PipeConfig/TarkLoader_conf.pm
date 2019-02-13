@@ -85,6 +85,9 @@ sub default_options {
           -dbname => $self->o( 'core_dbname' ),
           -driver => 'mysql',
         },
+
+        exclude_source => q{},
+        include_source => q{},
     };
 } ## end sub default_options
 
@@ -107,6 +110,11 @@ sub pipeline_analyses {
     {
       -logic_name => 'generate_sql',
       -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::GeneSetSQL',
+      -parameters => {
+        block_size => $self->o('block_size'),
+        exclude_source => $self->o('exclude_source'),
+        include_source => $self->o('include_source'),
+      },
       -input_ids => [
         {
           'target_db'  => $self->dbconn_2_url( 'core_db' ),

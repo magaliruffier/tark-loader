@@ -68,18 +68,18 @@ sub run {
 
   my $sql = q{};
 
-  if ( defined $self->param_is_defined('exclude_source') ) {
+  if ( $self->param_is_defined('exclude_source') and $self->param('exclude_source') ) {
     my @source_list = split /,/, $self->param('exclude_source');
-    $sql = sprintf $sql_handle->gene_grouping_exclusion(),
-      $self->param('block_size'), scalar @source_list;
+    $sql = sprintf $sql_handle->gene_grouping_exclusion( scalar @source_list ),
+      $self->param('block_size'), @source_list;
   }
-  elsif ( defined $self->param_is_defined('include_source') ) {
+  elsif ( $self->param_is_defined('include_source') and $self->param('include_source') ) {
     my @source_list = split /,/, $self->param('include_source');
-    $sql = sprintf $sql_handle->gene_grouping_inclusion(),
-      $self->param('block_size'), scalar @source_list;
+    $sql = sprintf $sql_handle->gene_grouping_inclusion( scalar @source_list ),
+      $self->param('block_size'), @source_list;
   }
   else {
-    $sql = sprintf $sql_handle->gene_grouping(), $self->o('block_size');
+    $sql = sprintf $sql_handle->gene_grouping(), $self->param('block_size');
   }
 
   $self->param('sql', $sql);
