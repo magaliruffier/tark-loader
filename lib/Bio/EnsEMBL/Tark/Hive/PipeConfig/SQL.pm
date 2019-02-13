@@ -53,14 +53,22 @@ SQL
 =cut
 
 sub gene_grouping_exclusion {
-  my ($self) = @_;
+  my ($self, $list_length) = @_;
 
-  my $sql = (<<'SQL');
+  my $sub_string = '"%s"' . ', "%s"' x $list_length-1;
+
+  my $sql = (<<"SQL");
     SELECT
       GROUP_CONCAT(gene_grp.gene_id SEPARATOR ',')
     FROM
       (
-        SELECT gene_id, CEILING( RAND() * %d ) AS grp FROM gene WHERE source NOT IN ( %s )
+        SELECT
+         gene_id,
+         CEILING( RAND() * %d ) AS grp
+        FROM
+          gene
+        WHERE
+          source NOT IN ( $sub_string )
       ) gene_grp
     GROUP BY
       gene_grp.grp
@@ -78,12 +86,20 @@ SQL
 sub gene_grouping_inclusion {
   my ($self) = @_;
 
-  my $sql = (<<'SQL');
+  my $sub_string = '"%s"' . ', "%s"' x $list_length-1;
+
+  my $sql = (<<"SQL");
     SELECT
       GROUP_CONCAT(gene_grp.gene_id SEPARATOR ',')
     FROM
       (
-        SELECT gene_id, CEILING( RAND() * %d ) AS grp FROM gene WHERE source IN ( %s )
+        SELECT
+         gene_id,
+         CEILING( RAND() * %d ) AS grp
+        FROM
+          gene
+        WHERE
+          source IN ( $sub_string )
       ) gene_grp
     GROUP BY
       gene_grp.grp

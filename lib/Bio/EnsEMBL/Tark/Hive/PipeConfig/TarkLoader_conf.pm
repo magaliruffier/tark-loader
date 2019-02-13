@@ -107,6 +107,17 @@ sub pipeline_analyses {
 
   my $sql = sprintf $sql_handle->gene_grouping(), $self->o('block_size');
 
+  if ( defined $self->o('exclude_source') ) {
+    my @source_list = split /,/, $self->o('exclude_source');
+    $sql = sprintf $sql_handle->gene_grouping_exclusion(),
+      $self->o('block_size'), scalar @source_list;
+  }
+  elsif ( defined $self->o('include_source') ) {
+    my @source_list = split /,/, $self->o('include_source');
+    $sql = sprintf $sql_handle->gene_grouping_inclusion(),
+      $self->o('block_size'), scalar @source_list;
+  }
+
   return [
     {
       -logic_name => 'generate_sql_params',
