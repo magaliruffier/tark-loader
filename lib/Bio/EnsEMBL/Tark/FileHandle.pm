@@ -46,15 +46,17 @@ package Bio::EnsEMBL::Tark::FileHandle;
 
 use strict;
 use warnings;
-
+use Moose;
 use Carp;
 
 use PerlIO::gzip;
 
 
 =head2 get_file_handle
-  Description:
-  Returntype :
+  Arg [1]    : $filename : string
+  Description: Create a file handle for a given string. Capable of handling local
+               files as well as URLs as well as gzipped files.
+  Returntype : File handle
   Exceptions : none
   Caller     : general
 

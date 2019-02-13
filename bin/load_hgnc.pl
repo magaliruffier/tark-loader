@@ -51,7 +51,7 @@ my $db = Bio::EnsEMBL::Tark::DB->new(
 my $session_id = $db->start_session( 'HGNC loader' );
 
 my $loader = Bio::EnsEMBL::Tark::HGNC->new(
-  session_id => $session_id
+  session => $db
 );
 
 if($flush_names) {

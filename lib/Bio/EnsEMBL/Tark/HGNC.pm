@@ -43,12 +43,15 @@ has 'query' => (
   },
 );
 
-has 'session_id' => ( is => 'ro', isa => 'Int' );
+has session => (
+  is  => 'rw',
+  isa => 'Bio::EnsEMBL::Tark::DB',
+);
 
 
 =head2 BUILD
-  Description:
-  Returntype :
+  Description: Initialise the creation of the object
+  Returntype : undef
   Exceptions : none
   Caller     : general
 
@@ -60,7 +63,7 @@ sub BUILD {
   $self->log()->info('Initializing HGNC loader');
 
   # Attempt a connection to the database
-  my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+  my $dbh = $self->session->dbh();
 
   # Setup the insert queries
   my $insert_gene_name_sql = (<<'SQL');
@@ -83,12 +86,21 @@ SQL
   return;
 } ## end sub BUILD
 
+
+=head2 flush_hgnc
+  Description: Truncate the gene_names table
+  Returntype : undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub flush_hgnc {
   my $self = shift;
 
   $self->log()->info('Truncating gene names table');
 
-  my $dbh = Bio::EnsEMBL::Tark::DB->dbh();
+  my $dbh = $self->session->dbh();
 
   $dbh->do('TRUNCATE gene_names');
 
@@ -97,9 +109,9 @@ sub flush_hgnc {
 
 
 =head2 load_hgnc
-
-  Description:
-  Returntype :
+  Arg [1]    : $hgnc_file : string
+  Description: Extract HGNC names and aliases from the HGNC dump files
+  Returntype : undef
   Exceptions : none
   Caller     : general
   Notes      : Col 1: hgnc_id
@@ -118,10 +130,12 @@ sub load_hgnc {
 
   my $in_fh;
   if($hgnc_file) {
-  $self->log()->info("Using HGNC file $hgnc_file");
-  $in_fh = Bio::EnsEMBL::Tark::FileHandle->get_file_handle($hgnc_file);
+    $self->log()->info("Using HGNC file $hgnc_file");
+
+    my $file_handle = Bio::EnsEMBL::Tark::FileHandle->new();
+    $in_fh = $file_handle->get_file_handle($hgnc_file);
   } else {
-  $in_fh = *STDIN;
+    $in_fh = *STDIN;
   }
 
   my $get_gene = $self->get_query('gene');
@@ -137,7 +151,7 @@ sub load_hgnc {
     my (undef, $hgnc_id) = split ':', $hgnc_line[0];
 
     # Insert the hgnc symbol
-    $insert_hgnc->execute($hgnc_id, $hgnc_line[1], 1, $self->session_id);
+    $insert_hgnc->execute($hgnc_id, $hgnc_line[1], 1, $self->session->session_id);
 
     # Add any synomyms
     next unless($hgnc_line[8]);
@@ -148,7 +162,7 @@ sub load_hgnc {
 
     my @aliases = split '\|', $hgnc_line[8];
     foreach my $alias (@aliases) {
-      $insert_hgnc->execute($hgnc_id, $alias, 0, $self->session_id);
+      $insert_hgnc->execute($hgnc_id, $alias, 0, $self->session->session_id);
     }
   }
 

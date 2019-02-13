@@ -186,13 +186,22 @@ __PACKAGE__->belongs_to(
 # Created by DBIx::Class::Schema::Loader v0.07045 @ 2019-01-22 14:34:33
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7U13wQ/V+hhT6UdVf4XKNQ
 
+=head2 sqlt_deploy_hook
+  Arg [1]    : $sqlt_table : Bio::EnsEMBL::Tark::Schema::Result::Session
+  Description: Add relevant missing indexes to the table
+  Returntype : undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub sqlt_deploy_hook {
   my ($self, $sqlt_table) = @_;
 
   $sqlt_table->add_index(name => 'fk_genome_1_idx', fields => ['session_id']);
 
   return;
-}
+} ## end sub sqlt_deploy_hook
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

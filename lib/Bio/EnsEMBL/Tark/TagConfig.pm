@@ -41,6 +41,16 @@ has 'blocks' => (
 );
 
 
+=head2 load_config_file
+  Arg [1]    : $file_name : string
+  Description: Parse the config file and extract the config parameters for each
+               block
+  Returntype : undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub load_config_file {
   my ( $self, $file_name ) = @_;
 
@@ -59,11 +69,12 @@ sub load_config_file {
   $self->config( \%config );
 
   return;
-}
+} ## end sub load_config_file
 
-=head2 initialize
-  Description:
-  Returntype :
+
+=head2 _init_blocks
+  Description: Return a list of the tags within the loaded config file
+  Returntype : ArrayRef
   Exceptions : none
   Caller     : general
 
@@ -76,11 +87,18 @@ sub _init_blocks {
 } ## end sub _init_blocks
 
 
+=head2 set_id
+  Description: Set the id value for the tag
+  Returntype : undef
+  Exceptions : none
+  Caller     : general
+
+=cut
 
 sub set_id {
   my ( $self, $block, $id ) = @_;
-  $self->config->{'release'}->{'id'} = $id;
+  $self->config->{ $block }->{'id'} = $id;
   return;
-}
+} ## end sub set_id
 
 1;

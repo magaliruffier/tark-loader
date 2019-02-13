@@ -294,6 +294,15 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07045 @ 2019-01-22 14:34:33
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Ez3MGYP6ig+907cGcF8GdA
 
+=head2 sqlt_deploy_hook
+  Arg [1]    : $sqlt_table : Bio::EnsEMBL::Tark::Schema::Result::Session
+  Description: Add relevant missing indexes to the table
+  Returntype : undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub sqlt_deploy_hook {
   my ($self, $sqlt_table) = @_;
 
