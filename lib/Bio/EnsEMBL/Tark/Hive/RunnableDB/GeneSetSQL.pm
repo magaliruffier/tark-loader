@@ -66,18 +66,20 @@ sub run {
 
   my $sql_handle = Bio::EnsEMBL::Tark::Hive::PipeConfig::SQL->new();
 
+  my $sql = q{};
+
   if ( defined $self->o('exclude_source') ) {
     my @source_list = split /,/, $self->o('exclude_source');
-    my $sql = sprintf $sql_handle->gene_grouping_exclusion(),
+    $sql = sprintf $sql_handle->gene_grouping_exclusion(),
       $self->o('block_size'), scalar @source_list;
   }
   elsif ( defined $self->o('include_source') ) {
     my @source_list = split /,/, $self->o('include_source');
-    my $sql = sprintf $sql_handle->gene_grouping_inclusion(),
+    $sql = sprintf $sql_handle->gene_grouping_inclusion(),
       $self->o('block_size'), scalar @source_list;
   }
   else {
-    my $sql = sprintf $sql_handle->gene_grouping(), $self->o('block_size');
+    $sql = sprintf $sql_handle->gene_grouping(), $self->o('block_size');
   }
 
   $self->param('sql', $sql);

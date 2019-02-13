@@ -106,7 +106,7 @@ sub pipeline_analyses {
   return [
     {
       -logic_name => 'generate_sql',
-      -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
+      -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::GeneSetSQL',
       -flow_into  => { 2 => { 'generate_sql_params' => INPUT_PLUS() } },
     },
     {
