@@ -23,6 +23,12 @@ use warnings;
 
 use Moose;
 
+
+=head2 gene_grouping
+  Description : Query for getting lists of genes split into n batches. Genes are
+               Randomly assigned to each group
+=cut
+
 sub gene_grouping {
   my ($self) = @_;
 
@@ -38,6 +44,6 @@ sub gene_grouping {
 SQL
 
   return $sql;
-}
+} ## end sub gene_grouping
 
 1;

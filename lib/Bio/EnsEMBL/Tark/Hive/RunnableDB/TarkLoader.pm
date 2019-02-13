@@ -20,39 +20,20 @@ See the NOTICE file distributed with this work for additional information
   Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf
 
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
-  # Prepare the pipeline
-  init_pipeline.pl Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf
-    --tark_host 127.0.0.1
-    --tark_port 3306
-    --tark_user travis
-    --tark_pass ''
-    --tark_db $TARK_SPP_DB
-    --core_host 127.0.0.1
-    --core_port 3306
-    --core_user travis
-    --core_pass ''
-    --core_dbname $ENS_SPP_CORE_DB
-    --host 127.0.0.1
-    --port 3306
-    --user travis
-    --password ''
-    --pipeline_name test_hive_1234
-    --species homo_sapiens
-    --tag_block release
-    --tag_shortname 84
-    --tag_description 'Ensembl release 84'
-    --tag_feature_type all
-    --tag_version 1
-    --block_size 1000
-
-  runWorker.pl -url $EHIVE_URL
+  Runnable for the loading of the Tark db from a Core db.
 
 
 =head1 DESCRIPTION
 
-  A pipeline for loading ensembl genomic features into the Tark DB.
+  A pipeline for loading ensembl genomic features into the Tark DB. Requires
+  connection parameters for the Tark and Core dbs, as well was matching tags to
+  describe the entries.
+
+  This process can be run over a whole core db or by passing a list of gene_ids
+  in a comma separated string, thus allowing multiple instances to handle the
+  loading of the Tark db.
 
 =cut
 
@@ -75,6 +56,11 @@ use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($DEBUG);
 
 
+=head2 param_defaults
+  Description : Defines the default parameters for the param variables
+
+=cut
+
 sub param_defaults {
   return {
     'host' => 'localhost',
@@ -94,13 +80,8 @@ sub param_defaults {
     # 'tag_shortname'    => 84,
     # 'tag_description'  => 'Ensembl release 84',
     # 'tag_feature_type' => 'all',
-
-    # Examples of the remaining block parameters:
-    # block_size => 1000,
-    # start_block => 1,
-    # max_gene_id => 1000,
   };
-}
+} ## end sub param_defaults
 
 
 
@@ -172,14 +153,6 @@ sub run {
       session     =>  $tark_dba,
       tag_config  =>  $tag_config,
     );
-  }
-
-  foreach my $block_label (
-    qw/ block_size start_block max_gene_id /
-  ) {
-    if ($self->param_is_defined( $block_label ) ) {
-      $loader->{$block_label} = $self->param( $block_label );
-    }
   }
 
   $loader->load_species( $core_dba, 'Ensembl' );

@@ -14,6 +14,37 @@ See the NOTICE file distributed with this work for additional information
    See the License for the specific language governing permissions and
    limitations under the License.
 
+=head1 DESCRIPTION
+
+  A pipeline for the loading of the Tark DB from a Core db.
+
+=head1 SYNOPSIS
+
+  # Prepare the pipeline
+  init_pipeline.pl Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf
+    --tark_host $TARK_HOST
+    --tark_port $TARK_PORT
+    --tark_user $TARK_USER
+    --tark_pass $TARK_PASS
+    --tark_db $TARK_SPP_DB
+    --core_host $CORE_HOST
+    --core_port $CORE_PORT
+    --core_user $CORE_USER
+    --core_pass $CORE_PASS
+    --core_dbname $ENS_SPP_CORE_DB
+    --host $HIVE_HOST
+    --port $HIVE_PORT
+    --user $HIVE_USER
+    --password $HIVE_PASS
+    --pipeline_name test_hive_1234
+    --species homo_sapiens
+    --tag_block release
+    --tag_shortname 84
+    --tag_description 'Ensembl release 84'
+    --tag_feature_type all
+    --tag_version 1
+    --block_size 1000
+
 =cut
 
 package Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf;
@@ -55,7 +86,7 @@ sub default_options {
           -driver => 'mysql',
         },
     };
-}
+} ## end sub default_options
 
 =head2 pipeline_analyses
   Description : Implements pipeline_analyses() interface method of
@@ -125,6 +156,6 @@ sub pipeline_analyses {
       -analysis_capacity => 50,
     },
   ];
-}
+} ## end sub pipeline_analyses
 
 1;
