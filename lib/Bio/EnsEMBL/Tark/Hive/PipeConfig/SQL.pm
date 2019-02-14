@@ -23,13 +23,10 @@ use warnings;
 
 use Moose;
 
+use Data::Dumper;
 
-=head2 gene_grouping
-  Description : Query for getting lists of genes split into n batches. Genes are
-               Randomly assigned to each group
-=cut
 
-sub gene_grouping {
+sub gene_grouping_template_SQL {
   my ($self) = @_;
 
   my $sql = (<<'SQL');
@@ -37,73 +34,87 @@ sub gene_grouping {
       GROUP_CONCAT(gene_grp.gene_id SEPARATOR ',')
     FROM
       (
-        SELECT gene_id, CEILING( RAND() * %d ) AS grp FROM gene
+        SELECT
+          gene_id,
+          CEILING( RAND() * %d ) AS grp
+        FROM
+          gene
+        #WHERE#
       ) gene_grp
     GROUP BY
       gene_grp.grp
 SQL
+
+  return $sql;
+}
+
+=head2 gene_grouping
+  Description: Query for getting lists of all genes split into n batches. Genes
+               are randomly assigned to each group.
+=cut
+
+sub gene_grouping {
+  my ( $self ) = @_;
+
+  my $sql = $self->gene_grouping_template_SQL();
+
+  $sql =~ s/#WHERE#//g;
 
   return $sql;
 } ## end sub gene_grouping
 
 
 =head2 gene_grouping_exclusion
-  Description : Query for getting lists of genes split into n batches. Genes are
-               Randomly assigned to each group
+  Arg [1]    : $list_length - interger
+  Description: Query for getting lists of genes split into n batches except
+               those from the specified sources. Genes are randomly assigned to
+               each group
 =cut
 
 sub gene_grouping_exclusion {
   my ($self, $list_length) = @_;
 
-  my $sub_string = '"%s"' . ', "%s"' x ($list_length-1);
+  my $sql = $self->gene_grouping_template_SQL();
+  my $sub_string = 'WHERE source NOT IN ( "%s"' . ', "%s"' x ($list_length-1) . ' )';
 
-  my $sql = (<<"SQL");
-    SELECT
-      GROUP_CONCAT(gene_grp.gene_id SEPARATOR ',')
-    FROM
-      (
-        SELECT
-         gene_id,
-         CEILING( RAND() * %d ) AS grp
-        FROM
-          gene
-        WHERE
-          source NOT IN ( $sub_string )
-      ) gene_grp
-    GROUP BY
-      gene_grp.grp
-SQL
+  $sql =~ s/#WHERE#/$sub_string/g;
 
   return $sql;
 } ## end sub gene_grouping_exclusion
 
 
 =head2 gene_grouping_inclusion
-  Description : Query for getting lists of genes split into n batches. Genes are
-               Randomly assigned to each group
+  Arg [1]    : $list_length - interger
+  Description: Query for getting lists of genes split into n batches, but only
+               from the defined sources. Genes are randomly assigned to each
+               group.
 =cut
 
 sub gene_grouping_inclusion {
   my ($self, $list_length) = @_;
 
-  my $sub_string = '"%s"' . ', "%s"' x ($list_length-1);
+  my $sql = $self->gene_grouping_template_SQL();
+  my $sub_string = 'WHERE source IN ( "%s"' . ', "%s"' x ($list_length-1) . ' )';
 
-  my $sql = (<<"SQL");
-    SELECT
-      GROUP_CONCAT(gene_grp.gene_id SEPARATOR ',')
-    FROM
-      (
-        SELECT
-         gene_id,
-         CEILING( RAND() * %d ) AS grp
-        FROM
-          gene
-        WHERE
-          source IN ( $sub_string )
-      ) gene_grp
-    GROUP BY
-      gene_grp.grp
-SQL
+  $sql =~ s/#WHERE#/$sub_string/g;
+#   my $sub_string = '"%s"' . ', "%s"' x ($list_length-1);
+
+#   my $sql = (<<"SQL");
+#     SELECT
+#       GROUP_CONCAT(gene_grp.gene_id SEPARATOR ',')
+#     FROM
+#       (
+#         SELECT
+#          gene_id,
+#          CEILING( RAND() * %d ) AS grp
+#         FROM
+#           gene
+#         WHERE
+#           source IN ( $sub_string )
+#       ) gene_grp
+#     GROUP BY
+#       gene_grp.grp
+# SQL
 
   return $sql;
 } ## end sub gene_grouping_inclusion

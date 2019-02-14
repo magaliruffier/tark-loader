@@ -32,4 +32,19 @@ use Bio::EnsEMBL::Tark::Hive::PipeConfig::SQL;
 
 use_ok('Bio::EnsEMBL::Tark::Hive::PipeConfig::SQL');
 
+my $sql_handle = Bio::EnsEMBL::Tark::Hive::PipeConfig::SQL->new();
+my $sql = $sql_handle->gene_grouping_template_SQL();
+ok( $sql =~ m/#WHERE#/, 'gene_grouping_template_SQL' );
+
+$sql = $sql_handle->gene_grouping();
+ok( $sql !~ m/#WHERE#/, 'gene_grouping' );
+
+$sql = $sql_handle->gene_grouping_exclusion( 2 );
+ok( $sql !~ m/#WHERE#/, 'gene_grouping_exclusion' );
+
+$sql = $sql_handle->gene_grouping_inclusion( 2 );
+ok( $sql !~ m/#WHERE#/, 'gene_grouping_inclusion' );
+
+done_testing();
+
 1;
