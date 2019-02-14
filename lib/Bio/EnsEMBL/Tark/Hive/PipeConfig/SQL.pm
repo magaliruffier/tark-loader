@@ -23,10 +23,15 @@ use warnings;
 
 use Moose;
 
-use Data::Dumper;
 
+=head1 _gene_grouping_template_SQL
+  Description: Default SQL for the gene grouping queries. This is an internal
+               function and should only be accessed through the gene_grouping,
+               gene_grouping_exclusion and gene_grouping_inclusion that will
+               handle the substitution of the WHERE clauses.
+=cut
 
-sub gene_grouping_template_SQL {
+sub _gene_grouping_template_SQL {
   my ($self) = @_;
 
   my $sql = (<<'SQL');
@@ -46,7 +51,8 @@ sub gene_grouping_template_SQL {
 SQL
 
   return $sql;
-}
+} ## end sub _gene_grouping_template_SQL
+
 
 =head2 gene_grouping
   Description: Query for getting lists of all genes split into n batches. Genes
@@ -56,7 +62,7 @@ SQL
 sub gene_grouping {
   my ( $self ) = @_;
 
-  my $sql = $self->gene_grouping_template_SQL();
+  my $sql = $self->_gene_grouping_template_SQL();
 
   $sql =~ s/#WHERE#//g;
 
@@ -74,7 +80,7 @@ sub gene_grouping {
 sub gene_grouping_exclusion {
   my ($self, $list_length) = @_;
 
-  my $sql = $self->gene_grouping_template_SQL();
+  my $sql = $self->_gene_grouping_template_SQL();
   my $sub_string = 'WHERE source NOT IN ( "%s"' . ', "%s"' x ($list_length-1) . ' )';
 
   $sql =~ s/#WHERE#/$sub_string/g;
@@ -93,28 +99,10 @@ sub gene_grouping_exclusion {
 sub gene_grouping_inclusion {
   my ($self, $list_length) = @_;
 
-  my $sql = $self->gene_grouping_template_SQL();
+  my $sql = $self->_gene_grouping_template_SQL();
   my $sub_string = 'WHERE source IN ( "%s"' . ', "%s"' x ($list_length-1) . ' )';
 
   $sql =~ s/#WHERE#/$sub_string/g;
-#   my $sub_string = '"%s"' . ', "%s"' x ($list_length-1);
-
-#   my $sql = (<<"SQL");
-#     SELECT
-#       GROUP_CONCAT(gene_grp.gene_id SEPARATOR ',')
-#     FROM
-#       (
-#         SELECT
-#          gene_id,
-#          CEILING( RAND() * %d ) AS grp
-#         FROM
-#           gene
-#         WHERE
-#           source IN ( $sub_string )
-#       ) gene_grp
-#     GROUP BY
-#       gene_grp.grp
-# SQL
 
   return $sql;
 } ## end sub gene_grouping_inclusion
