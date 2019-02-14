@@ -49,21 +49,6 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 
-=head2 default_options
-    Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
-                  In addition to the standard things it defines four options:
-                    o('concurrent_jobs')   defines how many tables can be worked on in parallel
-=cut
-
-sub default_options {
-    my ($self) = @_;
-
-    return {
-        %{$self->SUPER::default_options(@_)},
-    };
-} ## end sub default_options
-
-
 =head2 pipeline_analyses
   Description : Implements pipeline_analyses() interface method of
                 Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the
@@ -82,7 +67,6 @@ sub pipeline_analyses {
       -logic_name => 'load_hgnc',
       -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::HGNCNames',
       -parameters => {
-
         # Tark db params
         tark_host => $self->o( 'tark_host' ),
         tark_port => $self->o( 'tark_port' ),

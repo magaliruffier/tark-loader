@@ -173,7 +173,6 @@ sub load_hgnc {
 
     $get_gene_update->execute( $hgnc_id, $hgnc_line[19] );
 
-    print "$hgnc_id $hgnc_line[1] \n";
     $hgnc_line[8] =~ s/^"//;
     $hgnc_line[8] =~ s/"$//;
 
