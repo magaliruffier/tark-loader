@@ -92,6 +92,7 @@ sub pipeline_analyses {
 
         hgnc_file => $self->o( 'hgnc_file' ),
       },
+      -input_ids => [ {} ],
     },
   ];
 } ## end sub pipeline_analyses
