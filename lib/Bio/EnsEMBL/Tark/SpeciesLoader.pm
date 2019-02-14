@@ -324,16 +324,14 @@ sub _load_gene {
   my $utils = Bio::EnsEMBL::Tark::Utils->new();
   my $loc_checksum = $utils->checksum_array( @loc_pieces );
 
-  my $hgnc_id = $self->_fetch_hgnc_id($gene);
-
   my $gene_checksum = $utils->checksum_array(
-    @loc_pieces, ($hgnc_id ? $hgnc_id : undef), $gene->stable_id(), $gene->version()
+    @loc_pieces, $gene->stable_id(), $gene->version()
   );
 
   my $sth = $self->get_insert('gene');
   $sth->execute(
     $gene->stable_id(), $gene->version(), @loc_pieces, $loc_checksum,
-    ($hgnc_id ? $hgnc_id : undef), $gene_checksum, $session_pkg->{session_id}
+    undef, $gene_checksum, $session_pkg->{session_id}
   ) or  $self->log->logdie("Error inserting gene: $DBI::errstr");
 
   my $gene_id = $sth->{mysql_insertid};
