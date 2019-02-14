@@ -83,6 +83,14 @@ SQL
     $self->log->logdie("Error creating gene select: $DBI::errstr");
   $self->set_query('gene' => $sth);
 
+  my $update_ids_sql = (<<'SQL');
+    UPDATE gene SET hgnc_id = ? WHERE stable_id = ?
+SQL
+
+  $sth = $dbh->prepare( $update_ids_sql ) or
+    $self->log->logdie("Error creating gene select: $DBI::errstr");
+  $self->set_query('gene_update' => $sth);
+
   return;
 } ## end sub BUILD
 
@@ -98,11 +106,13 @@ SQL
 sub flush_hgnc {
   my $self = shift;
 
-  $self->log()->info('Truncating gene names table');
-
   my $dbh = $self->session->dbh();
 
+  $self->log()->info('Truncating gene names table');
   $dbh->do('TRUNCATE gene_names');
+
+  $self->log()->info('Setting hgnc_id column in the gene table to NULL');
+  $dbh->do('UPDATE gene SET hgnc_id = NULL');
 
   return;
 } ## end sub flush_hgnc
@@ -138,15 +148,18 @@ sub load_hgnc {
     $in_fh = *STDIN;
   }
 
-  my $get_gene = $self->get_query('gene');
-  my $insert_hgnc = $self->get_query('hgnc');
+  my $get_gene        = $self->get_query('gene');
+  my $get_gene_update = $self->get_query('gene_update');
+  my $insert_hgnc     = $self->get_query('hgnc');
 
   while(<$in_fh>) {
 
     chomp;
 
     my @hgnc_line = split '\t';
-    next unless($hgnc_line[0]=~/^HGNC:/);
+    if ( $hgnc_line[0] !~ /^HGNC:/ ) {
+      next;
+    }
 
     my (undef, $hgnc_id) = split ':', $hgnc_line[0];
 
@@ -154,7 +167,11 @@ sub load_hgnc {
     $insert_hgnc->execute($hgnc_id, $hgnc_line[1], 1, $self->session->session_id);
 
     # Add any synomyms
-    next unless($hgnc_line[8]);
+    if ( !$hgnc_line[8] ) {
+      next;
+    }
+
+    $get_gene_update->execute( $hgnc_id, $hgnc_line[19] );
 
     print "$hgnc_id $hgnc_line[1] \n";
     $hgnc_line[8] =~ s/^"//;

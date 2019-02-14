@@ -17,7 +17,7 @@ See the NOTICE file distributed with this work for additional information
 
 =head NAME
 
-  Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader
+  Bio::EnsEMBL::Tark::Hive::PipeConfig::HGNCNames
 
 
 =head1 DESCRIPTION
@@ -38,7 +38,7 @@ See the NOTICE file distributed with this work for additional information
 =cut
 
 
-package Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader;
+package Bio::EnsEMBL::Tark::Hive::RunnableDB::HGNCNames;
 
 use strict;
 use warnings;
@@ -48,9 +48,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Tark::DB;
-use Bio::EnsEMBL::Tark::SpeciesLoader;
-use Bio::EnsEMBL::Tark::TagConfig;
-use Bio::EnsEMBL::Tark::Utils;
+use Bio::EnsEMBL::Tark::HGNC;
 
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($DEBUG);
@@ -63,23 +61,11 @@ Log::Log4perl->easy_init($DEBUG);
 
 sub param_defaults {
   return {
-    'host' => 'localhost',
-    'port' => '3306',
-    'user' => 'travis',
-    'pass' => q{},
-    'db'   => 'species_core_test',
-
     'tark_host' => 'localhost',
     'tark_port' => '3306',
     'tark_user' => 'travis',
     'tark_pass' => q{},
-    'tark_db'   => 'test_tark',
-
-    # Examples of the remaining tag parameters:
-    # 'tag_block'        => 'Ensembl',
-    # 'tag_shortname'    => 84,
-    # 'tag_description'  => 'Ensembl release 84',
-    # 'tag_feature_type' => 'all',
+    'tark_db'   => 'test_tark'
   };
 } ## end sub param_defaults
 
@@ -96,18 +82,6 @@ sub param_defaults {
 sub run {
   my ( $self ) = @_;
 
-  my $species  = $self->param('species');
-  # my $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $species, 'core' );
-
-  my $core_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host   => $self->param('host'),
-    -port   => $self->param('port'),
-    -user   => $self->param('user'),
-    -pass   => $self->param('pass'),
-    -group  => 'core',
-    -dbname => $self->param('db'),
-  );
-
   my $tark_dba = Bio::EnsEMBL::Tark::DB->new(
     config => {
       driver => 'mysql',
@@ -122,40 +96,14 @@ sub run {
   # start_session
   my $session_id_start = $tark_dba->start_session();
 
-  my %tag_config_hash;
-  my $tag_block = $self->param_required( 'tag_block' );
-  $tag_config_hash{ $tag_block } = {};
-
-  foreach my $tag_label (
-    qw/ shortname description feature_type version /
-  ) {
-    if ( $self->param_is_defined( 'tag_' . $tag_label ) ) {
-      $tag_config_hash{ $tag_block }{ $tag_label } = $self->param( 'tag_' . $tag_label );
-    }
-  }
-
-  my $tag_config = Bio::EnsEMBL::Tark::TagConfig->new(
-    config => \%tag_config_hash
+  my $hgnc_loader = Bio::EnsEMBL::Tark::HGNC->new(
+    session => $tark_dba
   );
 
-  my $loader;
+  # Flush the gene_names table and the hgnc_id column in the gene table
+  $hgnc_loader->flush_hgnc();
 
-  if ( $self->param_is_defined( 'gene_id_list' ) ) {
-    my @gene_id_list = split /,/, $self->param( 'gene_id_list' ) ;
-
-    $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
-      session     =>  $tark_dba,
-      tag_config  =>  $tag_config,
-      gene_id_list => \@gene_id_list,
-    );
-  } else {
-    $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
-      session     =>  $tark_dba,
-      tag_config  =>  $tag_config,
-    );
-  }
-
-  $loader->load_species( $core_dba, 'Ensembl' );
+  $hgnc_loader->load_hgnc( $self->param_required( 'hgnc_file' ) );
 
   $tark_dba->end_session();
 
