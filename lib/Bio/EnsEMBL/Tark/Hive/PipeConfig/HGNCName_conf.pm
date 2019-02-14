@@ -80,7 +80,7 @@ sub pipeline_analyses {
   return [
     {
       -logic_name => 'load_hgnc',
-      -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::HGNCName',
+      -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::HGNCNames',
       -parameters => {
 
         # Tark db params
