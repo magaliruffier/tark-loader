@@ -575,34 +575,6 @@ sub _fetch_hgnc_id {
 } ## end sub _fetch_hgnc_id
 
 
-=head2 genes_to_metadata_iterator_test
-  Description:
-  Returntype :
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub genes_to_metadata_iterator_test {
-  my ( $self, $dba, $source_name ) = @_;
-
-  my $ga = $dba->get_GeneAdaptor();
-  my $gene_features_ensembl = $ga->fetch_all_by_display_label('BRCA2');
-
-  my $len = scalar @{ $gene_features_ensembl };
-  print "Number of gene features $len\n";
-
-  my $current_gene = 0;
-
-  my $genes_i      = Bio::EnsEMBL::Utils::Iterator->new(
-    sub {
-      return shift @{ $gene_features_ensembl };
-    }
-  );
-  return $genes_i;
-} ## end sub genes_to_metadata_iterator_test
-
-
 =head2 genes_to_metadata_iterator
   Description: This is the place where you should try to get the gene iterator properly
   Returntype :
