@@ -95,6 +95,11 @@ CREATE TABLE IF NOT EXISTS `gene_names` (
     FOREIGN KEY (`session_id`)
     REFERENCES `session` (`session_id`)
     ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_gene_3`
+    FOREIGN KEY (`external_id`)
+    REFERENCES `gene` (`hgnc_id`)
+    ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
@@ -134,11 +139,6 @@ CREATE TABLE IF NOT EXISTS `gene` (
   CONSTRAINT `fk_gene_2`
     FOREIGN KEY (`session_id`)
     REFERENCES `session` (`session_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_gene_3`
-    FOREIGN KEY (`hgnc_id`)
-    REFERENCES `gene_names` (`external_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
