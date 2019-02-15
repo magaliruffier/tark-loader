@@ -560,35 +560,6 @@ sub _insert_sequence {
 } ## end sub _insert_sequence
 
 
-=head2 _fetch_hgnc_id
-  Description:
-  Returntype :
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub _fetch_hgnc_id {
-  my ( $self, $gene ) = @_;
-  my $hgnc_id;
-  foreach my $oxref (@{ $gene->get_all_object_xrefs() }) {
-    if ( $oxref->dbname ne 'HGNC' ) {
-      next;
-    }
-
-    if ($oxref->primary_id =~ /^HGNC:\d+$/) {
-      ( undef, $hgnc_id ) = split ':', $oxref->primary_id;
-    } else {
-      $hgnc_id = $oxref->primary_id;
-    }
-
-    return $hgnc_id;
-  }
-
-  return;
-} ## end sub _fetch_hgnc_id
-
-
 =head2 genes_to_metadata_iterator
   Description: This is the place where you should try to get the gene iterator properly
   Returntype :
