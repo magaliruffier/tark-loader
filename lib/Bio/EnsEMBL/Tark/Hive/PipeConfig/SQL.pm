@@ -107,4 +107,57 @@ sub gene_grouping_inclusion {
   return $sql;
 } ## end sub gene_grouping_inclusion
 
+
+sub _feature_count_template {
+  my ( $self, $feature ) = @_;
+
+  my $sql = (<<'SQL');
+    SELECT
+      COUNT(*)
+    FROM
+      #FROM#
+    #WHERE#
+SQL
+
+  return $sql;
+}
+
+
+sub feature_count {
+  my ( $self, $feature ) = @_;
+
+  my $sql = $self->_gene_grouping_template_SQL();
+
+  $sql =~ s/#FROM#/$feature/g;
+  $sql =~ s/#WHERE#//g;
+
+  return $sql;
+}
+
+
+sub feature_count_exclusion {
+  my ($self, $feature, $list_length) = @_;
+
+  my $sql = $self->_gene_grouping_template_SQL();
+  my $sub_string = 'WHERE source NOT IN ( "%s"' . ', "%s"' x ($list_length-1) . ' )';
+
+  $sql =~ s/#FROM#/$feature/g;
+  $sql =~ s/#WHERE#/$sub_string/g;
+
+  return $sql;
+}
+
+
+sub feature_count_inclusion {
+  my ($self, $feature, $list_length) = @_;
+
+  my $sql = $self->_gene_grouping_template_SQL();
+  my $sub_string = 'WHERE source IN ( "%s"' . ', "%s"' x ($list_length-1) . ' )';
+
+  $sql =~ s/#FROM#/$feature/g;
+  $sql =~ s/#WHERE#/$sub_string/g;
+
+  return $sql;
+}
+
 1;
