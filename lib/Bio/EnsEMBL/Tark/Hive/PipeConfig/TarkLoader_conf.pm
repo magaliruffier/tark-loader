@@ -122,6 +122,7 @@ sub pipeline_analyses {
       ],
       -flow_into  => { 2 => { 'generate_sql_params' => INPUT_PLUS() } },
     },
+
     {
       -logic_name => 'generate_sql_params',
       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -163,7 +164,33 @@ sub pipeline_analyses {
         tark_db   => $self->o( 'tark_db' ),
       },
       -analysis_capacity => 50,
+      -flow_into  => { 2 => { 'tark_report' => INPUT_PLUS() } },
     },
+
+    {
+      -logic_name => 'tark_report',
+      -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoaderReport',
+      -parameters => {
+
+        # Core db params
+        host => $self->o( 'core_host' ),
+        port => $self->o( 'core_port' ),
+        user => $self->o( 'core_user' ),
+        pass => $self->o( 'core_pass' ),
+        db   => $self->o( 'core_dbname' ),
+
+        # Tark db params
+        tark_host => $self->o( 'tark_host' ),
+        tark_port => $self->o( 'tark_port' ),
+        tark_user => $self->o( 'tark_user' ),
+        tark_pass => $self->o( 'tark_pass' ),
+        tark_db   => $self->o( 'tark_db' ),
+
+        # Worker parameters
+        tag_shortname => $self->o( 'tag_shortname' ),
+        report        => $self->o( 'report' ),
+      }
+    }
   ];
 } ## end sub pipeline_analyses
 

@@ -73,12 +73,15 @@ sub _feature_release_template_SQL {
 
   my $sql = (<<'SQL');
     SELECT
-      release_id,
+      #FEATURE#_release_tag.release_id,
       COUNT(*)
     FROM
       #FEATURE#_release_tag
+      JOIN release_set ON #FEATURE#_release_tag.release_id=release_set.release_id
     WHERE
-      shortname = ?
+      release_set.shortname = ?
+    GROUP BY
+      #FEATURE#_release_tag.release_id
 SQL
 
   return $sql;

@@ -89,7 +89,7 @@ sub run {
     }
   );
 
-  my $core_dbh = $core_dba->dbh();
+  my $core_dbh = $core_dba->dbc();
   my $tark_dbh = $tark_dba->dbh();
 
   my $core_sql_handle = Bio::EnsEMBL::Tark::Hive::PipeConfig::SQL->new();
@@ -121,7 +121,7 @@ sub run {
     }
 
     $tark_sql = $tark_sql_handle->feature_count( $table );
-    $tark_release_sql = sprintf $tark_sql_handle->feature_release_count( $table ), $self->o( 'tag_shortname' );
+    $tark_release_sql = $tark_sql_handle->feature_release_count( $table );
 
     my $sth = $core_dbh->prepare( $core_sql );
     $sth->execute();
@@ -132,7 +132,7 @@ sub run {
     my @tark_count_row = $sth->fetchrow_array();
 
     $sth = $tark_dbh->prepare( $tark_release_sql );
-    $sth->execute();
+    $sth->execute( $self->param( 'tag_shortname' ) );
     my @tark_release_count_row = $sth->fetchrow_array();
 
     $output{ $table } = {

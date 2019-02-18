@@ -50,18 +50,6 @@ my $core_dba = $multi_db->get_DBAdaptor('core');
 my $tark_dba = Bio::EnsEMBL::Tark::Test::TestDB->new();
 $tark_dba->schema();
 
-print $core_dba->dbc->host . "\n";
-print $core_dba->dbc->port . "\n";
-print $core_dba->dbc->user . "\n";
-print $core_dba->dbc->pass . "\n";
-print $core_dba->dbc->dbname . "\n";
-
-print $tark_dba->config->{host} . "\n";
-print $tark_dba->config->{port} . "\n";
-print $tark_dba->config->{user} . "\n";
-print $tark_dba->config->{pass} . "\n";
-print $tark_dba->config->{db} . "\n";
-
 standaloneJob(
   'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
   {
@@ -106,9 +94,6 @@ standaloneJob(
   },
 );
 
-
-
-# run_sql_on_db($test_url, 'DROP DATABASE');
 
 done_testing();
 
