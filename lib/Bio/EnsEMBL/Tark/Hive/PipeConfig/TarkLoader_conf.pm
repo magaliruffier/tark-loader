@@ -120,7 +120,10 @@ sub pipeline_analyses {
           'target_db'  => $self->dbconn_2_url( 'core_db' ),
         }
       ],
-      -flow_into  => { 2 => { 'generate_sql_params' => INPUT_PLUS() } },
+      -flow_into  => {
+        '2->a' => { 'generate_sql_params' => INPUT_PLUS() },
+        'a->1' => { 'tark_report' => INPUT_PLUS() }
+      },
     },
 
     {
@@ -164,7 +167,6 @@ sub pipeline_analyses {
         tark_db   => $self->o( 'tark_db' ),
       },
       -analysis_capacity => 50,
-      -flow_into  => { 2 => { 'tark_report' => INPUT_PLUS() } },
     },
 
     {
