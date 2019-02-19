@@ -99,7 +99,7 @@ sub run {
   my $tark_sql = q{};
   my $tark_release_sql = q{};
 
-  my %output = {};
+  my %output;
 
   foreach my $table (qw/ gene exon transcript translation /) {
     if ( $self->param_is_defined('exclude_source') and $self->param('exclude_source') ) {
@@ -139,7 +139,7 @@ sub run {
       core         => $core_count_row[0],
       tark_total   => $tark_count_row[0],
       tark_release => $tark_release_count_row[0],
-    }
+    };
   }
 
   open my $fh, '>', $self->param('report') or confess 'Can\'t open report file';
