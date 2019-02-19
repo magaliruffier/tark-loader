@@ -122,7 +122,7 @@ sub pipeline_analyses {
       ],
       -flow_into  => {
         '2->a' => { 'generate_sql_params' => INPUT_PLUS() },
-        'a->1' => { 'tark_report' => INPUT_PLUS() }
+        'a->1' => { 'tark_report'         => INPUT_PLUS() }
       },
     },
 
