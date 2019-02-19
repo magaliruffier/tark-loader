@@ -138,7 +138,7 @@ sub run {
     $output{ $table } = {
       core         => $core_count_row[0],
       tark_total   => $tark_count_row[0],
-      tark_release => $tark_release_count_row[0],
+      tark_release => $tark_release_count_row[1],
     };
   }
 
