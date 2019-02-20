@@ -95,13 +95,15 @@ sub run {
 =cut
 
 sub write_output {  # but this time we have something to store
-  my $self = shift @_;
+  my ( $self ) = @_;
 
   $self->dataflow_output_id(
     {
       'sql' => $self->param('sql'),
     }, 2
   );
+
+  return;
 }
 
 1;

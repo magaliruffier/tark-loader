@@ -30,7 +30,6 @@ use Data::Dumper;
 use Bio::EnsEMBL::Tark::Test::TestDB;
 use Bio::EnsEMBL::Test::MultiTestDB;
 
-use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob get_test_url_or_die make_new_db_from_sqls run_sql_on_db);
 
 # Need EHIVE_ROOT_DIR to be able to point at specific files
