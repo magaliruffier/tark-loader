@@ -18,7 +18,7 @@ See the NOTICE file distributed with this work for additional information
 
 package Bio::EnsEMBL::Tark::Utils;
 
-use Moose
+use Moose;
 use Digest::SHA1 qw(sha1);
 
 

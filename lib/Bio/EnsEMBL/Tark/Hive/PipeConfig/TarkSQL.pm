@@ -42,7 +42,7 @@ SQL
 } ## end sub _gene_grouping_template_SQL
 
 
-=head2 gene_grouping
+=head2 feature_count
   Description: Query for getting lists of all genes split into n batches. Genes
                are randomly assigned to each group.
 =cut
@@ -58,7 +58,7 @@ sub feature_count {
 } ## end sub feature_count
 
 
-=head1 _gene_grouping_template_SQL
+=head1 _feature_release_template_SQL
   Description: Default SQL for the gene grouping queries. This is an internal
                function and should only be accessed through the gene_grouping,
                gene_grouping_exclusion and gene_grouping_inclusion that will
@@ -82,12 +82,12 @@ sub _feature_release_template_SQL {
 SQL
 
   return $sql;
-} ## end sub _gene_grouping_template_SQL
+} ## end sub _feature_release_template_SQL
 
 
-=head2 gene_grouping
-  Description: Query for getting lists of all genes split into n batches. Genes
-               are randomly assigned to each group.
+=head2 feature_release_count
+  Arg [1]    : $feature - string
+  Description: Query for getting counts of all features
 =cut
 
 sub feature_release_count {
@@ -98,6 +98,6 @@ sub feature_release_count {
   $sql =~ s/#FEATURE#/$feature/g;
 
   return $sql;
-} ## end sub feature_count
+} ## end sub feature_release_count
 
 1;

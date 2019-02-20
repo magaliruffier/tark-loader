@@ -105,6 +105,13 @@ sub gene_grouping_inclusion {
 } ## end sub gene_grouping_inclusion
 
 
+=head1 _feature_count_template_SQL
+  Description: Default SQL for the feature count queries. This is an internal
+               function and should only be accessed through the feature_count,
+               feature_count_exclusion and feature_count_inclusion that will
+               handle the substitution of the FROM and WHERE clauses.
+=cut
+
 sub _feature_count_template_SQL {
   my ( $self, $feature ) = @_;
 
@@ -117,8 +124,13 @@ sub _feature_count_template_SQL {
 SQL
 
   return $sql;
-}
+} ## end sub _feature_count_template_SQL
 
+
+=head2 feature_count
+  Arg [1]    : $feature - string
+  Description: Query for getting of all features
+=cut
 
 sub feature_count {
   my ( $self, $feature ) = @_;
@@ -129,8 +141,15 @@ sub feature_count {
   $sql =~ s/#WHERE#//g;
 
   return $sql;
-}
+} ## end sub feature_count
 
+
+=head2 feature_count_exclusion
+  Arg [1]    : $feature - string
+  Arg [2]    : $list_length - interger
+  Description: Query for getting counts of features except those from the
+               specified sources. Genes are randomly assigned to each group
+=cut
 
 sub feature_count_exclusion {
   my ($self, $feature, $list_length) = @_;
@@ -142,8 +161,15 @@ sub feature_count_exclusion {
   $sql =~ s/#WHERE#/$sub_string/g;
 
   return $sql;
-}
+} ## end sub feature_count_exclusion
 
+
+=head2 feature_count_inclusion
+  Arg [1]    : $feature - string
+  Arg [2]    : $list_length - interger
+  Description: Query for getting counts of features only from the defined
+               sources. Genes are randomly assigned to each group.
+=cut
 
 sub feature_count_inclusion {
   my ($self, $feature, $list_length) = @_;
@@ -155,6 +181,6 @@ sub feature_count_inclusion {
   $sql =~ s/#WHERE#/$sub_string/g;
 
   return $sql;
-}
+} ## end sub feature_count_inclusion
 
 1;
