@@ -114,6 +114,7 @@ CREATE TABLE `biotype` (
   `description` text,
   `biotype_group` enum('coding','pseudogene','snoncoding','lnoncoding','mnoncoding','LRG','undefined','no_group') DEFAULT NULL,
   `so_acc` varchar(64) DEFAULT NULL,
+  `so_term` varchar(1023) DEFAULT NULL,
   PRIMARY KEY (`biotype_id`),
   UNIQUE KEY `name_type_idx` (`name`,`object_type`)
 ) ENGINE=MyISAM AUTO_INCREMENT=88 DEFAULT CHARSET=latin1;
@@ -489,7 +490,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`),
   KEY `species_value_idx` (`species_id`,`meta_value`)
-) ENGINE=MyISAM AUTO_INCREMENT=175 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=177 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `meta_coord` (
   `table_name` varchar(40) COLLATE latin1_bin NOT NULL DEFAULT '',
@@ -901,7 +902,7 @@ CREATE TABLE `xref` (
   `display_label` varchar(512) COLLATE latin1_bin NOT NULL,
   `version` varchar(10) COLLATE latin1_bin DEFAULT NULL,
   `description` text COLLATE latin1_bin,
-  `info_type` enum('NONE','PROJECTION','MISC','DEPENDENT','DIRECT','SEQUENCE_MATCH','INFERRED_PAIR','PROBE','UNMAPPED','COORDINATE_OVERLAP','CHECKSUM') COLLATE latin1_bin NOT NULL DEFAULT 'NONE',
+  `info_type` enum('NONE','PROJECTION','MISC','DEPENDENT','DIRECT','SEQUENCE_MATCH','INFERRED_PAIR','PROBE','UNMAPPED','CHECKSUM') COLLATE latin1_bin NOT NULL DEFAULT 'NONE',
   `info_text` varchar(255) COLLATE latin1_bin NOT NULL DEFAULT '',
   PRIMARY KEY (`xref_id`),
   UNIQUE KEY `id_index` (`dbprimary_acc`,`external_db_id`,`info_type`,`info_text`,`version`),

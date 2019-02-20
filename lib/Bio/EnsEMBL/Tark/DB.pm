@@ -113,7 +113,7 @@ sub _init_db {
   # Example deploy option $deploy_opts{add_drop_table} = 1;
   my $schema = Bio::EnsEMBL::Tark::Schema->connect($dsn, $conf{user}, $conf{pass}, \%opts);
 
-  if ($conf{create} == 1 && $conf{driver} eq 'mysql') {
+  if ( defined $conf{create} && $conf{create} == 1 && $conf{driver} eq 'mysql' ) {
     my $dbh = DBI->connect(
       sprintf('DBI:%s:database=;host=%s;port=%s', $conf{driver}, $conf{host}, $conf{port}), $conf{user}, $conf{pass}, \%opts
     );
@@ -130,7 +130,7 @@ sub _init_db {
     $dbh->disconnect;
   }
 
-  if ( $conf{create} == 1 ) {
+  if ( defined $conf{create} && $conf{create} == 1 ) {
     $schema->deploy(\%deploy_opts);
     $schema->resultset( 'ReleaseSource' )->populate( [
       [ qw( shortname description ) ],
@@ -221,6 +221,7 @@ sub _validate_config {
 
 sub dbh {
   my $self = shift;
+
   return $self->schema->storage->dbh;
 } ## end sub dbh
 

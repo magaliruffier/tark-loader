@@ -62,6 +62,8 @@ has tag_config => (
   isa => 'Bio::EnsEMBL::Tark::TagConfig'
 );
 
+has gene_id_list => ( is => 'ro', isa => 'ArrayRef' );
+
 
 =head2 BUILD
   Description: Initialise the creation of the prepared statements
@@ -265,13 +267,27 @@ sub load_species {
     assembly_id => $assembly_id
   };
 
-  # Fetch a gene iterator and cycle through loading the genes
-  my $iter = $self->genes_to_metadata_iterator($dba, $source_name);
+  my $iter;
+  if ( defined $self->gene_id_list ) {
+    # Fetch and load genes within a defined ID range
+    my $ga   = $dba->get_GeneAdaptor();
+    foreach my $current_gene ( @{ $self->gene_id_list } ) {
+      my $gene = $ga->fetch_by_dbID( $current_gene );
+      if ( $gene ) {
+        $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
+        $self->_load_gene($gene, $session_pkg, $source_name, $tag);
+      }
+    }
+  } else {
+    # Fetch a gene iterator and cycle through loading the genes
+    $iter = $self->genes_to_metadata_iterator( $dba, $source_name );
 
-  while ( my $gene = $iter->next() ) {
-    $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
-    $self->_load_gene($gene, $session_pkg, $source_name, $tag);
+    while ( my $gene = $iter->next() ) {
+      $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
+      $self->_load_gene($gene, $session_pkg, $source_name, $tag);
+    }
   }
+
   $self->log->info( 'Completed dumping genes for ' . $species );
 
   $self->log->info( 'Tagging sets for ' . $species );
@@ -308,16 +324,14 @@ sub _load_gene {
   my $utils = Bio::EnsEMBL::Tark::Utils->new();
   my $loc_checksum = $utils->checksum_array( @loc_pieces );
 
-  my $hgnc_id = $self->_fetch_hgnc_id($gene);
-
   my $gene_checksum = $utils->checksum_array(
-    @loc_pieces, ($hgnc_id ? $hgnc_id : undef), $gene->stable_id(), $gene->version()
+    @loc_pieces, $gene->stable_id(), $gene->version()
   );
 
   my $sth = $self->get_insert('gene');
   $sth->execute(
     $gene->stable_id(), $gene->version(), @loc_pieces, $loc_checksum,
-    ($hgnc_id ? $hgnc_id : undef), $gene_checksum, $session_pkg->{session_id}
+    undef, $gene_checksum, $session_pkg->{session_id}
   ) or  $self->log->logdie("Error inserting gene: $DBI::errstr");
 
   my $gene_id = $sth->{mysql_insertid};
@@ -546,35 +560,6 @@ sub _insert_sequence {
 } ## end sub _insert_sequence
 
 
-=head2 _fetch_hgnc_id
-  Description:
-  Returntype :
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub _fetch_hgnc_id {
-  my ( $self, $gene ) = @_;
-  my $hgnc_id;
-  foreach my $oxref (@{ $gene->get_all_object_xrefs() }) {
-    if ( $oxref->dbname ne 'HGNC' ) {
-      next;
-    }
-
-    if ($oxref->primary_id =~ /^HGNC:\d+$/) {
-      ( undef, $hgnc_id ) = split ':', $oxref->primary_id;
-    } else {
-      $hgnc_id = $oxref->primary_id;
-    }
-
-    return $hgnc_id;
-  }
-
-  return;
-} ## end sub _fetch_hgnc_id
-
-
 =head2 genes_to_metadata_iterator
   Description: This is the place where you should try to get the gene iterator properly
   Returntype :
@@ -584,9 +569,15 @@ sub _fetch_hgnc_id {
 =cut
 
 sub genes_to_metadata_iterator {
-  my ( $self, $dba, $source_name ) = @_;
+  my ( $self, $dba, $source_name, $gene_ids ) = @_;
   my $ga           = $dba->get_GeneAdaptor();
-  my $gene_ids     = $ga->_list_dbIDs('gene');
+
+  # print Dumper $gene_ids;
+
+  if ( !defined $gene_ids ) {
+    $gene_ids = $ga->_list_dbIDs('gene');
+  }
+
   my $len          = scalar @{ $gene_ids };
   my $current_gene = 0;
   my $genes_i      = Bio::EnsEMBL::Utils::Iterator->new(
