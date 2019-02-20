@@ -18,8 +18,6 @@ See the NOTICE file distributed with this work for additional information
 
 package Bio::EnsEMBL::Tark::DB;
 
-use warnings;
-use strict;
 use DBI;
 use Carp;
 use Digest::SHA1 qw(sha1);

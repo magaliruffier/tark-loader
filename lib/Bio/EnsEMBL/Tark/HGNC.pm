@@ -18,14 +18,11 @@ See the NOTICE file distributed with this work for additional information
 
 package Bio::EnsEMBL::Tark::HGNC;
 
-use warnings;
-use strict;
+use Moose;
+with 'MooseX::Log::Log4perl';
 
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::FileHandle;
-
-use Moose;
-with 'MooseX::Log::Log4perl';
 
 has 'query' => (
   traits  => ['Hash'],

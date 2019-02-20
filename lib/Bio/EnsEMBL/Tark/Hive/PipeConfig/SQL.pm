@@ -18,9 +18,6 @@ See the NOTICE file distributed with this work for additional information
 
 package Bio::EnsEMBL::Tark::Hive::PipeConfig::SQL;
 
-use strict;
-use warnings;
-
 use Moose;
 
 

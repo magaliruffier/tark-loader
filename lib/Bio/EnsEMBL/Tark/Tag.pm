@@ -41,18 +41,14 @@ rather than getting built at the beginning.
 
 package Bio::EnsEMBL::Tark::Tag;
 
-use warnings;
-use strict;
+use Moose;
+with 'MooseX::Log::Log4perl';
 use DBI;
 use Config::Simple;
 
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::Utils;
 
-use Moose;
-with 'MooseX::Log::Log4perl';
-
-use Data::Dumper;
 
 has session => (
   is => 'rw',

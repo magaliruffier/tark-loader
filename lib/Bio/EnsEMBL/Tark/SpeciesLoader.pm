@@ -18,17 +18,15 @@ See the NOTICE file distributed with this work for additional information
 
 package Bio::EnsEMBL::Tark::SpeciesLoader;
 
-use warnings;
-use strict;
+use Moose;
+with 'MooseX::Log::Log4perl';
+
 use DBI;
 
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::Tag;
 use Bio::EnsEMBL::Tark::Utils;
-use Data::Dumper;
 
-use Moose;
-with 'MooseX::Log::Log4perl';
 
 has 'dsn' => ( is => 'ro', isa => 'Str' );
 
@@ -571,8 +569,6 @@ sub _insert_sequence {
 sub genes_to_metadata_iterator {
   my ( $self, $dba, $source_name, $gene_ids ) = @_;
   my $ga           = $dba->get_GeneAdaptor();
-
-  # print Dumper $gene_ids;
 
   if ( !defined $gene_ids ) {
     $gene_ids = $ga->_list_dbIDs('gene');

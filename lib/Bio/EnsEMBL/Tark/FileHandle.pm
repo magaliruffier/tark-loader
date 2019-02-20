@@ -34,8 +34,6 @@ Bio::EnsEMBL::Tark::FileHandle
 
 package Bio::EnsEMBL::Tark::FileHandle;
 
-use strict;
-use warnings;
 use Moose;
 use Carp;
 
