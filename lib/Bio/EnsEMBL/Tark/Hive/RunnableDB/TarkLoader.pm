@@ -17,7 +17,7 @@ See the NOTICE file distributed with this work for additional information
 
 =head NAME
 
-  Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader
+  Bio::EnsEMBL::Tark::Hive::Runnable::TarkLoader
 
 
 =head1 DESCRIPTION
@@ -25,7 +25,7 @@ See the NOTICE file distributed with this work for additional information
   Runnable for the loading of the Tark db from a Core db.
 
 
-=head1 DESCRIPTION
+=head2 DESCRIPTION
 
   A pipeline for loading ensembl genomic features into the Tark DB. Requires
   connection parameters for the Tark and Core dbs, as well was matching tags to
