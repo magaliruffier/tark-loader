@@ -9,7 +9,6 @@ requires 'List::Util', '>= 1.45';
 requires 'Log::Log4perl';
 requires 'Moose';
 requires 'MooseX::Log::Log4perl';
-requires 'Proc::Daemon';
 requires 'SQL::Translator', '>= 0.11018';
 requires 'Text::CSV';
 requires 'Text::Glob';
