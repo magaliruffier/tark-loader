@@ -137,8 +137,11 @@ sub run {
       tark_release => $tark_release_count_row[1],
     };
 
-    if ( $self->param_is_defined( 'tag_previous_shortname' ) ) {
-      $tark_compare_sql = $tark_sql_handle->feature_release_count( $table, 'removed' );
+    if (
+      $self->param_is_defined( 'tag_previous_shortname' ) and
+      $self->param( 'tag_previous_shortname' ) ne $self->param( 'tag_shortname' )
+    ) {
+      $tark_compare_sql = $tark_sql_handle->feature_diff_count( $table, 'removed' );
       $sth = $tark_dbh->prepare( $tark_compare_sql );
       $sth->execute(
         $self->param( 'tag_previous_shortname' ),
@@ -147,7 +150,7 @@ sub run {
       my @tark_compare_removed = $sth->fetchrow_array();
       $output{ $table }{ 'removed' } = $tark_compare_removed[0];
 
-      $tark_compare_sql = $tark_sql_handle->feature_release_count( $table, 'gained' );
+      $tark_compare_sql = $tark_sql_handle->feature_diff_count( $table, 'gained' );
       $sth = $tark_dbh->prepare( $tark_compare_sql );
       $sth->execute(
         $self->param( 'tag_previous_shortname' ),
