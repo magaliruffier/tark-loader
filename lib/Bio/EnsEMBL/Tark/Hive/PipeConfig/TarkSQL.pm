@@ -116,10 +116,22 @@ sub _feature_diff_template_SQL {
       COUNT(*)
     FROM
       (
-        SELECT feature_id FROM #FEATURE#_release_tag WHERE release_id=?
+        SELECT
+          feature_id
+        FROM
+          #FEATURE#_release_tag AS f_tag
+          JOIN release_set AS rs ON (f_tag.release_id=rs.release_id)
+        WHERE
+          rs.shortname=?
       ) AS v0
       #DIRECTION# JOIN (
-        SELECT feature_id FROM #FEATURE#_release_tag WHERE release_id=?
+        SELECT
+          feature_id
+        FROM
+          #FEATURE#_release_tag AS f_tag
+          JOIN release_set AS rs ON (f_tag.release_id=rs.release_id)
+        WHERE
+          rs.shortname=?
       ) AS v1 ON (v0.feature_id=v1.feature_id)
     WHERE
       #SET#.feature_id IS NULL
