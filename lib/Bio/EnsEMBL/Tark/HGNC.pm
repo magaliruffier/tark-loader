@@ -24,6 +24,9 @@ with 'MooseX::Log::Log4perl';
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::FileHandle;
 
+use Data::Dumper;
+use Try::Tiny;
+
 has 'query' => (
   traits  => ['Hash'],
   is      => 'rw',
@@ -175,7 +178,11 @@ sub load_hgnc {
 
     my @aliases = split '\|', $hgnc_line[8];
     foreach my $alias (@aliases) {
-      $insert_hgnc->execute($hgnc_id, $alias, 0, $self->session->session_id);
+      try {
+        $insert_hgnc->execute($hgnc_id, $alias, 0, $self->session->session_id);
+      } catch {
+        $self->log->warn("Failed to load alias $alias for $hgnc_id");
+      }
     }
   }
 
