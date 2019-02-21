@@ -131,6 +131,7 @@ SQL
 
 =head2 feature_diff_count
   Arg [1]    : $feature - string
+  Arg [2]    : $direction - string (removed|gained)
   Description: Query for getting counts of all features
 =cut
 
@@ -145,8 +146,8 @@ sub feature_diff_count {
     $sql =~ s/#DIRECTION#/LEFT/g;
     $sql =~ s/#SET#/v1/g;
   } else {
-    $sql =~ s/#DIRECTION#/LEFT/g;
-    $sql =~ s/#SET#/v1/g;
+    $sql =~ s/#DIRECTION#/RIGHT/g;
+    $sql =~ s/#SET#/v0/g;
   }
 
   return $sql;

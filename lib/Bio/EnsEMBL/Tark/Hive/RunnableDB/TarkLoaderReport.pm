@@ -93,6 +93,7 @@ sub run {
   my $core_sql = q{};
   my $tark_sql = q{};
   my $tark_release_sql = q{};
+  my $tark_compare_sql = q{};
 
   my %output;
 
@@ -135,6 +136,20 @@ sub run {
       tark_total   => $tark_count_row[0],
       tark_release => $tark_release_count_row[1],
     };
+
+    if ( $self->param_is_defined( 'tag_previous_shortname' ) ) {
+      $tark_compare_sql = $tark_sql_handle->feature_release_count( $table, 'removed' );
+      $sth = $tark_dbh->prepare( $tark_release_sql );
+      $sth->execute( $self->param( 'tag_shortname' ) );
+      my @tark_compare_removed = $sth->fetchrow_array();
+      $output{ $table }{ 'removed' } = $tark_compare_removed[0];
+
+      $tark_compare_sql = $tark_sql_handle->feature_release_count( $table, 'gained' );
+      $sth = $tark_dbh->prepare( $tark_release_sql );
+      $sth->execute( $self->param( 'tag_shortname' ) );
+      my @tark_compare_gained = $sth->fetchrow_array();
+      $output{ $table }{ 'gained' } = $tark_compare_gained[0];
+    }
   }
 
   open my $fh, '>', $self->param('report') or confess 'Can\'t open report file';
