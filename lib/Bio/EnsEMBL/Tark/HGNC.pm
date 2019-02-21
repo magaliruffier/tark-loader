@@ -24,7 +24,6 @@ with 'MooseX::Log::Log4perl';
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::FileHandle;
 
-use Data::Dumper;
 use Try::Tiny;
 
 has 'query' => (
