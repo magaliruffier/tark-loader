@@ -138,7 +138,7 @@ SQL
 sub feature_diff_count {
   my ( $self, $feature, $direction ) = @_;
 
-  my $sql = $self->_feature_release_template_SQL();
+  my $sql = $self->_feature_diff_template_SQL();
 
   $sql =~ s/#FEATURE#/$feature/g;
 
