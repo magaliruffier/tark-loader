@@ -95,7 +95,18 @@ sub run {
   my $tark_release_sql = q{};
   my $tark_compare_sql = q{};
 
-  my %output;
+  my %output = {
+    release => {
+      current => $self->param( 'tag_shortname' )
+    }
+  };
+
+  if (
+    $self->param_is_defined( 'tag_previous_shortname' ) and
+    $self->param( 'tag_previous_shortname' ) ne $self->param( 'tag_shortname' )
+  ) {
+    $output{ 'release' }{ 'previous' } = $self->param( 'tag_previous_shortname' );
+  }
 
   foreach my $table (qw/ gene exon transcript translation /) {
     if ( $self->param_is_defined('exclude_source') and $self->param('exclude_source') ) {
