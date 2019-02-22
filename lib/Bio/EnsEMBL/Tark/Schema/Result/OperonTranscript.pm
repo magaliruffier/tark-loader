@@ -225,7 +225,7 @@ __PACKAGE__->belongs_to(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OQMS9DmOJmFV51h4Ef8BRA
 
 =head2 sqlt_deploy_hook
-  Arg [1]    : $qlt_table : Bio::EnsEMBL::Tark::Schema::Result::Session
+  Arg [1]    : $sqlt_table : Bio::EnsEMBL::Tark::Schema::Result::Session
   Description: Add relevant missing indexes to the table
   Returntype : undef
   Exceptions : none
