@@ -95,10 +95,9 @@ sub run {
   my $tark_release_sql = q{};
   my $tark_compare_sql = q{};
 
-  my %output = {
-    release => {
+  my %output;
+  $output{ 'release' } = {
       current => $self->param( 'tag_shortname' )
-    }
   };
 
   if (
