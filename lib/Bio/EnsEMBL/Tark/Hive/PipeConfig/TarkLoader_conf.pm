@@ -86,8 +86,9 @@ sub default_options {
           -driver => 'mysql',
         },
 
-        exclude_source => q{},
-        include_source => q{},
+        exclude_source         => q{},
+        include_source         => q{},
+        tag_previous_shortname => q{},
     };
 } ## end sub default_options
 
@@ -189,8 +190,9 @@ sub pipeline_analyses {
         tark_db   => $self->o( 'tark_db' ),
 
         # Worker parameters
-        tag_shortname => $self->o( 'tag_shortname' ),
-        report        => $self->o( 'report' ),
+        tag_shortname          => $self->o( 'tag_shortname' ),
+        tag_previous_shortname => $self->o( 'tag_previous_shortname' ),
+        report                 => $self->o( 'report' ),
       }
     }
   ];
