@@ -2,7 +2,7 @@
 
 ENSDIR="${ENSDIR:-$PWD}"
 
-export PERL5LIB=$ENSDIR/bioperl-live:$ENSDIR/ensembl-test/modules:$PWD/lib:$ENSDIR/ensembl/modules
+export PERL5LIB=$ENSDIR/bioperl-live:$ENSDIR/ensembl-test/modules:$PWD/lib:$ENSDIR/ensembl/modules:$ENSDIR/ensembl-hive/modules
 export TEST_AUTHOR=$USER
 
 echo "Running test suite"

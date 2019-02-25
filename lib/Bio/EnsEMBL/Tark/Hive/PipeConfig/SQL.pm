@@ -18,9 +18,6 @@ See the NOTICE file distributed with this work for additional information
 
 package Bio::EnsEMBL::Tark::Hive::PipeConfig::SQL;
 
-use strict;
-use warnings;
-
 use Moose;
 
 
@@ -106,5 +103,84 @@ sub gene_grouping_inclusion {
 
   return $sql;
 } ## end sub gene_grouping_inclusion
+
+
+=head1 _feature_count_template_SQL
+  Description: Default SQL for the feature count queries. This is an internal
+               function and should only be accessed through the feature_count,
+               feature_count_exclusion and feature_count_inclusion that will
+               handle the substitution of the FROM and WHERE clauses.
+=cut
+
+sub _feature_count_template_SQL {
+  my ( $self, $feature ) = @_;
+
+  my $sql = (<<'SQL');
+    SELECT
+      COUNT(*)
+    FROM
+      #FROM#
+    #WHERE#
+SQL
+
+  return $sql;
+} ## end sub _feature_count_template_SQL
+
+
+=head2 feature_count
+  Arg [1]    : $feature - string
+  Description: Query for getting of all features
+=cut
+
+sub feature_count {
+  my ( $self, $feature ) = @_;
+
+  my $sql = $self->_feature_count_template_SQL();
+
+  $sql =~ s/#FROM#/$feature/g;
+  $sql =~ s/#WHERE#//g;
+
+  return $sql;
+} ## end sub feature_count
+
+
+=head2 feature_count_exclusion
+  Arg [1]    : $feature - string
+  Arg [2]    : $list_length - interger
+  Description: Query for getting counts of features except those from the
+               specified sources. Genes are randomly assigned to each group
+=cut
+
+sub feature_count_exclusion {
+  my ($self, $feature, $list_length) = @_;
+
+  my $sql = $self->_feature_count_template_SQL();
+  my $sub_string = 'WHERE source NOT IN ( "%s"' . ', "%s"' x ($list_length-1) . ' )';
+
+  $sql =~ s/#FROM#/$feature/g;
+  $sql =~ s/#WHERE#/$sub_string/g;
+
+  return $sql;
+} ## end sub feature_count_exclusion
+
+
+=head2 feature_count_inclusion
+  Arg [1]    : $feature - string
+  Arg [2]    : $list_length - interger
+  Description: Query for getting counts of features only from the defined
+               sources. Genes are randomly assigned to each group.
+=cut
+
+sub feature_count_inclusion {
+  my ($self, $feature, $list_length) = @_;
+
+  my $sql = $self->_feature_count_template_SQL();
+  my $sub_string = 'WHERE source IN ( "%s"' . ', "%s"' x ($list_length-1) . ' )';
+
+  $sql =~ s/#FROM#/$feature/g;
+  $sql =~ s/#WHERE#/$sub_string/g;
+
+  return $sql;
+} ## end sub feature_count_inclusion
 
 1;

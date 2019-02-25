@@ -182,7 +182,7 @@ __PACKAGE__->belongs_to(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lXDy1JKemCgTXGtWz5xRbw
 
 =head2 sqlt_deploy_hook
-  Arg [1]    : $sqlt_table : Bio::EnsEMBL::Tark::Schema::Result::Session
+  Arg [1]    : $qlt_table
   Description: Add relevant missing indexes to the table
   Returntype : undef
   Exceptions : none

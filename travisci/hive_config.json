@@ -1,0 +1,136 @@
+{
+    "VERSION" : 0.01,
+    "REMARKS" : [
+        "Colour names and colour scheme names are taken from http://www.graphviz.org/doc/info/colors.html"
+    ],
+    "Valley" : {
+        "SubmitWorkersMax"  : 50
+    },
+    "Meadow" : {
+        "REMARKS" : {
+            "RunWorkerPath" : "The path of runWorker.pl . When null or missing, beekeeper will use $EHIVE_ROOT_DIR or its own path. When RunWorkerPath is '', beekeeper assumes runWorker.pl is in $PATH"
+        },
+        "CleanupTempDirectoryKilledWorkers" : 0,
+        "MaxLimboSeconds"                   : 10,
+        "MaxRegistrationSeconds"            : 30,
+        "CanSubmitJobArrays"                : 1,
+        "LOCAL" : {
+            "MaxRegistrationSeconds"        : 60,
+            "TotalRunningWorkersMax"   : 2,
+            "my-quadcore-desktop" : {
+                "TotalRunningWorkersMax"   : 4
+            },
+            "your-weak-laptop" : {
+                "TotalRunningWorkersMax"   : 1
+            }
+        },
+        "LSF" : {
+            "SubmissionOptions"         : "",
+            "TotalRunningWorkersMax"    : 2000,
+            "farm3" : {
+                "SubmissionOptions"  : "",
+                "TotalRunningWorkersMax"    : 5000
+            },
+            "EBI" : {
+                "SubmissionOptions"  : "",
+                "TotalRunningWorkersMax"    : 10000
+            }
+        },
+        "SGE" : {
+            "SubmissionOptions"         : "",
+            "TotalRunningWorkersMax"    : 2000
+        },
+        "HTCondor" : {
+            "SubmissionOptions"         : "",
+            "TotalRunningWorkersMax"    : 500
+        },
+        "PBSPro" : {
+            "SubmissionOptions"         : "",
+            "TotalRunningWorkersMax"    : 500
+        }
+    },
+    "Graph" : {
+        "Pad"  : "1.0",
+
+        "Node" : {
+            "Font"        : "Times-Roman",
+            "Colour"      : "cyan",
+            "Details"     : { "Font"   : "Helvetica" },
+
+            "JobStatus"   : {
+                "Colour"        : "yellow",
+
+                "SEMAPHORED"    : { "Colour" : "grey"        },
+                "READY"         : { "Colour" : "green"       },
+                "INPROGRESS"    : { "Colour" : "yellow"      },
+                "DONE"          : { "Colour" : "DeepSkyBlue" },
+                "FAILED"        : { "Colour" : "red"         }
+            },
+
+            "AnalysisStatus"   : {
+                "Shape"       : "Mrecord",
+
+                "EMPTY"       : { "Colour" : "white"       },
+                "BLOCKED"     : { "Colour" : "grey"        },
+                "LOADING"     : { "Colour" : "green"       },
+                "ALL_CLAIMED" : { "Colour" : "grey"        },
+                "SYNCHING"    : { "Colour" : "green"       },
+                "READY"       : { "Colour" : "green"       },
+                "WORKING"     : { "Colour" : "yellow"      },
+                "DONE"        : { "Colour" : "DeepSkyBlue" },
+                "FAILED"      : { "Colour" : "red"         }
+            },
+
+            "Table" : {
+                "Shape"         : "tab",
+                "Style"         : "filled",
+                "Colour"        : "orange",
+                "HeaderColour"  : "orangered",
+                "Font"          : "Courier",
+                "FontColour"    : "black"
+            },
+
+            "AccuSink"  : {
+                "Shape"         : "invhouse",
+                "Style"         : "filled",
+                "Colour"        : "darkgreen",
+                "Font"          : "Courier",
+                "FontColour"    : "white"
+            },
+
+            "Switch"  : {
+                "Shape"         : "egg",
+                "Style"         : "filled",
+                "Colour"        : "blueviolet",
+                "Font"          : "Courier",
+                "FontColour"    : "white"
+            }
+        },
+        "Edge" : {
+            "Font"        : "Helvetica",
+            "Data"        : { "Colour" : "blue"         },
+            "Control"     : { "Colour" : "red"          },
+            "Semablock"   : { "Colour" : "red"          },
+            "Accu"        : { "Colour" : "darkgreen"    }
+        },
+        "Box"  : {
+            "Semaphore"     : { "ColourScheme" : "blues9",   "ColourOffset" : 1 },
+            "MainPipeline"  : { "ColourScheme" : "pastel19", "ColourOffset" : 3 },
+            "OtherPipeline" : { "ColourScheme" : "pastel19", "ColourOffset" : 8 }
+        },
+
+        "DisplayStats"          : "barchart",
+        "DisplayJobs"           : 0,
+        "DisplayJobLength"      : 64,
+        "DisplayData"           : 0,
+        "DisplayDBIDs"          : 1,
+        "DisplayColumnLength"   : 32,
+        "DisplayConditionLength": 64,
+        "DisplayInputIDTemplate": 1,
+
+        "DisplayDetails"        : 1,
+        "DisplayStretched"      : 0,
+        "DisplaySemaphoreBoxes" : 1,
+        "DuplicateTables"       : 0
+    }
+}

@@ -18,14 +18,13 @@ See the NOTICE file distributed with this work for additional information
 
 package Bio::EnsEMBL::Tark::HGNC;
 
-use warnings;
-use strict;
+use Moose;
+with 'MooseX::Log::Log4perl';
 
 use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::FileHandle;
 
-use Moose;
-with 'MooseX::Log::Log4perl';
+use Try::Tiny;
 
 has 'query' => (
   traits  => ['Hash'],
@@ -178,7 +177,11 @@ sub load_hgnc {
 
     my @aliases = split '\|', $hgnc_line[8];
     foreach my $alias (@aliases) {
-      $insert_hgnc->execute($hgnc_id, $alias, 0, $self->session->session_id);
+      try {
+        $insert_hgnc->execute($hgnc_id, $alias, 0, $self->session->session_id);
+      } catch {
+        $self->log->warn("Failed to load alias $alias for $hgnc_id");
+      }
     }
   }
 

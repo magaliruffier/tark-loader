@@ -32,8 +32,6 @@ use Bio::EnsEMBL::Test::MultiTestDB;
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob get_test_url_or_die make_new_db_from_sqls run_sql_on_db);
 
-# plan tests => 9;
-
 # Need EHIVE_ROOT_DIR to be able to point at specific files
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname(
   File::Basename::dirname(
@@ -49,18 +47,6 @@ my $core_dba = $multi_db->get_DBAdaptor('core');
 my $tark_dba = Bio::EnsEMBL::Tark::Test::TestDB->new();
 $tark_dba->schema();
 
-print $core_dba->dbc->host . "\n";
-print $core_dba->dbc->port . "\n";
-print $core_dba->dbc->user . "\n";
-print $core_dba->dbc->pass . "\n";
-print $core_dba->dbc->dbname . "\n";
-
-print $tark_dba->config->{host} . "\n";
-print $tark_dba->config->{port} . "\n";
-print $tark_dba->config->{user} . "\n";
-print $tark_dba->config->{pass} . "\n";
-print $tark_dba->config->{db} . "\n";
-
 standaloneJob(
   'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
   {
@@ -86,9 +72,8 @@ standaloneJob(
 
 
 standaloneJob(
-  'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
+  'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoaderReport',
   {
-    'species'   => 'homo_sapiens',
     'host' => $core_dba->dbc->host,
     'port' => $core_dba->dbc->port,
     'user' => $core_dba->dbc->user,
@@ -101,19 +86,11 @@ standaloneJob(
     'tark_pass' => $tark_dba->config->{pass},
     'tark_db'   => $tark_dba->config->{db},
 
-    'tag_block'        => 'release',
-    'tag_shortname'    => 84,
-    'tag_description'  => 'Ensembl release 84',
-    'tag_feature_type' => 'all',
-
-    'block_size'   => 10,
-    'gene_id_list' => '18271,18256,18262'
+    'tag_shortname' => 84,
+    'report'        => 'test_report.json'
   },
 );
 
-
-
-# run_sql_on_db($test_url, 'DROP DATABASE');
 
 done_testing();
 

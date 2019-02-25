@@ -18,11 +18,9 @@ See the NOTICE file distributed with this work for additional information
 
 package Bio::EnsEMBL::Tark::Utils;
 
-use warnings;
-use strict;
+use Moose;
 use Digest::SHA1 qw(sha1);
 
-use Moose;
 
 =head2 checksum_array
   Description: Join an array of values with a ':' delimeter and find a sha1
