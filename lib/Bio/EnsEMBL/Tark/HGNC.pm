@@ -83,7 +83,7 @@ SQL
   $self->set_query('gene' => $sth);
 
   my $update_ids_sql = (<<'SQL');
-    UPDATE gene SET hgnc_id = ? WHERE stable_id = ?
+    UPDATE gene SET name_id = ? WHERE stable_id = ?
 SQL
 
   $sth = $dbh->prepare( $update_ids_sql ) or
