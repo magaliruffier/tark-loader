@@ -5,9 +5,9 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #    http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,13 +55,18 @@ while getopts "h?:d:s:a:q:r:p:t:" opt; do
     esac
 done
 
-echo $ENSDIR
-
 shift $((OPTIND-1))
 
 [ "${1:-}" = "--" ] && shift
 
-export PERL5LIB=$ENSDIR/bioperl-live:$PWD/local/lib/perl5:$PWD/lib:$ENSDIR/ensembl/modules:$ENSDIR/ensembl-hive/modules
+if [ $TARK_DB = "test_tark" ]
+then
+  echo "Loader for importing ensembl core dbs into the Tark db."
+  echo "\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-d ENSDIR\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-q RELEASE_FROM (default: ${RELEASE_FROM})\n\t-r RELEASE_TO (default: ${RELEASE_TO})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)"
+  echo "\n- Separate loads should be done for each assembly change."
+  echo "- Database parameters are defined using the helper scripts within this wrapper. This uses the public archive as the source of cores, the dev tark server for the loading and the hive server for the related hive dbs."
+  exit 0
+fi
 
 eval $(mysql-ens-tark-dev-1-ensrw details env_TARK_)
 eval $(mysql-ens-metazoa-prod-2-ensrw details env_HIVE_)
