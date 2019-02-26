@@ -23,6 +23,7 @@
 ENSDIR=""
 SPECIES="homo_sapiens"
 ASSEMBLY=38
+RELEASE_EG_FROM=0
 RELEASE_FROM=76
 RELEASE_TO=0
 PREVIOUS_RELEASE=0
@@ -51,6 +52,8 @@ while getopts "h?:d:s:a:e:i:q:r:p:t:" opt; do
     e)  EXCLUDE_SOURCE=$OPTARG
         ;;
     i)  INCLUDE_SOURCE=$OPTARG
+        ;;
+    m)  RELEASE_EG_FROM=$OPTARG
         ;;
     q)  RELEASE_FROM=$OPTARG
         ;;
@@ -114,6 +117,11 @@ for RELEASE in $( seq $RELEASE_FROM $RELEASE_TO)
 do
 
   CORE_DB=${SPECIES}_core_${RELEASE}_${ASSEMBLY}
+  if [ $RELEASE_EG_FROM -gt 0 ]
+  then
+    CORE_DB=${SPECIES}_core_${RELEASE_EG_FROM}_${RELEASE}_${ASSEMBLY}
+  fi
+
   HIVE_DB_NAME=hive_${TARK_DB}_${RELEASE}
   HIVE_DB=${USER}_${HIVE_DB_NAME}
 
@@ -127,6 +135,10 @@ do
   mysql -h${TARK_HOST} -P${TARK_PORT} -u${TARK_USER} -p${TARK_PASS} ${TARK_DB} -N -e "show tables;" | while read table; do echo "Optimizing $table ...     "; mysql -h${TARK_HOST} -P${TARK_PORT} -u${TARK_USER} -p${TARK_PASS} ${TARK_DB} -e "optimize table $table;"; done
 
   PREVIOUS_RELEASE=${RELEASE}
+  if [ $RELEASE_EG_FROM -gt 0 ]
+  then
+    RELEASE_EG_FROM=${RELEASE_EG_FROM}+1
+  fi
 
 done
 
