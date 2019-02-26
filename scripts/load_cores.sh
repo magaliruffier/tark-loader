@@ -69,7 +69,7 @@ then
 fi
 
 eval $(mysql-ens-tark-dev-1-ensrw details env_TARK_)
-eval $(mysql-ens-metazoa-prod-2-ensrw details env_HIVE_)
+eval $(mysql-ens-hive-prod-2-ensrw details env_HIVE_)
 
 CORE_HOST=ensembldb.ensembl.org
 CORE_PORT=3306
