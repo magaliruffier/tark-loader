@@ -79,7 +79,7 @@ $sql_handle->execute( 1000, 'ENSG00000101331' );
 my $result_count_01 = $test_utils->check_db(
   $db, 'Gene', { stable_id => 'ENSG00000101331' }
 );
-is( $result_count_01->hgnc_id, 1000, 'gene_update' );
+is( $result_count_01->name_id, 1000, 'gene_update' );
 
 done_testing();
 
