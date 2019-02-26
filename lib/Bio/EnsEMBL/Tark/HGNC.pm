@@ -110,8 +110,8 @@ sub flush_hgnc {
   $self->log()->info('Truncating gene names table');
   $dbh->do('TRUNCATE gene_names');
 
-  $self->log()->info('Setting hgnc_id column in the gene table to NULL');
-  $dbh->do('UPDATE gene SET hgnc_id = NULL');
+  $self->log()->info('Setting name_id column in the gene table to NULL');
+  $dbh->do('UPDATE gene SET name_id = NULL');
 
   return;
 } ## end sub flush_hgnc
