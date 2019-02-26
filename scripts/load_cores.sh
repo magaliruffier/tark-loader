@@ -31,11 +31,13 @@ EXCLUDE_SOURCE=""
 INCLUDE_SOURCE=""
 verbose=0
 
+HELP="\n\t-h Displays this message\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-d ENSDIR\n\t-e EXCLUDE_SOURCE\n\t-i INCLUDE_SOURCE\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-q RELEASE_FROM (default: ${RELEASE_FROM})\n\t-r RELEASE_TO (default: ${RELEASE_TO})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)"
+
 while getopts "h?:d:s:a:e:i:q:r:p:t:" opt; do
     case "${opt}" in
     h|\?)
         echo "Loader for importing ensembl core dbs into the Tark db."
-        echo -e "\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-d ENSDIR\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-q RELEASE_FROM (default: ${RELEASE_FROM})\n\t-r RELEASE_TO (default: ${RELEASE_TO})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)"
+        echo -e $HELP
         echo -e "\n- Separate loads should be done for each assembly change."
         echo "- Database parameters are defined using the helper scripts within this wrapper. This uses the public archive as the source of cores, the dev tark server for the loading and the hive server for the related hive dbs."
         exit 0
@@ -67,9 +69,9 @@ shift $((OPTIND-1))
 
 if [ $TARK_DB = "test_tark" ]
 then
-  echo "Loader for importing ensembl core dbs into the Tark db."
-  echo "\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-d ENSDIR\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-q RELEASE_FROM (default: ${RELEASE_FROM})\n\t-r RELEASE_TO (default: ${RELEASE_TO})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)"
-  echo "\n- Separate loads should be done for each assembly change."
+  echo "Please define a Tark db"
+  echo -e $HELP
+  echo -e "\n- Separate loads should be done for each assembly change."
   echo "- Database parameters are defined using the helper scripts within this wrapper. This uses the public archive as the source of cores, the dev tark server for the loading and the hive server for the related hive dbs."
   exit 0
 fi
