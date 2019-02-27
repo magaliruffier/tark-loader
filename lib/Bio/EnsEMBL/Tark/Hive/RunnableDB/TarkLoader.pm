@@ -140,6 +140,11 @@ sub run {
 
   my $loader;
 
+  my $naming_consortium = q{};
+  if ( $self->param_is_defined( 'naming_consortium' ) ) {
+    $naming_consortium = $self->param( 'naming_consortium' );
+  }
+
   if ( $self->param_is_defined( 'gene_id_list' ) ) {
     my @gene_id_list = split /,/, $self->param( 'gene_id_list' ) ;
 
@@ -147,13 +152,17 @@ sub run {
       session     =>  $tark_dba,
       tag_config  =>  $tag_config,
       gene_id_list => \@gene_id_list,
+      naming_consortium => $naming_consortium,
     );
   } else {
     $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
       session     =>  $tark_dba,
       tag_config  =>  $tag_config,
+      naming_consortium => $naming_consortium,
     );
   }
+
+
 
   $loader->load_species( $core_dba, 'Ensembl' );
 

@@ -161,8 +161,8 @@ __PACKAGE__->add_columns(
   { data_type => "binary", is_nullable => 1, size => 20 },
   "hgnc_id",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
+    data_type => "varchar",
+    size => 32,
     # is_foreign_key => 1,
     is_nullable => 1,
   },

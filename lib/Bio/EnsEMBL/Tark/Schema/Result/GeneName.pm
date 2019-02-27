@@ -103,8 +103,9 @@ __PACKAGE__->add_columns(
   },
   "external_id",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
+    data_type => "varchar",
+    # extra => { unsigned => 1 },
+    size => 32,
     is_nullable => 1,
     is_foreign_key => 1,
   },

@@ -165,6 +165,23 @@ ok(
   '_load_translation'
 );
 
+
+$loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
+  session    => $db,
+  tag_config => $tag_config,
+  naming_consortium => 'HGNC'
+);
+ok( !defined $loader->load_species( $dba, 'Ensembl' ), 'load_species' );
+my $result_count_02 = $test_utils->check_db(
+  $db, 'Gene', {}, 1
+);
+is(
+  $result_count_02,
+  $result_count_00 + 12,
+  'load_species - Loading WITH naming consortium values (HGNC)'
+);
+
+
 done_testing();
 
 1;

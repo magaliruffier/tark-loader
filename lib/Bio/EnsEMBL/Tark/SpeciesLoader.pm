@@ -62,6 +62,8 @@ has tag_config => (
 
 has gene_id_list => ( is => 'ro', isa => 'ArrayRef' );
 
+has naming_consortium => ( is => 'ro', isa => 'Str' );
+
 
 =head2 BUILD
   Description: Initialise the creation of the prepared statements
@@ -216,10 +218,11 @@ SQL
 =cut
 
 sub load_species {
-  my ( $self, $dba, $source_name, $naming_consortium ) = @_;
-  $naming_consortium //= undef;
+  my ( $self, $dba, $source_name ) = @_;
 
   my $session_id = $self->session->session_id;
+
+  my $naming_consortium = $self->naming_consortium;
 
   $source_name = defined($source_name) ? $source_name : 'Ensembl';
 
@@ -322,8 +325,8 @@ sub _load_gene {
   my $loc_checksum = $utils->checksum_array( @loc_pieces );
 
   my $name_id = undef;
-  if ( defined $naming_consortium ) {
-    $name_id = $self->_fetch_name_id($gene);
+  if ( $naming_consortium ) {
+    $name_id = $self->_fetch_name_id($gene, $naming_consortium);
   }
 
   my $gene_checksum = $utils->checksum_array(

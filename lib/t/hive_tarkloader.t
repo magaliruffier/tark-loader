@@ -25,14 +25,12 @@ Log::Log4perl->easy_init($DEBUG);
 use Cwd;
 use Test::More;
 
-use Data::Dumper;
-
 use Bio::EnsEMBL::Tark::Test::TestDB;
+use Bio::EnsEMBL::Tark::Test::Utils;
 use Bio::EnsEMBL::Test::MultiTestDB;
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob get_test_url_or_die make_new_db_from_sqls run_sql_on_db);
 
-# plan tests => 9;
 
 # Need EHIVE_ROOT_DIR to be able to point at specific files
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname(
@@ -49,17 +47,7 @@ my $core_dba = $multi_db->get_DBAdaptor('core');
 my $tark_dba = Bio::EnsEMBL::Tark::Test::TestDB->new();
 $tark_dba->schema();
 
-print $core_dba->dbc->host . "\n";
-print $core_dba->dbc->port . "\n";
-print $core_dba->dbc->user . "\n";
-print $core_dba->dbc->pass . "\n";
-print $core_dba->dbc->dbname . "\n";
-
-print $tark_dba->config->{host} . "\n";
-print $tark_dba->config->{port} . "\n";
-print $tark_dba->config->{user} . "\n";
-print $tark_dba->config->{pass} . "\n";
-print $tark_dba->config->{db} . "\n";
+my $test_utils = Bio::EnsEMBL::Tark::Test::Utils->new();
 
 standaloneJob(
   'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
@@ -107,11 +95,16 @@ standaloneJob(
     'tag_feature_type' => 'all',
 
     'block_size'   => 10,
-    'gene_id_list' => '18271,18256,18262'
+    'gene_id_list' => '18271,18256,18262',
+
+    'naming_consortium' => 'HGNC',
   },
 );
 
-
+my $result = $test_utils->check_db(
+  $tark_dba, 'Gene', { stable_id => 'ENSG00000149600' }, 1
+);
+is( $result, 2, 'Loaded genes with HGNC names' );
 
 # run_sql_on_db($test_url, 'DROP DATABASE');
 
