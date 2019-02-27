@@ -581,7 +581,7 @@ sub _fetch_name_id {
   }
 
   return;
-} ## end sub _fetch_hgnc_id
+} ## end sub _fetch_name_id
 
 
 =head2 genes_to_metadata_iterator
