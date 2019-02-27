@@ -216,9 +216,8 @@ SQL
 =cut
 
 sub load_species {
-  my $self = shift;
-  my $dba = shift;
-  my $source_name = shift;
+  my ( $self, $dba, $source_name, $naming_consortium ) = @_;
+  $naming_consortium //= undef;
 
   my $session_id = $self->session->session_id;
 
@@ -273,7 +272,7 @@ sub load_species {
       my $gene = $ga->fetch_by_dbID( $current_gene );
       if ( $gene ) {
         $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
-        $self->_load_gene($gene, $session_pkg, $source_name, $tag);
+        $self->_load_gene($gene, $session_pkg, $source_name, $tag, $naming_consortium);
       }
     }
   } else {
@@ -282,7 +281,7 @@ sub load_species {
 
     while ( my $gene = $iter->next() ) {
       $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
-      $self->_load_gene($gene, $session_pkg, $source_name, $tag);
+      $self->_load_gene($gene, $session_pkg, $source_name, $tag, $naming_consortium);
     }
   }
 
@@ -311,7 +310,7 @@ sub load_species {
 =cut
 
 sub _load_gene {
-  my ( $self, $gene, $session_pkg, $source_name, $tag ) = @_;
+  my ( $self, $gene, $session_pkg, $source_name, $tag, $naming_consortium ) = @_;
 
   my @loc_pieces = (
     $session_pkg->{assembly_id}, $gene->seq_region_name(),
@@ -322,14 +321,19 @@ sub _load_gene {
   my $utils = Bio::EnsEMBL::Tark::Utils->new();
   my $loc_checksum = $utils->checksum_array( @loc_pieces );
 
+  my $name_id = undef;
+  if ( defined $naming_consortium ) {
+    $name_id = $self->_fetch_name_id($gene);
+  }
+
   my $gene_checksum = $utils->checksum_array(
-    @loc_pieces, $gene->stable_id(), $gene->version()
+    @loc_pieces, $name_id, $gene->stable_id(), $gene->version()
   );
 
   my $sth = $self->get_insert('gene');
   $sth->execute(
     $gene->stable_id(), $gene->version(), @loc_pieces, $loc_checksum,
-    undef, $gene_checksum, $session_pkg->{session_id}
+    $name_id, $gene_checksum, $session_pkg->{session_id}
   ) or  $self->log->logdie("Error inserting gene: $DBI::errstr");
 
   my $gene_id = $sth->{mysql_insertid};
@@ -556,6 +560,28 @@ sub _insert_sequence {
 
   return $sha1;
 } ## end sub _insert_sequence
+
+
+=head2 _fetch_name_id
+  Description:
+  Returntype :
+  Exceptions : none
+  Caller     : general
+=cut
+
+sub _fetch_name_id {
+  my ( $self, $gene, $source_name ) = @_;
+
+  foreach my $oxref (@{ $gene->get_all_object_xrefs() }) {
+    if ( $oxref->dbname ne $source_name ) {
+      next;
+    }
+
+    return $oxref->primary_id;
+  }
+
+  return;
+} ## end sub _fetch_hgnc_id
 
 
 =head2 genes_to_metadata_iterator
