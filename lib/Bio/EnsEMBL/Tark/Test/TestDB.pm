@@ -61,7 +61,7 @@ around '_init_config' => sub {
   # DBI->trace(1);
 
   if (! exists $proto_config->{db}) {
-    $proto_config->{db} = sprintf '%s_tark_test_%s', $ENV{USER}, int(rand(100000));
+    $proto_config->{db} = sprintf '%s_tark_test_%s', $ENV{USER}, int rand 100000;
     $proto_config->{create} = 1;
   }
   # return $proto_config;
