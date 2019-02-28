@@ -31,7 +31,7 @@ ADD_CONSORTIUM_NAME=0
 TARK_DB="test_tark"
 verbose=0
 
-while getopts "h?:d:s:a:c:q:r:p:t:" opt; do
+while getopts "h?:d:s:a:c:n:q:r:p:t:" opt; do
     case "${opt}" in
     h|\?)
         echo "Loader for importing ensembl core dbs into the Tark db."
