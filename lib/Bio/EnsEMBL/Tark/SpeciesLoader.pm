@@ -573,10 +573,10 @@ sub _insert_sequence {
 =cut
 
 sub _fetch_name_id {
-  my ( $self, $gene, $source_name ) = @_;
+  my ( $self, $gene, $consortium_name ) = @_;
 
   foreach my $oxref (@{ $gene->get_all_object_xrefs() }) {
-    if ( $oxref->dbname ne $source_name ) {
+    if ( $oxref->dbname ne $consortium_name ) {
       next;
     }
 
@@ -597,7 +597,7 @@ sub _fetch_name_id {
 
 sub genes_to_metadata_iterator {
   my ( $self, $dba, $source_name, $gene_ids ) = @_;
-  my $ga           = $dba->get_GeneAdaptor();
+  my $ga = $dba->get_GeneAdaptor();
 
   if ( !defined $gene_ids ) {
     $gene_ids = $ga->_list_dbIDs('gene');

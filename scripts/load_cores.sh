@@ -5,9 +5,9 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #    http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ ASSEMBLY=38
 RELEASE_FROM=76
 RELEASE_TO=${RELEASE_FROM}
 PREVIOUS_RELEASE=${RELEASE_FROM}
+NAMING_CONSORTIUM=""
 TARK_DB="test_tark"
 verbose=0
 
@@ -33,7 +34,7 @@ while getopts "h?:d:s:a:q:r:p:t:" opt; do
     case "${opt}" in
     h|\?)
         echo "Loader for importing ensembl core dbs into the Tark db."
-        echo -e "\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-d ENSDIR\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-q RELEASE_FROM (default: ${RELEASE_FROM})\n\t-r RELEASE_TO (default: ${RELEASE_TO})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)"
+        echo -e "\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-c NAING_CONSORTIUM\n\t-d ENSDIR\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-q RELEASE_FROM (default: ${RELEASE_FROM})\n\t-r RELEASE_TO (default: ${RELEASE_TO})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)"
         echo -e "\n- Separate loads should be done for each assembly change."
         echo "- Database parameters are defined using the helper scripts within this wrapper. This uses the public archive as the source of cores, the dev tark server for the loading and the hive server for the related hive dbs."
         exit 0
@@ -41,6 +42,8 @@ while getopts "h?:d:s:a:q:r:p:t:" opt; do
     s)  SPECIES=$OPTARG
         ;;
     a)  ASSEMBLY=$OPTARG
+        ;;
+    c)  NAMING_CONSORTIUM=$OPTARG
         ;;
     d)  ENSDIR=$OPTARG
         ;;
@@ -55,8 +58,6 @@ while getopts "h?:d:s:a:q:r:p:t:" opt; do
     esac
 done
 
-echo $ENSDIR
-
 shift $((OPTIND-1))
 
 [ "${1:-}" = "--" ] && shift
@@ -70,6 +71,12 @@ CORE_HOST=ensembldb.ensembl.org
 CORE_PORT=3306
 CORE_USER=anonymous
 
+NAMING_CONSORTIUM_PARAM=""
+if [ ${#NAMING_CONSORTIUM} > 0 ]
+then
+  NAMING_CONSORTIUM_PARAM=" --naming_consortium ${NAMING_CONSORTIUM}"
+fi
+
 for RELEASE in $( seq $RELEASE_FROM $RELEASE_TO)
 do
 
@@ -79,7 +86,7 @@ do
 
   echo "Loading ${SPECIES}_core_${RELEASE}_${ASSEMBLY}, PREVIOUS_RELEASE was ${PREVIOUS_RELEASE}"
 
-  perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/init_pipeline.pl Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf   --tark_host ${TARK_HOST}   --tark_port ${TARK_PORT}   --tark_user ${TARK_USER}   --tark_pass ${TARK_PASS}   --tark_db ${TARK_DB}   --core_host ${CORE_HOST}   --core_port ${CORE_PORT}   --core_user ${CORE_USER}   --core_pass ''   --core_dbname ${CORE_DB}   --host ${HIVE_HOST}   --port ${HIVE_PORT}   --user ${HIVE_USER}   --password ${HIVE_PASS}   --pipeline_name ${HIVE_DB_NAME}   --species ${SPECIES}   --tag_block release   --tag_shortname ${RELEASE}   --tag_description "Ensembl release ${RELEASE}"   --tag_feature_type all   --tag_version 1   --block_size 1000 --report ${PWD}/loading_report_${RELEASE}.json --tag_previous_shortname ${PREVIOUS_RELEASE}
+  perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/init_pipeline.pl Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf   --tark_host ${TARK_HOST}   --tark_port ${TARK_PORT}   --tark_user ${TARK_USER}   --tark_pass ${TARK_PASS}   --tark_db ${TARK_DB}   --core_host ${CORE_HOST}   --core_port ${CORE_PORT}   --core_user ${CORE_USER}   --core_pass ''   --core_dbname ${CORE_DB}   --host ${HIVE_HOST}   --port ${HIVE_PORT}   --user ${HIVE_USER}   --password ${HIVE_PASS}   --pipeline_name ${HIVE_DB_NAME}   --species ${SPECIES}   --tag_block release   --tag_shortname ${RELEASE}   --tag_description "Ensembl release ${RELEASE}"   --tag_feature_type all   --tag_version 1   --block_size 1000 --report ${PWD}/loading_report_${RELEASE}.json --tag_previous_shortname ${PREVIOUS_RELEASE} ${NAMING_CONSORTIUM_PARAM}
 
   perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/beekeeper.pl -url mysql://${HIVE_USER}:${HIVE_PASS}@${HIVE_HOST}:${HIVE_PORT}/${HIVE_DB} -loop
 
