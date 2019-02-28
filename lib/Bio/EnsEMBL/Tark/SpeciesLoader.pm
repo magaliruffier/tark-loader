@@ -588,9 +588,10 @@ sub _fetch_name_id {
       next;
     }
 
-    if ( defined $add_prefix ) {
+    if ( defined $add_prefix and $add_prefix == 1 ) {
       return $consortium_name . q{:} . $oxref->primary_id;
     }
+
     return $oxref->primary_id;
   }
 

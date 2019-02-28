@@ -106,6 +106,45 @@ my $result = $test_utils->check_db(
 );
 is( $result, 2, 'Loaded genes with HGNC names' );
 
+standaloneJob(
+  'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
+  {
+    'species'   => 'homo_sapiens',
+    'host' => $core_dba->dbc->host,
+    'port' => $core_dba->dbc->port,
+    'user' => $core_dba->dbc->user,
+    'pass' => $core_dba->dbc->pass,
+    'db'   => $core_dba->dbc->dbname,
+
+    'tark_host' => $tark_dba->config->{host},
+    'tark_port' => $tark_dba->config->{port},
+    'tark_user' => $tark_dba->config->{user},
+    'tark_pass' => $tark_dba->config->{pass},
+    'tark_db'   => $tark_dba->config->{db},
+
+    'tag_block'        => 'release',
+    'tag_shortname'    => 84,
+    'tag_description'  => 'Ensembl release 84',
+    'tag_feature_type' => 'all',
+
+    'block_size'   => 10,
+    'gene_id_list' => '18271,18256,18262',
+
+    'naming_consortium'     => 'HGNC',
+    'add_consortium_prefix' => 1,
+  },
+);
+
+$result = $test_utils->check_db(
+  $tark_dba, 'Gene', { stable_id => 'ENSG00000149600' }, 1
+);
+is( $result, 3, 'Loaded genes with HGNC names' );
+
+$result = $test_utils->check_db(
+  $tark_dba, 'Gene', { hgnc_id => { -like => 'HGNC:HGNC:%' } }, 1
+);
+is( $result, 3, 'Loaded genes with HGNC names' );
+
 # run_sql_on_db($test_url, 'DROP DATABASE');
 
 done_testing();
