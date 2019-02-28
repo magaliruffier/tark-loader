@@ -154,18 +154,18 @@ sub run {
     my @gene_id_list = split /,/, $self->param( 'gene_id_list' ) ;
 
     $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
-      session     =>  $tark_dba,
-      tag_config  =>  $tag_config,
+      session      =>  $tark_dba,
+      tag_config   =>  $tag_config,
       gene_id_list => \@gene_id_list,
       naming_consortium => $naming_consortium,
-      add_name_prefix => $add_consortium_prefix,
+      add_name_prefix   => $add_consortium_prefix,
     );
   } else {
     $loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
       session     =>  $tark_dba,
       tag_config  =>  $tag_config,
       naming_consortium => $naming_consortium,
-      add_name_prefix => $add_consortium_prefix,
+      add_name_prefix   => $add_consortium_prefix,
     );
   }
 
