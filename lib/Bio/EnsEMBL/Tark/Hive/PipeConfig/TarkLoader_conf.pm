@@ -90,7 +90,7 @@ sub default_options {
       include_source         => q{},
       tag_previous_shortname => q{},
       naming_consortium      => q{},
-      add_consortium_prefix  => q{},
+      add_consortium_prefix  => 0,
     };
 } ## end sub default_options
 
