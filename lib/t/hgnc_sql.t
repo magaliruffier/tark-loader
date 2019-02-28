@@ -73,14 +73,6 @@ my @result = $sql_handle->fetchrow_array();
 is( $result[0], 5, 'get_gene: gene_id  - 5' );
 is( $result[1], 1, 'get_gene: assembly - 1' );
 
-$sql_handle = $hgnc_loader->get_query('gene_update');
-$sql_handle->execute( 1000, 'ENSG00000101331' );
-
-my $result_count_01 = $test_utils->check_db(
-  $db, 'Gene', { stable_id => 'ENSG00000101331' }
-);
-is( $result_count_01->hgnc_id, 1000, 'gene_update' );
-
 done_testing();
 
 1;
