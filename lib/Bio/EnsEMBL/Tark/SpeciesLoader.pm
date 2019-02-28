@@ -63,6 +63,7 @@ has tag_config => (
 has gene_id_list => ( is => 'ro', isa => 'ArrayRef' );
 
 has naming_consortium => ( is => 'ro', isa => 'Str' );
+has add_name_prefix => ( is => 'ro', isa => 'Str' );
 
 
 =head2 BUILD
@@ -223,6 +224,7 @@ sub load_species {
   my $session_id = $self->session->session_id;
 
   my $naming_consortium = $self->naming_consortium;
+  my $add_name_prefix   = $self->add_name_prefix;
 
   $source_name = defined($source_name) ? $source_name : 'Ensembl';
 
@@ -275,7 +277,10 @@ sub load_species {
       my $gene = $ga->fetch_by_dbID( $current_gene );
       if ( $gene ) {
         $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
-        $self->_load_gene($gene, $session_pkg, $source_name, $tag, $naming_consortium);
+        $self->_load_gene(
+          $gene, $session_pkg, $source_name, $tag, $naming_consortium,
+          $add_name_prefix
+        );
       }
     }
   } else {
@@ -284,7 +289,10 @@ sub load_species {
 
     while ( my $gene = $iter->next() ) {
       $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
-      $self->_load_gene($gene, $session_pkg, $source_name, $tag, $naming_consortium);
+      $self->_load_gene(
+        $gene, $session_pkg, $source_name, $tag, $naming_consortium,
+        $add_name_prefix
+      );
     }
   }
 
@@ -313,7 +321,7 @@ sub load_species {
 =cut
 
 sub _load_gene {
-  my ( $self, $gene, $session_pkg, $source_name, $tag, $naming_consortium ) = @_;
+  my ( $self, $gene, $session_pkg, $source_name, $tag, $naming_consortium, $add_name_prefix ) = @_;
 
   my @loc_pieces = (
     $session_pkg->{assembly_id}, $gene->seq_region_name(),
@@ -326,7 +334,7 @@ sub _load_gene {
 
   my $name_id = undef;
   if ( $naming_consortium ) {
-    $name_id = $self->_fetch_name_id($gene, $naming_consortium);
+    $name_id = $self->_fetch_name_id($gene, $naming_consortium, $add_name_prefix);
   }
 
   my $gene_checksum = $utils->checksum_array(
@@ -566,20 +574,23 @@ sub _insert_sequence {
 
 
 =head2 _fetch_name_id
-  Description:
+  Description: Retrieve and formate the consortium assigned name_id.
   Returntype :
   Exceptions : none
   Caller     : general
 =cut
 
 sub _fetch_name_id {
-  my ( $self, $gene, $consortium_name ) = @_;
+  my ( $self, $gene, $consortium_name, add_prefix ) = @_;
 
   foreach my $oxref (@{ $gene->get_all_object_xrefs() }) {
     if ( $oxref->dbname ne $consortium_name ) {
       next;
     }
 
+    if ( defined $add_prefix ) {
+      return $consortium_name . q{:} . $oxref->primary_id;
+    }
     return $oxref->primary_id;
   }
 

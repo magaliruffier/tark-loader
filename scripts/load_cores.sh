@@ -27,6 +27,7 @@ RELEASE_FROM=76
 RELEASE_TO=${RELEASE_FROM}
 PREVIOUS_RELEASE=${RELEASE_FROM}
 NAMING_CONSORTIUM=""
+ADD_CONSORTIUM_NAME=0
 TARK_DB="test_tark"
 verbose=0
 
@@ -44,6 +45,8 @@ while getopts "h?:d:s:a:c:q:r:p:t:" opt; do
     a)  ASSEMBLY=$OPTARG
         ;;
     c)  NAMING_CONSORTIUM=$OPTARG
+        ;;
+    n)  ADD_CONSORTIUM_NAME=$OPTARG
         ;;
     d)  ENSDIR=$OPTARG
         ;;
@@ -77,6 +80,12 @@ then
   NAMING_CONSORTIUM_PARAM=" --naming_consortium ${NAMING_CONSORTIUM}"
 fi
 
+ADD_CONSORTIUM_NAME_PARAM=""
+if [ $ADD_CONSORTIUM_NAME == 1]
+then
+  ADD_CONSORTIUM_NAME_PARAM=" --add_consortium_prefix 1"
+fi
+
 for RELEASE in $( seq $RELEASE_FROM $RELEASE_TO)
 do
 
@@ -86,7 +95,7 @@ do
 
   echo "Loading ${SPECIES}_core_${RELEASE}_${ASSEMBLY}, PREVIOUS_RELEASE was ${PREVIOUS_RELEASE}"
 
-  perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/init_pipeline.pl Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf   --tark_host ${TARK_HOST}   --tark_port ${TARK_PORT}   --tark_user ${TARK_USER}   --tark_pass ${TARK_PASS}   --tark_db ${TARK_DB}   --core_host ${CORE_HOST}   --core_port ${CORE_PORT}   --core_user ${CORE_USER}   --core_pass ''   --core_dbname ${CORE_DB}   --host ${HIVE_HOST}   --port ${HIVE_PORT}   --user ${HIVE_USER}   --password ${HIVE_PASS}   --pipeline_name ${HIVE_DB_NAME}   --species ${SPECIES}   --tag_block release   --tag_shortname ${RELEASE}   --tag_description "Ensembl release ${RELEASE}"   --tag_feature_type all   --tag_version 1   --block_size 1000 --report ${PWD}/loading_report_${RELEASE}.json --tag_previous_shortname ${PREVIOUS_RELEASE} ${NAMING_CONSORTIUM_PARAM}
+  perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/init_pipeline.pl Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf --tark_host ${TARK_HOST} --tark_port ${TARK_PORT} --tark_user ${TARK_USER} --tark_pass ${TARK_PASS} --tark_db ${TARK_DB} --core_host ${CORE_HOST} --core_port ${CORE_PORT} --core_user ${CORE_USER} --core_pass '' --core_dbname ${CORE_DB} --host ${HIVE_HOST} --port ${HIVE_PORT} --user ${HIVE_USER} --password ${HIVE_PASS} --pipeline_name ${HIVE_DB_NAME} --species ${SPECIES} --tag_block release --tag_shortname ${RELEASE} --tag_description "Ensembl release ${RELEASE}" --tag_feature_type all --tag_version 1 --block_size 1000 --report ${PWD}/loading_report_${RELEASE}.json --tag_previous_shortname ${PREVIOUS_RELEASE} ${NAMING_CONSORTIUM_PARAM} ${ADD_CONSORTIUM_NAME_PARAM}
 
   perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/beekeeper.pl -url mysql://${HIVE_USER}:${HIVE_PASS}@${HIVE_HOST}:${HIVE_PORT}/${HIVE_DB} -loop
 
