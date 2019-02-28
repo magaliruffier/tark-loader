@@ -81,7 +81,7 @@ then
 fi
 
 ADD_CONSORTIUM_NAME_PARAM=""
-if [ $ADD_CONSORTIUM_NAME == 1]
+if [ $ADD_CONSORTIUM_NAME == 1 ]
 then
   ADD_CONSORTIUM_NAME_PARAM=" --add_consortium_prefix 1"
 fi

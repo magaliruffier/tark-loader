@@ -581,7 +581,7 @@ sub _insert_sequence {
 =cut
 
 sub _fetch_name_id {
-  my ( $self, $gene, $consortium_name, add_prefix ) = @_;
+  my ( $self, $gene, $consortium_name, $add_prefix ) = @_;
 
   foreach my $oxref (@{ $gene->get_all_object_xrefs() }) {
     if ( $oxref->dbname ne $consortium_name ) {
