@@ -145,7 +145,7 @@ sub run {
     $naming_consortium = $self->param( 'naming_consortium' );
   }
 
-  my $add_consortium_prefix = undef;
+  my $add_consortium_prefix = 0;
   if ( $self->param_is_defined( 'add_consortium_prefix' ) ) {
     $add_consortium_prefix = $self->param( 'add_consortium_prefix' );
   }

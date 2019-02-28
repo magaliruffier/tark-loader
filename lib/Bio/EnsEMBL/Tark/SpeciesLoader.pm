@@ -63,7 +63,7 @@ has tag_config => (
 has gene_id_list => ( is => 'ro', isa => 'ArrayRef' );
 
 has naming_consortium => ( is => 'ro', isa => 'Str' );
-has add_name_prefix => ( is => 'ro', isa => 'Str' );
+has add_name_prefix => ( is => 'ro', isa => 'Int' );
 
 
 =head2 BUILD
