@@ -1,0 +1,131 @@
+#!/usr/bin/env R
+
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+library("rjson")
+
+report_root<-"reports/v4/"
+release<-95
+
+ens_rel<-as.data.frame(
+  fromJSON(file = paste(report_root, "loading_report_75.json", sep=""))
+)
+g<-c(
+  75,
+  ens_rel$gene.core,
+  ens_rel$gene.tark_release,
+  0,
+  ens_rel$gene.tark_release,
+  ens_rel$gene.tark_total
+)
+
+t<-c(
+  75,
+  ens_rel$transcript.core,
+  ens_rel$transcript.tark_release,
+  0,
+  ens_rel$transcript.tark_release,
+  ens_rel$transcript.tark_total
+)
+
+e<-c(
+  75,
+  ens_rel$exon.core,
+  ens_rel$exon.tark_release,
+  0,
+  ens_rel$exon.tark_release,
+  ens_rel$exon.tark_total
+)
+
+p<-c(
+  75,
+  ens_rel$translation.core,
+  ens_rel$translation.tark_release,
+  0,
+  ens_rel$translation.tark_release,
+  ens_rel$translation.tark_total
+)
+
+for ( i in c(76:release) ) {
+  ens_rel<-as.data.frame(
+    fromJSON(file = paste(report_root, "loading_report_", i, ".json", sep="")))
+
+  g<-rbind(
+    g,
+    c(i, ens_rel$gene.core, ens_rel$gene.tark_release, ens_rel$gene.removed,
+      ens_rel$gene.gained, ens_rel$gene.tark_total))
+
+  t<-rbind(
+    t,
+    c(i, ens_rel$transcript.core, ens_rel$transcript.tark_release, ens_rel$transcript.removed,
+      ens_rel$transcript.gained, ens_rel$transcript.tark_total))
+
+  e<-rbind(
+    e,
+    c(i, ens_rel$exon.core, ens_rel$exon.tark_release, ens_rel$exon.removed,
+      ens_rel$exon.gained, ens_rel$exon.tark_total))
+
+  p<-rbind(
+    p,
+    c(i, ens_rel$translation.core, ens_rel$translation.tark_release, ens_rel$translation.removed,
+      ens_rel$translation.gained, ens_rel$translation.tark_total))
+}
+
+
+getNiceMax<-function (x, step=1) {
+  s<-10^(floor(log10(x))-1)
+  return((floor(x/s)+1)*s)
+}
+
+pdf(paste(report_root, "loading_report_75-", release, ".pdf", sep=""))
+plot(g[,2], main="Genes", type='l',
+     ylim=c(0,getNiceMax(max(g))), xaxt="n", xlab="e! Release", ylab="Count")
+axis(1, 1:length(g[,1]), labels=g[,1])
+points(g[,4], type='l', col=2)
+points(g[,5], type='l', col=3)
+points(g[,6], type='l', col=4)
+legend("right", legend=c("No. in release", "No. added", "No. removed", "Total rows"),
+       fill=(col=c(1:4)), bg="white")
+
+plot(t[,2], main="Transcripts", type='l',
+     ylim=c(0,getNiceMax(max(t))), xaxt="n", xlab="e! Release", ylab="Count")
+axis(1, 1:length(t[,1]), labels=t[,1])
+points(t[,4], type='l', col=2)
+points(t[,5], type='l', col=3)
+points(t[,6], type='l', col=4)
+legend("right", legend=c("No. in release", "No. added", "No. removed", "Total rows"),
+       fill=(col=c(1:4)), bg="white")
+
+plot(e[,2], main="Exons", type='l',
+     ylim=c(0,getNiceMax(max(e))), xaxt="n", xlab="e! Release", ylab="Count")
+axis(1, 1:length(e[,1]), labels=e[,1])
+points(e[,3], type='l', col=5)
+points(e[,4], type='l', col=2)
+points(e[,5], type='l', col=3)
+points(e[,6], type='l', col=4)
+legend("right",
+       legend=c("No. in release", "No. in TArk", "No. added", "No. removed", "Total rows"),
+       fill=(col=c(1,5,2:4)), bg="white")
+
+plot(p[,2], main="Translations", type='l',
+     ylim=c(0,getNiceMax(max(p))), xaxt="n", xlab="e! Release", ylab="Count")
+axis(1, 1:length(p[,1]), labels=p[,1])
+points(p[,4], type='l', col=2)
+points(p[,5], type='l', col=3)
+points(p[,6], type='l', col=4)
+legend("right", legend=c("No. in release", "No. added", "No. removed", "Total rows"),
+       fill=(col=c(1:4)), bg="white")
+
+dev.off()
