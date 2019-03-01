@@ -91,6 +91,28 @@ standaloneJob(
   },
 );
 
+standaloneJob(
+  'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoaderReport',
+  {
+    'host' => $core_dba->dbc->host,
+    'port' => $core_dba->dbc->port,
+    'user' => $core_dba->dbc->user,
+    'pass' => $core_dba->dbc->pass,
+    'db'   => $core_dba->dbc->dbname,
+
+    'tark_host' => $tark_dba->config->{host},
+    'tark_port' => $tark_dba->config->{port},
+    'tark_user' => $tark_dba->config->{user},
+    'tark_pass' => $tark_dba->config->{pass},
+    'tark_db'   => $tark_dba->config->{db},
+
+    'tag_shortname' => 84,
+    'report'        => 'test_report_xvega.json',
+
+    'exclude_source' => 'vega'
+  },
+);
+
 
 done_testing();
 

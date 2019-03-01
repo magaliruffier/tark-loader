@@ -117,7 +117,7 @@ sub _feature_count_template_SQL {
 
   my $sql = (<<'SQL');
     SELECT
-      COUNT(*)
+      COUNT(DISTINCT #FEATURE#.#FEATURE#_id)
     FROM
       #FROM#
     #WHERE#
@@ -137,6 +137,7 @@ sub feature_count {
 
   my $sql = $self->_feature_count_template_SQL();
 
+  $sql =~ s/#FEATURE#/$feature/g;
   $sql =~ s/#FROM#/$feature/g;
   $sql =~ s/#WHERE#//g;
 
@@ -157,7 +158,25 @@ sub feature_count_exclusion {
   my $sql = $self->_feature_count_template_SQL();
   my $sub_string = 'WHERE source NOT IN ( "%s"' . ', "%s"' x ($list_length-1) . ' )';
 
-  $sql =~ s/#FROM#/$feature/g;
+  $sql =~ s/#FEATURE#/$feature/g;
+
+  if ( $feature eq 'exon' ) {
+    my $tables = (<<'SQL');
+      exon
+      JOIN exon_transcript ON exon.exon_id=exon_transcript.exon_id
+      JOIN transcript ON exon_transcript.transcript_id=transcript.transcript_id
+SQL
+    $sql =~ s/#FROM#/$tables/g;
+  } elsif ( $feature eq 'translation' ) {
+    my $tables = (<<'SQL');
+      translation
+      JOIN transcript ON translation.transcript_id=transcript.transcript_id
+SQL
+    $sql =~ s/#FROM#/$tables/g;
+  } else {
+    $sql =~ s/#FROM#/$feature/g;
+  }
+
   $sql =~ s/#WHERE#/$sub_string/g;
 
   return $sql;
@@ -177,7 +196,25 @@ sub feature_count_inclusion {
   my $sql = $self->_feature_count_template_SQL();
   my $sub_string = 'WHERE source IN ( "%s"' . ', "%s"' x ($list_length-1) . ' )';
 
-  $sql =~ s/#FROM#/$feature/g;
+  $sql =~ s/#FEATURE#/$feature/g;
+
+  if ( $feature eq 'exon' ) {
+    my $tables = (<<'SQL');
+      exon
+      JOIN exon_transcript ON exon.exon_id=exon_transcript.exon_id
+      JOIN transcript ON exon_transcript.transcript_id=transcript.transcript_id
+SQL
+    $sql =~ s/#FROM#/$tables/g;
+  } elsif ( $feature eq 'translation' ) {
+    my $tables = (<<'SQL');
+      translation
+      JOIN transcript ON translation.transcript_id=transcript.transcript_id
+SQL
+    $sql =~ s/#FROM#/$tables/g;
+  } else {
+    $sql =~ s/#FROM#/$feature/g;
+  }
+
   $sql =~ s/#WHERE#/$sub_string/g;
 
   return $sql;
