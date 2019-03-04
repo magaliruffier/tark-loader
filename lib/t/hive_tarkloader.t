@@ -141,7 +141,7 @@ $result = $test_utils->check_db(
 is( $result, 3, 'Loaded genes with HGNC names' );
 
 $result = $test_utils->check_db(
-  $tark_dba, 'Gene', { hgnc_id => { -like => 'HGNC:HGNC:%' } }, 1
+  $tark_dba, 'Gene', { name_id => { -like => 'HGNC:HGNC:%' } }, 1
 );
 is( $result, 3, 'Loaded genes with HGNC names' );
 

@@ -198,7 +198,7 @@ is(
 );
 
 my $result_count_04 = $test_utils->check_db(
-  $db, 'Gene', { hgnc_id => { -like => 'HGNC:HGNC:%' }, }, 1
+  $db, 'Gene', { name_id => { -like => 'HGNC:HGNC:%' }, }, 1
 );
 is(
   $result_count_04,
