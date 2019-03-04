@@ -104,7 +104,6 @@ __PACKAGE__->add_columns(
   "external_id",
   {
     data_type => "varchar",
-    # extra => { unsigned => 1 },
     size => 32,
     is_nullable => 1,
     is_foreign_key => 1,
@@ -149,7 +148,7 @@ Related object: L<Bio::EnsEMBL::Tark::Schema::Result::Gene>
 __PACKAGE__->belongs_to(
   "genes",
   "Bio::EnsEMBL::Tark::Schema::Result::Gene",
-  { hgnc_id => "external_id" },
+  { name_id => "external_id" },
   {
     is_deferrable => 1,
     join_type     => "LEFT",

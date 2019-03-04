@@ -108,7 +108,7 @@ __PACKAGE__->table("gene");
   is_nullable: 1
   size: 20
 
-=head2 hgnc_id
+=head2 name_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -159,12 +159,12 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 42 },
   "loc_checksum",
   { data_type => "binary", is_nullable => 1, size => 20 },
-  "hgnc_id",
+  "name_id",
   {
     data_type => "varchar",
     size => 32,
-    # is_foreign_key => 1,
     is_nullable => 1,
+    size => 32,
   },
   "gene_checksum",
   { data_type => "binary", is_nullable => 1, size => 20 },
@@ -240,7 +240,7 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 hgnc
+=head2 name
 
 Type: belongs_to
 
@@ -249,9 +249,9 @@ Related object: L<Bio::EnsEMBL::Tark::Schema::Result::GeneName>
 =cut
 
 __PACKAGE__->has_many(
-  "hgnc",
+  "name",
   "Bio::EnsEMBL::Tark::Schema::Result::GeneName",
-  { "foreign.external_id" => "self.hgnc_id" },
+  { "foreign.external_id" => "self.name_id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
@@ -306,7 +306,7 @@ __PACKAGE__->has_many(
 sub sqlt_deploy_hook {
   my ($self, $sqlt_table) = @_;
 
-  $sqlt_table->add_index(name => 'hgnc_id', fields => ['hgnc_id']);
+  $sqlt_table->add_index(name => 'name_id', fields => ['name_id']);
   $sqlt_table->add_index(name => 'stable_id', fields => ['stable_id', 'stable_id_version']);
 
   return;
