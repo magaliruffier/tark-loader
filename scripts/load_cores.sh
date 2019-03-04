@@ -97,7 +97,7 @@ fi
 
 ESOURCE=${#EXCLUDE_SOURCE}
 ISOURCE=${#INCLUDE_SOURCE}
-if [ "$ESOURCE" -gt "0" && "$ISOURCE" -gt "0" ]
+if [ $ESOURCE -gt 0 ] && [ $ISOURCE -gt 0 ]
 then
   echo "Please specify only -e OR -i."
 fi
