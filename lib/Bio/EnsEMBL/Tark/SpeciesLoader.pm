@@ -119,7 +119,7 @@ SQL
   my $gene_sql = (<<'SQL');
     INSERT INTO gene (
       stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end,
-      loc_strand, loc_checksum, hgnc_id, gene_checksum, session_id)
+      loc_strand, loc_checksum, name_id, gene_checksum, session_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE gene_id=LAST_INSERT_ID(gene_id)
 SQL
