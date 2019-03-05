@@ -47,7 +47,7 @@ See the NOTICE file distributed with this work for additional information
 
 =cut
 
-package Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf;
+package Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoaderReport_conf;
 
 use strict;
 use warnings;
@@ -126,6 +126,10 @@ sub pipeline_analyses {
         tark_user => $self->o( 'tark_user' ),
         tark_pass => $self->o( 'tark_pass' ),
         tark_db   => $self->o( 'tark_db' ),
+
+        # Include/Exclude db entries by source
+        exclude_source => $self->o('exclude_source'),
+        include_source => $self->o('include_source'),
 
         # Worker parameters
         tag_shortname          => $self->o( 'tag_shortname' ),
