@@ -16,7 +16,7 @@ See the NOTICE file distributed with this work for additional information
 
 =cut
 
-package Bio::EnsEMBL::Tark::HGNC;
+package Bio::EnsEMBL::Tark::MANE;
 
 use Moose;
 with 'MooseX::Log::Log4perl';
@@ -25,6 +25,7 @@ use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::FileHandle;
 
 use Try::Tiny;
+use Data::Dumper;
 
 has 'query' => (
   traits  => ['Hash'],
@@ -59,20 +60,30 @@ has session => (
 sub BUILD {
   my ($self) = @_;
 
-  $self->log()->info('Initializing HGNC loader');
+  $self->log()->info('Initializing MANE loader');
 
   # Attempt a connection to the database
   my $dbh = $self->session->dbh();
 
   # Setup the insert queries
-  my $insert_relationship_type_sql = (<<'SQL');
+  my $insert_relationship_type_select_sql = (<<'SQL');
     INSERT INTO relationship_type (shortname, description, version, release_date)
-    VALUES ('MANE', 'Matched Annotation by NCBI and EMBL-EBI (MANE)', ?, ?)
+    VALUES ('MANE select', 'Matched Annotation by NCBI and EMBL-EBI (MANE)', ?, ?)
 SQL
 
-  my $sth = $dbh->prepare( $insert_relationship_type_sql ) or
+  my $sth = $dbh->prepare( $insert_relationship_type_select_sql ) or
     $self->log->logdie("Error creating relationship_type insert: " . $DBI::errstr);
-  $self->set_query('insert_relationship_type' => $sth);
+  $self->set_query('insert_relationship_type_select' => $sth);
+
+
+  my $insert_relationship_type_plus_sql = (<<'SQL');
+    INSERT INTO relationship_type (shortname, description, version, release_date)
+    VALUES ('MANE plus', 'Matched Annotation by NCBI and EMBL-EBI (MANE)', ?, ?)
+SQL
+
+  $sth = $dbh->prepare( $insert_relationship_type_plus_sql ) or
+    $self->log->logdie("Error creating relationship_type insert: " . $DBI::errstr);
+  $self->set_query('insert_relationship_type_plus' => $sth);
 
 
   my $insert_transcript_relationship_sql = (<<'SQL');
@@ -81,7 +92,7 @@ SQL
     VALUES ('', '', ?, ?)
 SQL
 
-  my $sth = $dbh->prepare( $insert_transcript_relationship_sql ) or
+  $sth = $dbh->prepare( $insert_transcript_relationship_sql ) or
     $self->log->logdie("Error creating relationship_type insert: " . $DBI::errstr);
   $self->set_query('insert_transcript_relationship_sql' => $sth);
 
@@ -100,7 +111,7 @@ SQL
       release_source=?
 SQL
 
-  my $sth = $dbh->prepare( $select_transcript_release_tag_id_sql ) or
+  $sth = $dbh->prepare( $select_transcript_release_tag_id_sql ) or
     $self->log->logdie("Error creating relationship_type insert: " . $DBI::errstr);
   $self->set_query('select_transcript_release_tag_id_sql' => $sth);
 
@@ -122,16 +133,70 @@ SQL
 =cut
 
 sub load_mane {
-  my $self = shift;
+  my ( $self, $dba ) = @_;
 
   $self->log()->info('Starting MANE load');
 
   my $get_transcript_release_id = $self->get_query('select_transcript_release_tag_id_sql');
   my $insert_mane = $self->get_query('insert_transcript_relationship_sql');
 
-  # Loading code
+  # Fetch a gene iterator and cycle through loading the genes
+  my $iter = $self->genes_to_metadata_iterator( $dba );
+
+  while ( my $gene = $iter->next() ) {
+    $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
+    $self->_load_relationship( $gene );
+  }
 
   return;
 } ## end sub load_mane
+
+
+sub _load_relationship{
+  my ( $self, $gene, $session_pkg ) = @_;
+
+  for my $transcript ( @{ $gene->get_all_Transcripts() } ) {
+    $self->log->debug( 'Loading transcript ' . $transcript->{stable_id} );
+    # Iterate through the transcript_attribs
+    # my @mane_select = @{ $transcript->get_all_Attributes( 'MANE_Select' ) };
+    # print Dumper $transcript->get_all_Attributes();
+    for my $mane ( @{ $transcript->get_all_Attributes( 'MANE_Select' ) } ) {
+      print Dumper $mane;
+    }
+  }
+}
+
+
+=head2 genes_to_metadata_iterator
+  Description: This is the place where you should try to get the gene iterator properly
+  Returntype :
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub genes_to_metadata_iterator {
+  my ( $self, $dba, $gene_ids ) = @_;
+  my $ga = $dba->get_GeneAdaptor();
+
+  if ( !defined $gene_ids ) {
+    $gene_ids = $ga->_list_dbIDs('gene');
+  }
+
+  my $len          = scalar @{ $gene_ids };
+  my $current_gene = 0;
+  my $genes_i      = Bio::EnsEMBL::Utils::Iterator->new(
+    sub {
+      if ( $current_gene >= $len ) {
+        return;
+      }
+      else {
+        my $gene = $ga->fetch_by_dbID( $gene_ids->[ $current_gene++ ] );
+        return $gene;
+      }
+    }
+  );
+  return $genes_i;
+} ## end sub genes_to_metadata_iterator
 
 1;
