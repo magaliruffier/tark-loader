@@ -134,6 +134,7 @@ sub _init_db {
       [ qw( shortname description ) ],
       [ 'Ensembl', 'Ensembl data imports from Human Core DBs' ],
       [ 'RefSeq', 'RefSeq data imports from Human otherfeatures DBs' ],
+      [ 'LRG', 'Locus Reference Genomic records' ],
     ] );
   }
 
