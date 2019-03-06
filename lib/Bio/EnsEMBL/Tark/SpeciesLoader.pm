@@ -266,6 +266,7 @@ sub load_species {
   my $session_pkg = {
     session_id  => $session_id,
     genome_id   => $genome_id,
+    assembly_id => $assembly_id,
     assembly_name => $assembly_name
   };
 
@@ -324,13 +325,19 @@ sub _load_gene {
   my ( $self, $gene, $session_pkg, $source_name, $tag, $naming_consortium, $add_name_prefix ) = @_;
 
   my @loc_pieces = (
+    $session_pkg->{assembly_id}, $gene->seq_region_name(),
+    $gene->seq_region_start(), $gene->seq_region_end(),
+    $gene->seq_region_strand(),
+  );
+
+  my @loc_pieces_checksum = (
     $session_pkg->{assembly_name}, $gene->seq_region_name(),
     $gene->seq_region_start(), $gene->seq_region_end(),
     $gene->seq_region_strand(),
   );
 
   my $utils = Bio::EnsEMBL::Tark::Utils->new();
-  my $loc_checksum = $utils->checksum_array( @loc_pieces );
+  my $loc_checksum = $utils->checksum_array( @loc_pieces_checksum );
 
   my $name_id = undef;
   if ( $naming_consortium ) {
@@ -419,13 +426,19 @@ sub _load_transcript {
   }
 
   my @loc_pieces = (
+    $session_pkg->{assembly_id}, $transcript->seq_region_name(),
+    $transcript->seq_region_start(), $transcript->seq_region_end(),
+    $transcript->seq_region_strand(),
+  );
+
+  my @loc_pieces_checksum = (
     $session_pkg->{assembly_name}, $transcript->seq_region_name(),
     $transcript->seq_region_start(), $transcript->seq_region_end(),
     $transcript->seq_region_strand(),
   );
 
   my $utils = Bio::EnsEMBL::Tark::Utils->new();
-  my $loc_checksum = $utils->checksum_array( @loc_pieces );
+  my $loc_checksum = $utils->checksum_array( @loc_pieces_checksum );
   my $transcript_checksum = $utils->checksum_array(
     $loc_checksum, $transcript->stable_id(), $transcript->version(),
     (
@@ -476,13 +489,19 @@ sub _load_exon {
   }
 
   my @loc_pieces = (
+    $session_pkg->{assembly_id},$exon->seq_region_name(),
+    $exon->seq_region_start(), $exon->seq_region_end(),
+    $exon->seq_region_strand(),
+  );
+
+  my @loc_pieces_checksum = (
     $session_pkg->{assembly_name},$exon->seq_region_name(),
     $exon->seq_region_start(), $exon->seq_region_end(),
     $exon->seq_region_strand(),
   );
 
   my $utils = Bio::EnsEMBL::Tark::Utils->new();
-  my $loc_checksum = $utils->checksum_array( @loc_pieces );
+  my $loc_checksum = $utils->checksum_array( @loc_pieces_checksum );
   my $exon_checksum = $utils->checksum_array( $loc_checksum, $seq_checksum );
 
   my $sth = $self->get_insert('exon');
@@ -517,13 +536,19 @@ sub _load_translation {
   my $seq_checksum = $self->_insert_sequence($translation->seq(), $session_pkg->{session_id});
 
   my @loc_pieces = (
+    $session_pkg->{assembly_id}, $session_pkg->{transcript}->seq_region_name(),
+    $translation->genomic_start(), $translation->genomic_end(),
+    $session_pkg->{transcript}->seq_region_strand(),
+  );
+
+  my @loc_pieces_checksum = (
     $session_pkg->{assembly_name}, $session_pkg->{transcript}->seq_region_name(),
     $translation->genomic_start(), $translation->genomic_end(),
     $session_pkg->{transcript}->seq_region_strand(),
   );
 
   my $utils = Bio::EnsEMBL::Tark::Utils->new();
-  my $loc_checksum = $utils->checksum_array( @loc_pieces );
+  my $loc_checksum = $utils->checksum_array( @loc_pieces_checksum );
   my $translation_checksum = $utils->checksum_array(
     $loc_checksum, $translation->stable_id(), $translation->version(), $seq_checksum
   );
