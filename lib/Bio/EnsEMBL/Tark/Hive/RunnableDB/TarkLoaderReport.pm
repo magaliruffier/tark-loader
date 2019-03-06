@@ -108,14 +108,14 @@ sub run {
   }
 
   foreach my $table (qw/ gene exon transcript translation /) {
-    if ( $self->param_is_defined('exclude_source') and $self->param('exclude_source') ) {
+    if ( $self->param_is_defined('exclude_source') and $self->param('exclude_source') ne q{} ) {
       my @source_list = split /,/, $self->param('exclude_source');
       $core_sql = sprintf $core_sql_handle->feature_count_exclusion(
         $table,
         scalar @source_list
       ), @source_list;
     }
-    elsif ( $self->param_is_defined('include_source') and $self->param('include_source') ) {
+    elsif ( $self->param_is_defined('include_source') and $self->param('include_source') ne q{} ) {
       my @source_list = split /,/, $self->param('include_source');
       $core_sql = sprintf $core_sql_handle->feature_count_inclusion(
         $table,

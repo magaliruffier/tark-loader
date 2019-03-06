@@ -165,6 +165,47 @@ ok(
   '_load_translation'
 );
 
+
+$loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
+  session    => $db,
+  tag_config => $tag_config,
+  naming_consortium => 'HGNC'
+);
+ok( !defined $loader->load_species( $dba, 'Ensembl' ), 'load_species' );
+my $result_count_02 = $test_utils->check_db(
+  $db, 'Gene', {}, 1
+);
+is(
+  $result_count_02,
+  $result_count_00 + 12,
+  'load_species - Loading WITH naming consortium values (HGNC)'
+);
+
+$loader = Bio::EnsEMBL::Tark::SpeciesLoader->new(
+  session    => $db,
+  tag_config => $tag_config,
+  naming_consortium => 'HGNC',
+  add_name_prefix => 1,
+);
+ok( !defined $loader->load_species( $dba, 'Ensembl' ), 'load_species' );
+my $result_count_03 = $test_utils->check_db(
+  $db, 'Gene', {}, 1
+);
+is(
+  $result_count_03,
+  $result_count_00 + 24,
+  'load_species - Loading WITH extra prefix on naming consortium value'
+);
+
+my $result_count_04 = $test_utils->check_db(
+  $db, 'Gene', { name_id => { -like => 'HGNC:HGNC:%' }, }, 1
+);
+is(
+  $result_count_04,
+  12,
+  'load_species - Loading WITH extra prefix on naming consortium value'
+);
+
 done_testing();
 
 1;

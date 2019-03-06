@@ -75,20 +75,22 @@ sub default_options {
     my ($self) = @_;
 
     return {
-        %{$self->SUPER::default_options(@_)},
+      %{$self->SUPER::default_options(@_)},
 
-        'core_db'  => {
-          -host   => $self->o( 'core_host' ),
-          -port   => $self->o( 'core_port' ),
-          -user   => $self->o( 'core_user' ),
-          -pass   => $self->o( 'core_pass' ),
-          -dbname => $self->o( 'core_dbname' ),
-          -driver => 'mysql',
-        },
+      'core_db'  => {
+        -host   => $self->o( 'core_host' ),
+        -port   => $self->o( 'core_port' ),
+        -user   => $self->o( 'core_user' ),
+        -pass   => $self->o( 'core_pass' ),
+        -dbname => $self->o( 'core_dbname' ),
+        -driver => 'mysql',
+      },
 
-        exclude_source         => q{},
-        include_source         => q{},
-        tag_previous_shortname => q{},
+      exclude_source         => q{},
+      include_source         => q{},
+      tag_previous_shortname => q{},
+      naming_consortium      => q{},
+      add_consortium_prefix  => 0,
     };
 } ## end sub default_options
 
@@ -166,6 +168,9 @@ sub pipeline_analyses {
         tark_user => $self->o( 'tark_user' ),
         tark_pass => $self->o( 'tark_pass' ),
         tark_db   => $self->o( 'tark_db' ),
+
+        naming_consortium     => $self->o( 'naming_consortium' ),
+        add_consortium_prefix => $self->o( 'add_consortium_prefix' ),
       },
       -analysis_capacity => 50,
     },

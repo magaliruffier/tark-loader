@@ -82,14 +82,6 @@ SQL
     $self->log->logdie("Error creating gene select: $DBI::errstr");
   $self->set_query('gene' => $sth);
 
-  my $update_ids_sql = (<<'SQL');
-    UPDATE gene SET name_id = ? WHERE stable_id = ?
-SQL
-
-  $sth = $dbh->prepare( $update_ids_sql ) or
-    $self->log->logdie("Error creating gene select: $DBI::errstr");
-  $self->set_query('gene_update' => $sth);
-
   return;
 } ## end sub BUILD
 
@@ -109,9 +101,6 @@ sub flush_hgnc {
 
   $self->log()->info('Truncating gene names table');
   $dbh->do('TRUNCATE gene_names');
-
-  $self->log()->info('Setting name_id column in the gene table to NULL');
-  $dbh->do('UPDATE gene SET name_id = NULL');
 
   return;
 } ## end sub flush_hgnc
@@ -148,7 +137,6 @@ sub load_hgnc {
   }
 
   my $get_gene        = $self->get_query('gene');
-  my $get_gene_update = $self->get_query('gene_update');
   my $insert_hgnc     = $self->get_query('hgnc');
 
   while(<$in_fh>) {
@@ -169,8 +157,6 @@ sub load_hgnc {
     if ( !$hgnc_line[8] ) {
       next;
     }
-
-    $get_gene_update->execute( $hgnc_id, $hgnc_line[19] );
 
     $hgnc_line[8] =~ s/^"//;
     $hgnc_line[8] =~ s/"$//;

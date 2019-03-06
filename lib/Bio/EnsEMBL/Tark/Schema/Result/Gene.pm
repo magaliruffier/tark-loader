@@ -162,6 +162,7 @@ __PACKAGE__->add_columns(
   "name_id",
   {
     data_type => "varchar",
+    size => 32,
     is_nullable => 1,
     size => 32,
   },

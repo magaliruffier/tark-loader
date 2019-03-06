@@ -62,6 +62,9 @@ has tag_config => (
 
 has gene_id_list => ( is => 'ro', isa => 'ArrayRef' );
 
+has naming_consortium => ( is => 'ro', isa => 'Str' );
+has add_name_prefix => ( is => 'ro', isa => 'Int' );
+
 
 =head2 BUILD
   Description: Initialise the creation of the prepared statements
@@ -216,11 +219,12 @@ SQL
 =cut
 
 sub load_species {
-  my $self = shift;
-  my $dba = shift;
-  my $source_name = shift;
+  my ( $self, $dba, $source_name ) = @_;
 
   my $session_id = $self->session->session_id;
+
+  my $naming_consortium = $self->naming_consortium;
+  my $add_name_prefix   = $self->add_name_prefix;
 
   $source_name = defined($source_name) ? $source_name : 'Ensembl';
 
@@ -273,7 +277,10 @@ sub load_species {
       my $gene = $ga->fetch_by_dbID( $current_gene );
       if ( $gene ) {
         $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
-        $self->_load_gene($gene, $session_pkg, $source_name, $tag);
+        $self->_load_gene(
+          $gene, $session_pkg, $source_name, $tag, $naming_consortium,
+          $add_name_prefix
+        );
       }
     }
   } else {
@@ -282,7 +289,10 @@ sub load_species {
 
     while ( my $gene = $iter->next() ) {
       $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
-      $self->_load_gene($gene, $session_pkg, $source_name, $tag);
+      $self->_load_gene(
+        $gene, $session_pkg, $source_name, $tag, $naming_consortium,
+        $add_name_prefix
+      );
     }
   }
 
@@ -311,7 +321,7 @@ sub load_species {
 =cut
 
 sub _load_gene {
-  my ( $self, $gene, $session_pkg, $source_name, $tag ) = @_;
+  my ( $self, $gene, $session_pkg, $source_name, $tag, $naming_consortium, $add_name_prefix ) = @_;
 
   my @loc_pieces = (
     $session_pkg->{assembly_id}, $gene->seq_region_name(),
@@ -322,14 +332,19 @@ sub _load_gene {
   my $utils = Bio::EnsEMBL::Tark::Utils->new();
   my $loc_checksum = $utils->checksum_array( @loc_pieces );
 
+  my $name_id = undef;
+  if ( $naming_consortium ) {
+    $name_id = $self->_fetch_name_id($gene, $naming_consortium, $add_name_prefix);
+  }
+
   my $gene_checksum = $utils->checksum_array(
-    @loc_pieces, $gene->stable_id(), $gene->version()
+    @loc_pieces, $name_id, $gene->stable_id(), $gene->version()
   );
 
   my $sth = $self->get_insert('gene');
   $sth->execute(
     $gene->stable_id(), $gene->version(), @loc_pieces, $loc_checksum,
-    undef, $gene_checksum, $session_pkg->{session_id}
+    $name_id, $gene_checksum, $session_pkg->{session_id}
   ) or  $self->log->logdie("Error inserting gene: $DBI::errstr");
 
   my $gene_id = $sth->{mysql_insertid};
@@ -558,6 +573,32 @@ sub _insert_sequence {
 } ## end sub _insert_sequence
 
 
+=head2 _fetch_name_id
+  Description: Retrieve and formate the consortium assigned name_id.
+  Returntype :
+  Exceptions : none
+  Caller     : general
+=cut
+
+sub _fetch_name_id {
+  my ( $self, $gene, $consortium_name, $add_prefix ) = @_;
+
+  foreach my $oxref (@{ $gene->get_all_object_xrefs() }) {
+    if ( $oxref->dbname ne $consortium_name ) {
+      next;
+    }
+
+    if ( defined $add_prefix and $add_prefix == 1 ) {
+      return $consortium_name . q{:} . $oxref->primary_id;
+    }
+
+    return $oxref->primary_id;
+  }
+
+  return;
+} ## end sub _fetch_name_id
+
+
 =head2 genes_to_metadata_iterator
   Description: This is the place where you should try to get the gene iterator properly
   Returntype :
@@ -568,7 +609,7 @@ sub _insert_sequence {
 
 sub genes_to_metadata_iterator {
   my ( $self, $dba, $source_name, $gene_ids ) = @_;
-  my $ga           = $dba->get_GeneAdaptor();
+  my $ga = $dba->get_GeneAdaptor();
 
   if ( !defined $gene_ids ) {
     $gene_ids = $ga->_list_dbIDs('gene');
