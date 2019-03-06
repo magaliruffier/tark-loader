@@ -47,7 +47,7 @@ See the NOTICE file distributed with this work for additional information
 
 =cut
 
-package Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf;
+package Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoaderReport_conf;
 
 use strict;
 use warnings;
@@ -89,8 +89,6 @@ sub default_options {
       exclude_source         => q{},
       include_source         => q{},
       tag_previous_shortname => q{},
-      naming_consortium      => q{},
-      add_consortium_prefix  => 0,
     };
 } ## end sub default_options
 
@@ -110,71 +108,6 @@ sub pipeline_analyses {
   my ($self) = @_;
 
   return [
-    {
-      -logic_name => 'generate_sql',
-      -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::GeneSetSQL',
-      -parameters => {
-        block_size => $self->o('block_size'),
-        exclude_source => $self->o('exclude_source'),
-        include_source => $self->o('include_source'),
-      },
-      -input_ids => [
-        {
-          'target_db'  => $self->dbconn_2_url( 'core_db' ),
-        }
-      ],
-      -flow_into  => {
-        '2->A' => { 'generate_sql_params' => INPUT_PLUS() },
-        'A->1' => { 'tark_report'         => INPUT_PLUS() }
-      },
-    },
-
-    {
-      -logic_name => 'generate_sql_params',
-      -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-      -parameters => {
-        'db_conn'      => $self->dbconn_2_url( 'core_db' ),
-        'column_names' => [ 'gene_id_list' ],
-        'inputquery'   => '#sql#',
-        },
-      -flow_into  => { 2 => { 'load_tark' => INPUT_PLUS() } },
-    },
-
-    {
-      -logic_name => 'load_tark',
-      -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
-      -parameters => {
-
-        # Worker block size params
-        tag_block        => $self->o( 'tag_block' ),
-        tag_shortname    => $self->o( 'tag_shortname' ),
-        tag_description  => $self->o( 'tag_description' ),
-        tag_feature_type => $self->o( 'tag_feature_type' ),
-        tag_version      => $self->o( 'tag_version' ),
-
-        # Species name
-        species     => $self->o( 'species' ),
-
-        # Core db params
-        host => $self->o( 'core_host' ),
-        port => $self->o( 'core_port' ),
-        user => $self->o( 'core_user' ),
-        pass => $self->o( 'core_pass' ),
-        db   => $self->o( 'core_dbname' ),
-
-        # Tark db params
-        tark_host => $self->o( 'tark_host' ),
-        tark_port => $self->o( 'tark_port' ),
-        tark_user => $self->o( 'tark_user' ),
-        tark_pass => $self->o( 'tark_pass' ),
-        tark_db   => $self->o( 'tark_db' ),
-
-        naming_consortium     => $self->o( 'naming_consortium' ),
-        add_consortium_prefix => $self->o( 'add_consortium_prefix' ),
-      },
-      -analysis_capacity => 50,
-    },
-
     {
       -logic_name => 'tark_report',
       -module     => 'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoaderReport',
@@ -202,7 +135,12 @@ sub pipeline_analyses {
         tag_shortname          => $self->o( 'tag_shortname' ),
         tag_previous_shortname => $self->o( 'tag_previous_shortname' ),
         report                 => $self->o( 'report' ),
-      }
+      },
+      -input_ids => [
+        {
+          'target_db'  => $self->dbconn_2_url( 'core_db' ),
+        }
+      ],
     }
   ];
 } ## end sub pipeline_analyses
