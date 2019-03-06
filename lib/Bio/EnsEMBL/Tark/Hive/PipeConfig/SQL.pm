@@ -220,7 +220,4 @@ SQL
   return $sql;
 } ## end sub feature_count_inclusion
 
-
-
-
 1;
