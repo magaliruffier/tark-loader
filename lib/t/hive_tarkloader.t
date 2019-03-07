@@ -69,6 +69,8 @@ standaloneJob(
     'tag_shortname'    => 84,
     'tag_description'  => 'Ensembl release 84',
     'tag_feature_type' => 'all',
+
+    'source_name' => 'Ensembl',
   },
 );
 
@@ -97,6 +99,7 @@ standaloneJob(
     'block_size'   => 10,
     'gene_id_list' => '18271,18256,18262',
 
+    'source_name'       => 'Ensembl',
     'naming_consortium' => 'HGNC',
   },
 );
@@ -130,6 +133,7 @@ standaloneJob(
     'block_size'   => 10,
     'gene_id_list' => '18271,18256,18262',
 
+    'source_name'           => 'Ensembl',
     'naming_consortium'     => 'HGNC',
     'add_consortium_prefix' => 1,
   },

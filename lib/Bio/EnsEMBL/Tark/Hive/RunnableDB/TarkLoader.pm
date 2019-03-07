@@ -171,7 +171,7 @@ sub run {
 
 
 
-  $loader->load_species( $core_dba, 'Ensembl' );
+  $loader->load_species( $core_dba, $self->param('source_name') );
 
   $tark_dba->end_session();
 

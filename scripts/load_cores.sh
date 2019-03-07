@@ -32,11 +32,12 @@ ADD_CONSORTIUM_NAME=0
 TARK_DB="test_tark"
 EXCLUDE_SOURCE=""
 INCLUDE_SOURCE=""
+SOURCE_NAME="Ensembl"
 verbose=0
 
 HELP="\n\t-h Displays this message\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-c NAING_CONSORTIUM\n\t-e EXCLUDE_SOURCE\n\t-i INCLUDE_SOURCE\n\t-d ENSDIR\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-q RELEASE_FROM (default: ${RELEASE_FROM})\n\t-r RELEASE_TO (default: ${RELEASE_TO})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)"
 
-while getopts "h?:d:s:a:c:n:q:r:p:t:" opt; do
+while getopts "h?:d:s:a:c:e:i:n:q:r:p:t:w:" opt; do
     case "${opt}" in
     h|\?)
         echo "Loader for importing ensembl core dbs into the Tark db."
@@ -45,13 +46,9 @@ while getopts "h?:d:s:a:c:n:q:r:p:t:" opt; do
         echo "- Database parameters are defined using the helper scripts within this wrapper. This uses the public archive as the source of cores, the dev tark server for the loading and the hive server for the related hive dbs."
         exit 0
         ;;
-    s)  SPECIES=$OPTARG
-        ;;
     a)  ASSEMBLY=$OPTARG
         ;;
     c)  NAMING_CONSORTIUM=$OPTARG
-        ;;
-    n)  ADD_CONSORTIUM_NAME=$OPTARG
         ;;
     d)  ENSDIR=$OPTARG
         ;;
@@ -61,13 +58,19 @@ while getopts "h?:d:s:a:c:n:q:r:p:t:" opt; do
         ;;
     m)  RELEASE_EG_FROM=$OPTARG
         ;;
+    n)  ADD_CONSORTIUM_NAME=$OPTARG
+        ;;
     q)  RELEASE_FROM=$OPTARG
         ;;
     r)  RELEASE_TO=$OPTARG
         ;;
     p)  PREVIOUS_RELEASE=$OPTARG
         ;;
+    s)  SPECIES=$OPTARG
+        ;;
     t)  TARK_DB=$OPTARG
+        ;;
+    w)  SOURCE_NAME=$OPTARG
         ;;
     esac
 done
@@ -120,7 +123,7 @@ CORE_PORT=3306
 CORE_USER=anonymous
 
 NAMING_CONSORTIUM_PARAM=""
-if [ ${#NAMING_CONSORTIUM} > 0 ]
+if [ ${#NAMING_CONSORTIUM} -gt 0 ]
 then
   NAMING_CONSORTIUM_PARAM=" --naming_consortium ${NAMING_CONSORTIUM}"
 fi
@@ -145,7 +148,7 @@ do
 
   echo "Loading ${SPECIES}_core_${RELEASE}_${ASSEMBLY}, PREVIOUS_RELEASE was ${PREVIOUS_RELEASE}"
 
-  perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/init_pipeline.pl Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf --tark_host ${TARK_HOST} --tark_port ${TARK_PORT} --tark_user ${TARK_USER} --tark_pass ${TARK_PASS} --tark_db ${TARK_DB} --core_host ${CORE_HOST} --core_port ${CORE_PORT} --core_user ${CORE_USER} --core_pass '' --core_dbname ${CORE_DB} --host ${HIVE_HOST} --port ${HIVE_PORT} --user ${HIVE_USER} --password ${HIVE_PASS} --pipeline_name ${HIVE_DB_NAME} --species ${SPECIES} --tag_block release --tag_shortname ${RELEASE} --tag_description "Ensembl release ${RELEASE}" --tag_feature_type all --tag_version 1 --block_size 1000 --report ${PWD}/loading_report_${RELEASE}.json --tag_previous_shortname ${PREVIOUS_RELEASE} ${SOURCE} ${NAMING_CONSORTIUM_PARAM} ${ADD_CONSORTIUM_NAME_PARAM}
+  perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/init_pipeline.pl Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf --tark_host ${TARK_HOST} --tark_port ${TARK_PORT} --tark_user ${TARK_USER} --tark_pass ${TARK_PASS} --tark_db ${TARK_DB} --core_host ${CORE_HOST} --core_port ${CORE_PORT} --core_user ${CORE_USER} --core_pass '' --core_dbname ${CORE_DB} --host ${HIVE_HOST} --port ${HIVE_PORT} --user ${HIVE_USER} --password ${HIVE_PASS} --pipeline_name ${HIVE_DB_NAME} --species ${SPECIES} --tag_block release --tag_shortname ${RELEASE} --tag_description "Ensembl release ${RELEASE}" --tag_feature_type all --tag_version 1 --block_size 1000 --report ${PWD}/loading_report_${RELEASE}.json --tag_previous_shortname ${PREVIOUS_RELEASE} --source_name ${SOURCE_NAME} ${SOURCE} ${NAMING_CONSORTIUM_PARAM} ${ADD_CONSORTIUM_NAME_PARAM}
 
   perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/beekeeper.pl -url mysql://${HIVE_USER}:${HIVE_PASS}@${HIVE_HOST}:${HIVE_PORT}/${HIVE_DB} -loop
 

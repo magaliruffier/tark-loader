@@ -148,10 +148,8 @@ sub load_hgnc {
       next;
     }
 
-    my (undef, $hgnc_id) = split ':', $hgnc_line[0];
-
     # Insert the hgnc symbol
-    $insert_hgnc->execute($hgnc_id, $hgnc_line[1], 1, $self->session->session_id);
+    $insert_hgnc->execute($hgnc_line[0], $hgnc_line[1], 1, $self->session->session_id);
 
     # Add any synomyms
     if ( !$hgnc_line[8] ) {
@@ -164,9 +162,9 @@ sub load_hgnc {
     my @aliases = split '\|', $hgnc_line[8];
     foreach my $alias (@aliases) {
       try {
-        $insert_hgnc->execute($hgnc_id, $alias, 0, $self->session->session_id);
+        $insert_hgnc->execute($hgnc_line[0], $alias, 0, $self->session->session_id);
       } catch {
-        $self->log->warn("Failed to load alias $alias for $hgnc_id");
+        $self->log->warn("Failed to load alias $alias for $hgnc_line[0]");
       }
     }
   }

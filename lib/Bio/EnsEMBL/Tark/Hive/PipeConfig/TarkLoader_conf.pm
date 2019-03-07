@@ -169,6 +169,7 @@ sub pipeline_analyses {
         tark_pass => $self->o( 'tark_pass' ),
         tark_db   => $self->o( 'tark_db' ),
 
+        source_name           => $self->o('source_name'),
         naming_consortium     => $self->o( 'naming_consortium' ),
         add_consortium_prefix => $self->o( 'add_consortium_prefix' ),
       },
