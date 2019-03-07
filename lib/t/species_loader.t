@@ -129,7 +129,8 @@ $result = $test_utils->check_db(
 my $session_pkg = {
   session_id  => $db->session_id,
   genome_id   => $result->genome_id,
-  assembly_id => $result->assembly_id
+  assembly_id => $result->assembly_id,
+  assembly_name => $result->assembly_name
 };
 
 ok(
