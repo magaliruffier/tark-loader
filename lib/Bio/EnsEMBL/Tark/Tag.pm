@@ -356,17 +356,20 @@ SQL
 sub fetch_tag {
   my ($self, $tag) = @_;
 
+  my $dbh = $self->session->dbh();
+  my $session_id = $self->session->session_id;
+
   my $shortname = $self->config->config->{ 'release' }->{ 'shortname' };
   my $desc      = $self->config->config->{ 'release' }->{ 'description' };
   my $source_id = 1;
   if ( defined $self->config->config->{ 'release' }->{ 'source' } ) {
+    my $result_set = $dbh->schema->resultset( 'ReleaseSource' )->search(
+      { shortname => $self->config->config->{ 'release' }->{ 'source' } }
+    );
     $source_id = $self->config->config->{ 'release' }->{ 'source' };
   }
 
   print "From fetch_tag shortname $shortname desc $desc source_id $source_id\n";
-
-  my $dbh = $self->session->dbh();
-  my $session_id = $self->session->session_id;
 
   my $insert_tagset_sql = (<<'SQL');
     INSERT INTO tagset (
