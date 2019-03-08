@@ -100,11 +100,7 @@ fi
 
 ESOURCE=${#EXCLUDE_SOURCE}
 ISOURCE=${#INCLUDE_SOURCE}
-<<<<<<< HEAD
-if [ $ESOURCE -gt 0 ] && [ $ISOURCE -gt 0 ]
-=======
 if [ "$ESOURCE" -gt "0" ] && [ "$ISOURCE" -gt "0" ]
->>>>>>> master
 then
   echo "Please specify only -e OR -i."
 fi
