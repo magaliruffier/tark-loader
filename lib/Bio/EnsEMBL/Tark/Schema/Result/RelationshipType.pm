@@ -95,11 +95,11 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "shortname",
-  { data_type => "varchar", is_nullable => 1, size => 24 },
+  { data_type => "varchar", is_nullable => 0, size => 24 },
   "description",
   { data_type => "varchar", is_nullable => 1, size => 256 },
   "version",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", is_nullable => 0 },
   "release_date",
   { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 1 },
 );
