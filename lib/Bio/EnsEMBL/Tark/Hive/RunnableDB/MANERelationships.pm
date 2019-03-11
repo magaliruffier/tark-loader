@@ -51,6 +51,12 @@ Log::Log4perl->easy_init($DEBUG);
 
 sub param_defaults {
   return {
+    'host' => 'localhost',
+    'port' => '3306',
+    'user' => 'travis',
+    'pass' => q{},
+    'db'   => 'species_core_test',
+
     'tark_host' => 'localhost',
     'tark_port' => '3306',
     'tark_user' => 'travis',
