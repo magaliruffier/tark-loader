@@ -167,7 +167,6 @@ sub load_mane {
   my $iter = $self->genes_to_metadata_iterator( $dba );
 
   while ( my $gene = $iter->next() ) {
-    $self->log->debug( 'Loading gene ' . $gene->{stable_id} );
     $self->_load_relationship(
       $gene,
       {
@@ -191,18 +190,20 @@ sub _load_relationship{
   my %subject_config = %{ $self->subject_config };
 
   for my $transcript ( @{ $gene->get_all_Transcripts() } ) {
-    $self->log->debug( 'Loading transcript ' . $transcript->{stable_id} );
 
     # Iterate through the transcript_attribs
     # my @mane_select = @{ $transcript->get_all_Attributes( 'MANE_Select' ) };
     # print Dumper $transcript->get_all_Attributes();
     my @mane_transcripts = @{ $transcript->get_all_Attributes( 'MANE_Select' ) };
     if ( @mane_transcripts ) {
+      $self->log->debug( 'Loading transcript ' . $transcript->{stable_id} );
+
       $get_transcript_object_id->execute(
         $transcript->{stable_id},
         $object_config{shortname},
         $object_config{source}
       );
+
       my @transcript_object_id = @{ $get_transcript_object_id->fetchrow_arrayref };
 
       for my $mane ( @mane_transcripts ) {

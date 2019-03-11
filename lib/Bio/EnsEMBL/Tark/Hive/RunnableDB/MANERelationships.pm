@@ -83,8 +83,27 @@ sub run {
     }
   );
 
+  my $core_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host   => $self->param('host'),
+    -port   => $self->param('port'),
+    -user   => $self->param('user'),
+    -pass   => $self->param('pass'),
+    -group  => 'core',
+    -dbname => $self->param('db'),
+  );
+
   # start_session
   my $session_id_start = $tark_dba->start_session();
+
+  my %object_config = (
+    source    => $self->param('object_source'),
+    shortname => $self->param('object_shortname'),
+  );
+
+  my %subject_config = (
+    source    => $self->param('subject_source'),
+    shortname => $self->param('subject_shortname'),
+  );
 
   my $mane_loader = Bio::EnsEMBL::Tark::MANE->new(
     session => $tark_dba,
@@ -102,7 +121,7 @@ sub run {
     }
   );
 
-  $mane_loader->load_mane(  );
+  $mane_loader->load_mane( $core_dba );
 
   $tark_dba->end_session();
 
