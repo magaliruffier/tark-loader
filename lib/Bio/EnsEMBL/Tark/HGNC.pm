@@ -70,16 +70,20 @@ sub BUILD {
     VALUES (?, ?, 'HGNC', ?, ?)
 SQL
 
-  my $sth = $dbh->prepare( $insert_gene_name_sql ) or
-    $self->log->logdie("Error creating gene name insert: " . $DBI::errstr);
+  my $sth = $dbh->prepare( $insert_gene_name_sql );
+  if ( $sth->err ) {
+    $self->log->logdie('Error creating gene name insert: ' . $sth->errstr);
+  }
   $self->set_query('hgnc' => $sth);
 
   my $get_ids_sql = (<<'SQL');
     SELECT gene_id, assembly_id FROM gene WHERE stable_id = ?
 SQL
 
-  $sth = $dbh->prepare( $get_ids_sql ) or
-    $self->log->logdie("Error creating gene select: $DBI::errstr");
+  $sth = $dbh->prepare( $get_ids_sql );
+  if ( $sth->err ) {
+    $self->log->logdie('Error creating gene select: ' . $sth->errstr);
+  }
   $self->set_query('gene' => $sth);
 
   return;

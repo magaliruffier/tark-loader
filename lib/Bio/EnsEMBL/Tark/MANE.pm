@@ -25,7 +25,6 @@ use Bio::EnsEMBL::Tark::DB;
 use Bio::EnsEMBL::Tark::FileHandle;
 
 use Try::Tiny;
-use Data::Dumper;
 
 has 'query' => (
   traits  => ['Hash'],
@@ -86,8 +85,10 @@ sub BUILD {
     VALUES ('MANE SELECT', 'Matched Annotation by NCBI and EMBL-EBI (MANE)', ?, ?)
 SQL
 
-  my $sth = $dbh->prepare( $insert_relationship_type_select_sql ) or
-    $self->log->logdie("Error creating relationship_type insert: " . $DBI::errstr);
+  my $sth = $dbh->prepare( $insert_relationship_type_select_sql );
+  if ( $sth->err ) {
+    $self->log->logdie( 'Error creating relationship_type insert: ' . $sth->errstr );
+  }
   $self->set_query('insert_relationship_type_select' => $sth);
 
 
@@ -101,8 +102,10 @@ SQL
       version=?
 SQL
 
-  $sth = $dbh->prepare( $get_relationship_type_select_sql ) or
-    $self->log->logdie("Error creating relationship_type get: " . $DBI::errstr);
+  $sth = $dbh->prepare( $get_relationship_type_select_sql );
+  if ( $sth->err ) {
+    $self->log->logdie( 'Error creating relationship_type get: ' . $sth->errstr );
+  }
   $self->set_query('get_relationship_type_select' => $sth);
 
 
@@ -116,8 +119,10 @@ SQL
       version=?
 SQL
 
-  $sth = $dbh->prepare( $get_relationship_type_plus_sql ) or
-    $self->log->logdie("Error creating relationship_type get: " . $DBI::errstr);
+  $sth = $dbh->prepare( $get_relationship_type_plus_sql );
+  if ( $sth->err ) {
+    $self->log->logdie( 'Error creating relationship_type get: ' . $sth->errstr );
+  }
   $self->set_query('get_relationship_type_plus' => $sth);
 
 
@@ -126,8 +131,10 @@ SQL
     VALUES ('MANE PLUS', 'Matched Annotation by NCBI and EMBL-EBI (MANE)', ?, ?)
 SQL
 
-  $sth = $dbh->prepare( $insert_relationship_type_plus_sql ) or
-    $self->log->logdie("Error creating relationship_type insert: " . $DBI::errstr);
+  $sth = $dbh->prepare( $insert_relationship_type_plus_sql );
+  if ( $sth->err ) {
+    $self->log->logdie( 'Error creating relationship_type insert: ' . $sth->errstr );
+  }
   $self->set_query('insert_relationship_type_plus' => $sth);
 
 
@@ -137,8 +144,10 @@ SQL
     VALUES (?, ?, ?)
 SQL
 
-  $sth = $dbh->prepare( $insert_transcript_relationship_sql ) or
-    $self->log->logdie("Error creating relationship_type insert: " . $DBI::errstr);
+  $sth = $dbh->prepare( $insert_transcript_relationship_sql );
+  if ( $sth->err ) {
+    $self->log->logdie( 'Error creating relationship_type insert: ' . $sth->errstr );
+  }
   $self->set_query('insert_transcript_relationship_sql' => $sth);
 
 
@@ -156,8 +165,10 @@ SQL
       release_source.shortname=?
 SQL
 
-  $sth = $dbh->prepare( $select_transcript_release_tag_id_sql ) or
-    $self->log->logdie("Error creating relationship_type insert: " . $DBI::errstr);
+  $sth = $dbh->prepare( $select_transcript_release_tag_id_sql );
+  if ( $sth->err ) {
+    $self->log->logdie( 'Error creating relationship_type insert: ' . $sth->errstr );
+  }
   $self->set_query('select_transcript_release_tag_id_sql' => $sth);
 
   return;
@@ -165,7 +176,7 @@ SQL
 
 
 =head2 load_mane
-  Description: Extract MANE mappings from teh ensembl core
+  Description: Extract MANE mappings from the ensembl core
   Returntype : undef
   Exceptions : none
   Caller     : general
