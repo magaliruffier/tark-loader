@@ -68,7 +68,7 @@ sub default_options {
         -port   => $self->o( 'core_port' ),
         -user   => $self->o( 'core_user' ),
         -pass   => $self->o( 'core_pass' ),
-        -dbname => $self->o( 'core_dbname' ),
+        -db     => $self->o( 'core_dbname' ),
         -driver => 'mysql',
       },
 
@@ -101,6 +101,13 @@ sub pipeline_analyses {
         tark_user => $self->o( 'tark_user' ),
         tark_pass => $self->o( 'tark_pass' ),
         tark_db   => $self->o( 'tark_db' ),
+
+        # Core db params
+        host => $self->o( 'core_host' ),
+        port => $self->o( 'core_port' ),
+        user => $self->o( 'core_user' ),
+        pass => $self->o( 'core_pass' ),
+        db   => $self->o( 'core_dbname' ),
 
         object_shortname  => $self->o( 'object_shortname' ),
         object_source     => $self->o( 'object_source' ),

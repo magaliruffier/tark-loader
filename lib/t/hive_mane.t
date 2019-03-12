@@ -70,6 +70,7 @@ standaloneJob(
     'tag_feature_type' => 'all',
 
     'block_size'   => 10,
+    'gene_id_list' => '18258,18264',
 
     'source_name'       => 'Ensembl',
     'naming_consortium' => 'HGNC',

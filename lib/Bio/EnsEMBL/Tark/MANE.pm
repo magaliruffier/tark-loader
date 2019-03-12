@@ -194,14 +194,16 @@ sub load_mane {
       $mane_config{'select'}{'version'}, $mane_config{'select'}{'release_date'}
     );
   };
-  my $mane_select_id = $get_mane_select->execute( $mane_config{'select'}{'version'} );
+  $get_mane_select->execute( $mane_config{'select'}{'version'} );
+  my @mane_select_id = @{ $get_mane_select->fetchrow_arrayref };
 
   try {
     $insert_mane_plus->execute(
       $mane_config{'plus'}{'version'}, $mane_config{'plus'}{'release_date'}
     );
   };
-  my $mane_plus_id = $get_mane_plus->execute( $mane_config{'plus'}{'version'} );
+  $get_mane_plus->execute( $mane_config{'plus'}{'version'} );
+  my @mane_plus_id = @{ $get_mane_plus->fetchrow_arrayref };
 
   # Fetch a gene iterator and cycle through loading the genes
   my $iter = $self->genes_to_metadata_iterator( $dba );
@@ -210,8 +212,8 @@ sub load_mane {
     $self->_load_relationship(
       $gene,
       {
-        mane_select_id => $mane_select_id,
-        mane_plus_id   => $mane_plus_id
+        mane_select_id => $mane_select_id[0],
+        mane_plus_id   => $mane_plus_id[0]
       }
     );
   }
@@ -247,11 +249,13 @@ sub _load_relationship{
       my @transcript_object_id = @{ $get_transcript_object_id->fetchrow_arrayref };
 
       for my $mane ( @mane_transcripts ) {
+        my @remove_version = split /\./, $mane->{value};
         $get_transcript_subject_id->execute(
-          $mane->{value},
+          $remove_version[0],
           $subject_config{shortname},
           $subject_config{source}
         );
+
         my @transcript_subject_id = @{ $get_transcript_subject_id->fetchrow_arrayref };
 
         if ( $mane->{code} eq 'MANE_Select' ) {

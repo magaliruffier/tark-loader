@@ -74,9 +74,9 @@ __PACKAGE__->table("relationship_type");
 
 =head2 version
 
-  data_type: 'integer'
-  extra: {unsigned => 1}
+  data_type: 'varchar'
   is_nullable: 1
+  size: 24
 
 =head2 release_date
 
@@ -99,7 +99,7 @@ __PACKAGE__->add_columns(
   "description",
   { data_type => "varchar", is_nullable => 1, size => 256 },
   "version",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "varchar", is_nullable => 0, size => 32 },
   "release_date",
   { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 1 },
 );
