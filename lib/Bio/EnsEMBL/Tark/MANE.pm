@@ -234,8 +234,6 @@ sub _load_relationship{
   for my $transcript ( @{ $gene->get_all_Transcripts() } ) {
 
     # Iterate through the transcript_attribs
-    # my @mane_select = @{ $transcript->get_all_Attributes( 'MANE_Select' ) };
-    # print Dumper $transcript->get_all_Attributes();
     my @mane_transcripts = @{ $transcript->get_all_Attributes( 'MANE_Select' ) };
     if ( @mane_transcripts ) {
       $self->log->debug( 'Loading transcript ' . $transcript->{stable_id} );
