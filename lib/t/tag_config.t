@@ -34,7 +34,7 @@ my $tag = Bio::EnsEMBL::Tark::TagConfig->new();
 ok( !defined $tag->load_config_file( 'etc/release84.ini' ), 'load_config_file' );
 
 foreach my $block ( @{ $tag->blocks } ) {
-  ok( $block eq 'release' || $block eq 'CARS', "Block: $block" );
+  ok( $block eq 'release' || $block eq 'CARS' || $block eq 'refseq', "Block: $block" );
 }
 
 $tag->set_id( 'release', 2 );

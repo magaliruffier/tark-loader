@@ -164,16 +164,11 @@ SQL
 } ## end sub BUILD
 
 
-=head2 load_man
+=head2 load_mane
   Description: Extract MANE mappings from teh ensembl core
   Returntype : undef
   Exceptions : none
   Caller     : general
-  Notes      : Col 1: hgnc_id
-               Col 2: symbol/name
-               Col 9: alias_symbols
-               Col 20: ensembl_gene_id
-              (counting from 1)
 
 =cut
 
@@ -222,7 +217,19 @@ sub load_mane {
 } ## end sub load_mane
 
 
-sub _load_relationship{
+=head2 _load_relationship
+  Arg [1]    : Bio::EnsEMBL::Gene - $gene
+  Arg [2]    : HashRef
+  Description: Load the relationships between to transcripts. Links are made based
+               on the transcript_release_tag table to match the transcripts with
+               the given release of the source that it came from.
+  Returntype : undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub _load_relationship {
   my ( $self, $gene, $relationship_types ) = @_;
 
   my $insert_mane = $self->get_query('insert_transcript_relationship_sql');
@@ -272,7 +279,9 @@ sub _load_relationship{
       }
     }
   }
-}
+
+  return;
+} ## end sub _load_relationship
 
 
 =head2 genes_to_metadata_iterator
