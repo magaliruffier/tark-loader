@@ -91,6 +91,36 @@ SQL
   $self->set_query('insert_relationship_type_select' => $sth);
 
 
+  my $get_relationship_type_select_sql = (<<'SQL');
+    SELECT
+      relationship_type_id
+    FROM
+      relationship_type
+    WHERE
+      shortname='MANE SELECT' AND
+      version=?
+SQL
+
+  $sth = $dbh->prepare( $get_relationship_type_select_sql ) or
+    $self->log->logdie("Error creating relationship_type get: " . $DBI::errstr);
+  $self->set_query('get_relationship_type_select' => $sth);
+
+
+  my $get_relationship_type_plus_sql = (<<'SQL');
+    SELECT
+      relationship_type_id
+    FROM
+      relationship_type
+    WHERE
+      shortname='MANE PLUS' AND
+      version=?
+SQL
+
+  $sth = $dbh->prepare( $get_relationship_type_plus_sql ) or
+    $self->log->logdie("Error creating relationship_type get: " . $DBI::errstr);
+  $self->set_query('get_relationship_type_plus' => $sth);
+
+
   my $insert_relationship_type_plus_sql = (<<'SQL');
     INSERT INTO relationship_type (shortname, description, version, release_date)
     VALUES ('MANE PLUS', 'Matched Annotation by NCBI and EMBL-EBI (MANE)', ?, ?)
@@ -156,12 +186,22 @@ sub load_mane {
   my $insert_mane_select = $self->get_query('insert_relationship_type_select');
   my $insert_mane_plus = $self->get_query('insert_relationship_type_plus');
 
-  my $mane_select_id = $insert_mane_select->execute(
-    $mane_config{'select'}{'version'}, $mane_config{'select'}{'release_date'}
-  );
-  my $mane_plus_id = $insert_mane_plus->execute(
-    $mane_config{'plus'}{'version'}, $mane_config{'plus'}{'release_date'}
-  );
+  my $get_mane_select = $self->get_query('get_relationship_type_select');
+  my $get_mane_plus = $self->get_query('get_relationship_type_plus');
+
+  try {
+    $insert_mane_select->execute(
+      $mane_config{'select'}{'version'}, $mane_config{'select'}{'release_date'}
+    );
+  };
+  my $mane_select_id = $get_mane_select->execute( $mane_config{'select'}{'version'} );
+
+  try {
+    $insert_mane_plus->execute(
+      $mane_config{'plus'}{'version'}, $mane_config{'plus'}{'release_date'}
+    );
+  };
+  my $mane_plus_id = $get_mane_plus->execute( $mane_config{'plus'}{'version'} );
 
   # Fetch a gene iterator and cycle through loading the genes
   my $iter = $self->genes_to_metadata_iterator( $dba );
