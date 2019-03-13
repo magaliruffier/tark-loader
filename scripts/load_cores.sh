@@ -108,6 +108,12 @@ then
   echo "Please specify only -e OR -i."
 fi
 
+TAG_DESCRITPION="Ensembl release ${RELEASE}"
+if [ "$ISOURCE" -gt "0" ]
+then
+  TAG_DESCRITPION="Ensembl release ${RELEASE} (${SOURCE_NAME})"
+fi
+
 eval $(mysql-ens-tark-dev-1-ensrw details env_TARK_)
 eval $(mysql-ens-hive-prod-2-ensrw details env_HIVE_)
 
@@ -148,7 +154,7 @@ do
     --core_user ${CORE_USER} --core_pass '' --core_dbname ${CORE_DB} \
     --host ${HIVE_HOST} --port ${HIVE_PORT} --user ${HIVE_USER} --password ${HIVE_PASS} \
     --pipeline_name ${HIVE_DB_NAME} --species ${SPECIES} \
-    --tag_block release --tag_shortname ${RELEASE} --tag_description "Ensembl release ${RELEASE}" \
+    --tag_block release --tag_shortname ${RELEASE} --tag_description "$TAG_DESCRITPION" \
     --tag_feature_type all --tag_version 1 \
     --block_size ${BATCH_COUNT} --report ${PWD}/loading_report_${RELEASE}.json \
     --tag_previous_shortname ${PREVIOUS_RELEASE} --source_name ${SOURCE_NAME} \
