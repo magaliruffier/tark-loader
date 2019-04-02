@@ -155,7 +155,9 @@ sub run {
       $sth = $tark_dbh->prepare( $tark_compare_sql );
       $sth->execute(
         $self->param( 'tag_previous_shortname' ),
-        $self->param( 'tag_shortname' )
+        $self->param( 'source_name' ),
+        $self->param( 'tag_shortname' ),
+        $self->param( 'source_name' )
       );
       my @tark_compare_removed = $sth->fetchrow_array();
       $output{ $table }{ 'removed' } = $tark_compare_removed[0];
@@ -164,10 +166,23 @@ sub run {
       $sth = $tark_dbh->prepare( $tark_compare_sql );
       $sth->execute(
         $self->param( 'tag_previous_shortname' ),
-        $self->param( 'tag_shortname' )
+        $self->param( 'source_name' ),
+        $self->param( 'tag_shortname' ),
+        $self->param( 'source_name' )
       );
       my @tark_compare_gained = $sth->fetchrow_array();
       $output{ $table }{ 'gained' } = $tark_compare_gained[0];
+
+      $tark_compare_sql = $tark_sql_handle->feature_diff_count( $table, 'changed' );
+      $sth = $tark_dbh->prepare( $tark_compare_sql );
+      $sth->execute(
+        $self->param( 'tag_previous_shortname' ),
+        $self->param( 'source_name' ),
+        $self->param( 'tag_shortname' ),
+        $self->param( 'source_name' )
+      );
+      my @tark_compare_gained = $sth->fetchrow_array();
+      $output{ $table }{ 'changed' } = $tark_compare_gained[0];
     }
   }
 
