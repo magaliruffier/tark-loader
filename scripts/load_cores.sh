@@ -21,6 +21,7 @@
 
 # Initialize our own variables:
 ENSDIR=""
+BATCH_COUNT=1000
 SPECIES="homo_sapiens"
 ASSEMBLY=38
 RELEASE_EG_FROM=0
@@ -35,9 +36,9 @@ INCLUDE_SOURCE=""
 SOURCE_NAME="Ensembl"
 verbose=0
 
-HELP="\n\t-h Displays this message\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-c NAING_CONSORTIUM\n\t-e EXCLUDE_SOURCE\n\t-i INCLUDE_SOURCE\n\t-d ENSDIR\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-q RELEASE_FROM (default: ${RELEASE_FROM})\n\t-r RELEASE_TO (default: ${RELEASE_TO})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)"
+HELP="\n\t-h Displays this message\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-b BATCH_COUNT\n\t-c NAING_CONSORTIUM\n\t-d ENSDIR\n\t-e EXCLUDE_SOURCE\n\t-i INCLUDE_SOURCE\n\t-m RELEASE_EG_FROM\n\t-n ADD_CONSORTIUM_NAME\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-q RELEASE_FROM (default: ${RELEASE_FROM})\n\t-r RELEASE_TO (default: ${RELEASE_TO})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)\n\t-w SOURCE_NAME (default: ${SOURCE_NAME})"
 
-while getopts "h?:d:s:a:c:e:i:n:q:r:p:t:w:" opt; do
+while getopts "h?:a:b:c:d:e:i:m:n:p:q:r:s:t:w:" opt; do
     case "${opt}" in
     h|\?)
         echo "Loader for importing ensembl core dbs into the Tark db."
@@ -47,6 +48,8 @@ while getopts "h?:d:s:a:c:e:i:n:q:r:p:t:w:" opt; do
         exit 0
         ;;
     a)  ASSEMBLY=$OPTARG
+        ;;
+    b)  BATCH_COUNT=$OPTARG
         ;;
     c)  NAMING_CONSORTIUM=$OPTARG
         ;;
@@ -105,16 +108,6 @@ then
   echo "Please specify only -e OR -i."
 fi
 
-SOURCE=""
-if [ "$ESOURCE" -gt "0" ]
-then
-  SOURCE=" --exclude_source '${EXCLUDE_SOURCE}'"
-fi
-if [ "$ISOURCE" -gt "0" ]
-then
-  SOURCE=" --include_source '${INCLUDE_SOURCE}'"
-fi
-
 eval $(mysql-ens-tark-dev-1-ensrw details env_TARK_)
 eval $(mysql-ens-hive-prod-2-ensrw details env_HIVE_)
 
@@ -148,7 +141,19 @@ do
 
   echo "Loading ${SPECIES}_core_${RELEASE}_${ASSEMBLY}, PREVIOUS_RELEASE was ${PREVIOUS_RELEASE}"
 
-  perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/init_pipeline.pl Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf --tark_host ${TARK_HOST} --tark_port ${TARK_PORT} --tark_user ${TARK_USER} --tark_pass ${TARK_PASS} --tark_db ${TARK_DB} --core_host ${CORE_HOST} --core_port ${CORE_PORT} --core_user ${CORE_USER} --core_pass '' --core_dbname ${CORE_DB} --host ${HIVE_HOST} --port ${HIVE_PORT} --user ${HIVE_USER} --password ${HIVE_PASS} --pipeline_name ${HIVE_DB_NAME} --species ${SPECIES} --tag_block release --tag_shortname ${RELEASE} --tag_description "Ensembl release ${RELEASE}" --tag_feature_type all --tag_version 1 --block_size 1000 --report ${PWD}/loading_report_${RELEASE}.json --tag_previous_shortname ${PREVIOUS_RELEASE} --source_name ${SOURCE_NAME} ${SOURCE} ${NAMING_CONSORTIUM_PARAM} ${ADD_CONSORTIUM_NAME_PARAM}
+  perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/init_pipeline.pl \
+    Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf                \
+    --tark_host ${TARK_HOST} --tark_port ${TARK_PORT} --tark_user ${TARK_USER} --tark_pass ${TARK_PASS} \
+    --tark_db ${TARK_DB} --core_host ${CORE_HOST} --core_port ${CORE_PORT} \
+    --core_user ${CORE_USER} --core_pass '' --core_dbname ${CORE_DB} \
+    --host ${HIVE_HOST} --port ${HIVE_PORT} --user ${HIVE_USER} --password ${HIVE_PASS} \
+    --pipeline_name ${HIVE_DB_NAME} --species ${SPECIES} \
+    --tag_block release --tag_shortname ${RELEASE} --tag_description "Ensembl release ${RELEASE}" \
+    --tag_feature_type all --tag_version 1 \
+    --block_size ${BATCH_COUNT} --report ${PWD}/loading_report_${RELEASE}.json \
+    --tag_previous_shortname ${PREVIOUS_RELEASE} --source_name ${SOURCE_NAME} \
+    --exclude_source "$EXCLUDE_SOURCE" --include_source "$INCLUDE_SOURCE" \
+    ${NAMING_CONSORTIUM_PARAM} ${ADD_CONSORTIUM_NAME_PARAM}
 
   perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/beekeeper.pl -url mysql://${HIVE_USER}:${HIVE_PASS}@${HIVE_HOST}:${HIVE_PORT}/${HIVE_DB} -loop
 
