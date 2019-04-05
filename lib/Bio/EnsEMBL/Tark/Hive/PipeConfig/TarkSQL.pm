@@ -117,28 +117,40 @@ sub _feature_diff_template_SQL {
     FROM
       (
         SELECT
-          feature_id
+          #FEATURE#.stable_id,
+          #FEATURE#.stable_id_version,
+          f_tag.feature_id,
+          rst.shortname,
+          rst.description,
+          rst.assembly_id
         FROM
-          #FEATURE#_release_tag AS f_tag
+          #FEATURE#
+          JOIN #FEATURE#_release_tag AS f_tag ON (#FEATURE#.#FEATURE#_id=f_tag.feature_id)
           JOIN release_set AS rst ON (f_tag.release_id=rst.release_id)
           JOIN release_source AS rso ON (rst.source_id=rso.source_id)
         WHERE
-          rs.shortname=? AND
+          rst.shortname=? AND
           rso.shortname=?
       ) AS v0
       #DIRECTION# JOIN (
         SELECT
-          feature_id
+          #FEATURE#.stable_id,
+          #FEATURE#.stable_id_version,
+          f_tag.feature_id,
+          rst.shortname,
+          rst.description,
+          rst.assembly_id
         FROM
-          #FEATURE#_release_tag AS f_tag
+          #FEATURE#
+          JOIN #FEATURE#_release_tag AS f_tag ON (#FEATURE#.#FEATURE#_id=f_tag.feature_id)
           JOIN release_set AS rst ON (f_tag.release_id=rst.release_id)
           JOIN release_source AS rso ON (rst.source_id=rso.source_id)
         WHERE
-          rs.shortname=? AND
+          rst.shortname=? AND
           rso.shortname=?
       ) AS v1 ON (v0.stable_id=v1.stable_id)
     WHERE
-      #SET#.feature_id IS NULL
+      #SET#
 SQL
 
   return $sql;
@@ -168,6 +180,34 @@ sub feature_diff_count {
     $sql =~ s/#DIRECTION#//g;
     $sql =~ s/#SET#/v0.stable_id_version!=v1.stable_id_version/g;
   }
+
+  return $sql;
+} ## end sub feature_diff_count
+
+
+=head2 insert_stats
+  Arg [1]    : $feature - string
+  Arg [2]    : $direction - string (removed|gained)
+  Description: Query for getting counts of all features
+=cut
+
+sub insert_stats {
+  my ( $self, $json ) = @_;
+
+  my $sql = (<<'SQL');
+    INSERT INTO release_stats (release_id, json)
+    SELECT
+      release_set.release_id,
+      '#JSON#' AS json
+    FROM
+      release_set
+      JOIN release_source ON release_set.source_id=release_source.source_id
+    WHERE
+      release_source.shortname=? AND
+      release_set.shortname=?
+SQL
+
+  $sql =~ s/#JSON#/$json/g;
 
   return $sql;
 } ## end sub feature_diff_count
