@@ -53,6 +53,13 @@ __PACKAGE__->table("transcript_release_tag");
 
 =head1 ACCESSORS
 
+=head2 transcript_release_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_auto_increment: 1
+  is_nullable: 0
+
 =head2 feature_id
 
   data_type: 'integer'
@@ -76,6 +83,13 @@ __PACKAGE__->table("transcript_release_tag");
 =cut
 
 __PACKAGE__->add_columns(
+  "transcript_release_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_auto_increment => 1,
+    is_nullable => 0,
+  },
   "feature_id",
   {
     data_type => "integer",
@@ -98,6 +112,20 @@ __PACKAGE__->add_columns(
 
 =over 4
 
+=item * L</transcript_release_id>
+
+=back
+
+=cut
+
+__PACKAGE__->set_primary_key("transcript_release_id");
+
+=head1 UNIQUE CONSTRAINTS
+
+=head2 C<transcript_release_idx>
+
+=over 4
+
 =item * L</feature_id>
 
 =item * L</release_id>
@@ -106,7 +134,7 @@ __PACKAGE__->add_columns(
 
 =cut
 
-__PACKAGE__->set_primary_key("feature_id", "release_id");
+__PACKAGE__->add_unique_constraint("transcript_release_idx", ["feature_id", "release_id"]);
 
 =head1 RELATIONS
 
@@ -143,6 +171,36 @@ __PACKAGE__->belongs_to(
 
 # Created by DBIx::Class::Schema::Loader v0.07045 @ 2019-01-22 14:34:33
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:hVBBsWX2gaXFGD8I9XPl0A
+
+=head2 transcript_release_object
+
+Type: has_many
+
+Related object: L<Bio::EnsEMBL::Tark::Schema::Result::transcript_release_object>
+
+=cut
+
+__PACKAGE__->has_many(
+  "transcript_release_object",
+  "Bio::EnsEMBL::Tark::Schema::Result::TranscriptReleaseTagRelationship",
+  { "foreign.transcript_release_object_id" => "self.transcript_release_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 transcript_release_subject
+
+Type: has_many
+
+Related object: L<Bio::EnsEMBL::Tark::Schema::Result::transcript_release_object>
+
+=cut
+
+__PACKAGE__->has_many(
+  "transcript_release_subject",
+  "Bio::EnsEMBL::Tark::Schema::Result::TranscriptReleaseTagRelationship",
+  { "foreign.transcript_release_subject_id" => "self.transcript_release_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

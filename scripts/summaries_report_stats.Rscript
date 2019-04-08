@@ -21,7 +21,7 @@ option_list = list(
   make_option(c("-d", "--root_dir"), type="character", default="reports/v4/",
               help="Root Directory", metavar="character"),
   make_option(c("-r", "--release"), type="character", default=95,
-              help="Final release", metavar="character"),
+              help="Final release", metavar="character")
 );
 
 opt_parser = OptionParser(option_list=option_list);
