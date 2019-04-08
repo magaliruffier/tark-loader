@@ -28,6 +28,7 @@ use Test::More;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Tark::Test::TestDB;
+use Bio::EnsEMBL::Tark::Test::Utils;
 use Bio::EnsEMBL::Test::MultiTestDB;
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob get_test_url_or_die make_new_db_from_sqls run_sql_on_db);
@@ -47,6 +48,8 @@ my $core_dba = $multi_db->get_DBAdaptor('core');
 my $tark_dba = Bio::EnsEMBL::Tark::Test::TestDB->new();
 $tark_dba->schema();
 
+my $test_utils = Bio::EnsEMBL::Tark::Test::Utils->new();
+
 standaloneJob(
   'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
   {
@@ -63,6 +66,7 @@ standaloneJob(
     'tark_pass' => $tark_dba->config->{pass},
     'tark_db'   => $tark_dba->config->{db},
 
+    'source_name'      => 'Ensembl',
     'tag_block'        => 'release',
     'tag_shortname'    => 84,
     'tag_description'  => 'Ensembl release 84',
@@ -86,10 +90,16 @@ standaloneJob(
     'tark_pass' => $tark_dba->config->{pass},
     'tark_db'   => $tark_dba->config->{db},
 
+    'source_name'   => 'Ensembl',
     'tag_shortname' => 84,
     'report'        => 'test_report.json'
   },
 );
+
+my $result = $test_utils->check_db(
+  $tark_dba, 'ReleaseStats', {}, 1
+);
+is( $result, 1, 'Stats loaded into ReleaseStats' );
 
 standaloneJob(
   'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoaderReport',
@@ -106,12 +116,69 @@ standaloneJob(
     'tark_pass' => $tark_dba->config->{pass},
     'tark_db'   => $tark_dba->config->{db},
 
+    'source_name'   => 'sans_vega',
     'tag_shortname' => 84,
     'report'        => 'test_report_xvega.json',
 
     'exclude_source' => 'vega'
   },
 );
+
+
+
+standaloneJob(
+  'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader',
+  {
+    'species'   => 'homo_sapiens',
+    'host' => $core_dba->dbc->host,
+    'port' => $core_dba->dbc->port,
+    'user' => $core_dba->dbc->user,
+    'pass' => $core_dba->dbc->pass,
+    'db'   => $core_dba->dbc->dbname,
+
+    'tark_host' => $tark_dba->config->{host},
+    'tark_port' => $tark_dba->config->{port},
+    'tark_user' => $tark_dba->config->{user},
+    'tark_pass' => $tark_dba->config->{pass},
+    'tark_db'   => $tark_dba->config->{db},
+
+    'source_name'      => 'Ensembl',
+    'tag_block'        => 'release',
+    'tag_shortname'    => 85,
+    'tag_description'  => 'Ensembl release 84',
+    'tag_feature_type' => 'all',
+  },
+);
+
+
+standaloneJob(
+  'Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoaderReport',
+  {
+    'host' => $core_dba->dbc->host,
+    'port' => $core_dba->dbc->port,
+    'user' => $core_dba->dbc->user,
+    'pass' => $core_dba->dbc->pass,
+    'db'   => $core_dba->dbc->dbname,
+
+    'tark_host' => $tark_dba->config->{host},
+    'tark_port' => $tark_dba->config->{port},
+    'tark_user' => $tark_dba->config->{user},
+    'tark_pass' => $tark_dba->config->{pass},
+    'tark_db'   => $tark_dba->config->{db},
+
+    'source_name'   => 'Ensembl',
+    'tag_previous_shortname' => 84,
+    'tag_shortname' => 85,
+    'report'        => 'test_report.json'
+  },
+);
+
+$result = $test_utils->check_db(
+  $tark_dba, 'ReleaseStats', {}, 1
+);
+is( $result, 2, 'Stats loaded into ReleaseStats' );
+
+
 
 
 done_testing();

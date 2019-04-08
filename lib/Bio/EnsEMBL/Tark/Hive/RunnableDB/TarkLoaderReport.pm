@@ -181,16 +181,17 @@ sub run {
         $self->param( 'tag_shortname' ),
         $self->param( 'source_name' )
       );
-      my @tark_compare_gained = $sth->fetchrow_array();
-      $output{ $table }{ 'changed' } = $tark_compare_gained[0];
+      my @tark_compare_changed = $sth->fetchrow_array();
+      $output{ $table }{ 'changed' } = $tark_compare_changed[0];
     }
   }
 
-  open my $fh, '>', $self->param('report') or confess 'Can\'t open report file';
-
-  print $fh encode_json \%output;
-
-  close $fh or confess 'Can\'t close report file';
+  my $tark_report_sql = $tark_sql_handle->insert_stats(encode_json \%output);
+  my $sth = $tark_dbh->prepare( $tark_report_sql );
+  $sth->execute(
+    $self->param( 'source_name' ),
+    $self->param( 'tag_shortname' )
+  );
 
   return;
 }
