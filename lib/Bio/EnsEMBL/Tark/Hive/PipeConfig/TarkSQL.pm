@@ -120,19 +120,23 @@ sub _feature_diff_template_SQL {
           feature_id
         FROM
           #FEATURE#_release_tag AS f_tag
-          JOIN release_set AS rs ON (f_tag.release_id=rs.release_id)
+          JOIN release_set AS rst ON (f_tag.release_id=rst.release_id)
+          JOIN release_source AS rso ON (rst.source_id=rso.source_id)
         WHERE
-          rs.shortname=?
+          rs.shortname=? AND
+          rso.shortname=?
       ) AS v0
       #DIRECTION# JOIN (
         SELECT
           feature_id
         FROM
           #FEATURE#_release_tag AS f_tag
-          JOIN release_set AS rs ON (f_tag.release_id=rs.release_id)
+          JOIN release_set AS rst ON (f_tag.release_id=rst.release_id)
+          JOIN release_source AS rso ON (rst.source_id=rso.source_id)
         WHERE
-          rs.shortname=?
-      ) AS v1 ON (v0.feature_id=v1.feature_id)
+          rs.shortname=? AND
+          rso.shortname=?
+      ) AS v1 ON (v0.stable_id=v1.stable_id)
     WHERE
       #SET#.feature_id IS NULL
 SQL
@@ -156,10 +160,13 @@ sub feature_diff_count {
 
   if ( $direction eq 'removed' ) {
     $sql =~ s/#DIRECTION#/LEFT/g;
-    $sql =~ s/#SET#/v1/g;
-  } else {
+    $sql =~ s/#SET#/v1.stable_id IS NULL/g;
+  } elsif ($direction eq 'gained') {
     $sql =~ s/#DIRECTION#/RIGHT/g;
-    $sql =~ s/#SET#/v0/g;
+    $sql =~ s/#SET#/v0.stable_id IS NULL/g;
+  } else {
+    $sql =~ s/#DIRECTION#//g;
+    $sql =~ s/#SET#/v0.stable_id_version!=v1.stable_id_version/g;
   }
 
   return $sql;

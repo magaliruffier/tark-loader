@@ -132,6 +132,7 @@ sub pipeline_analyses {
         include_source => $self->o('include_source'),
 
         # Worker parameters
+        source_name            => $self->o( 'source_name' ),
         tag_shortname          => $self->o( 'tag_shortname' ),
         tag_previous_shortname => $self->o( 'tag_previous_shortname' ),
         report                 => $self->o( 'report' ),

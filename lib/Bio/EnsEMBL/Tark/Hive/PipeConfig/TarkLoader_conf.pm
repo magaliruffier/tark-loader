@@ -169,7 +169,7 @@ sub pipeline_analyses {
         tark_pass => $self->o( 'tark_pass' ),
         tark_db   => $self->o( 'tark_db' ),
 
-        source_name           => $self->o('source_name'),
+        source_name           => $self->o( 'source_name' ),
         naming_consortium     => $self->o( 'naming_consortium' ),
         add_consortium_prefix => $self->o( 'add_consortium_prefix' ),
       },
@@ -196,10 +196,11 @@ sub pipeline_analyses {
         tark_db   => $self->o( 'tark_db' ),
 
         # Include/Exclude db entries by source
-        exclude_source => $self->o('exclude_source'),
-        include_source => $self->o('include_source'),
+        exclude_source => $self->o( 'exclude_source' ),
+        include_source => $self->o( 'include_source' ),
 
         # Worker parameters
+        source_name            => $self->o( 'source_name' ),
         tag_shortname          => $self->o( 'tag_shortname' ),
         tag_previous_shortname => $self->o( 'tag_previous_shortname' ),
         report                 => $self->o( 'report' ),
