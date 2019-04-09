@@ -134,6 +134,8 @@ sub run {
     }
   }
 
+  $tag_config_hash{ 'release' }{ 'source_name' } = $self->param( 'source_name' );
+
   my $tag_config = Bio::EnsEMBL::Tark::TagConfig->new(
     config => \%tag_config_hash
   );
