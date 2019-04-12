@@ -78,7 +78,7 @@ sub _feature_release_template_SQL {
       JOIN release_source ON #FEATURE#_release_tag.source_id=release_source.source_id
     WHERE
       release_set.shortname = ? AND
-      release_source.short_name = ?
+      release_source.shortname = ?
     GROUP BY
       #FEATURE#_release_tag.release_id
 SQL
