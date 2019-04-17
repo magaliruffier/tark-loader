@@ -138,7 +138,10 @@ sub run {
     my @tark_count_row = $sth->fetchrow_array();
 
     $sth = $tark_dbh->prepare( $tark_release_sql );
-    $sth->execute( $self->param( 'tag_shortname' ) );
+    $sth->execute(
+        $self->param( 'tag_shortname' ),
+        $self->param( 'source_name' )
+    );
     my @tark_release_count_row = $sth->fetchrow_array();
 
     $output{ $table } = {

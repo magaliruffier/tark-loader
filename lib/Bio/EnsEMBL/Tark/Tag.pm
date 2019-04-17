@@ -362,10 +362,12 @@ sub fetch_tag {
   my $shortname = $self->config->config->{ 'release' }->{ 'shortname' };
   my $desc      = $self->config->config->{ 'release' }->{ 'description' };
   my $source_id = 1;
-  if ( defined $self->config->config->{ 'release' }->{ 'source' } ) {
-    my $result_set = $dbh->schema->resultset( 'ReleaseSource' )->search(
-      { shortname => $self->config->config->{ 'release' }->{ 'source' } }
+  if ( defined $self->config->config->{ 'release' }->{ 'source_name' } ) {
+    my $result_set = $self->session->schema->resultset( 'ReleaseSource' )->search(
+      { shortname => $self->config->config->{ 'release' }->{ 'source_name' } }
     );
+    my $source = $result_set->next;
+    $self->config->config->{ 'release' }->{ 'source' } = $source->source_id;
     $source_id = $self->config->config->{ 'release' }->{ 'source' };
   }
 

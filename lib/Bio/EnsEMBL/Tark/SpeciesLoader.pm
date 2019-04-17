@@ -258,8 +258,8 @@ sub load_species {
 
   # Initialize the tags we'll be using
   my $tag = Bio::EnsEMBL::Tark::Tag->new(
-    config  => $self->tag_config,
-    session => $self->session
+    session => $self->session,
+    config  => $self->tag_config
   );
   $tag->init_tags( $assembly_id );
 
