@@ -289,6 +289,7 @@ sub _load_relationship {
               $transcript_subject_id[0],
               $relationship_types->{mane_plus_id}
             );
+          }
         } catch {
           $warning_msg = $warning_msg . "\tFAILED RELATIONSHIP: " . $remove_version[0] . ' - ' . $transcript->{stable_id} . "\n";
         }

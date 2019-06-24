@@ -1,3 +1,4 @@
+requires 'Bio::Species';
 requires 'Config::IniFiles';
 test_requires 'Config::Simple';
 requires 'DBD::mysql';
