@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.7.25, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.26, for Linux (x86_64)
 --
--- Host: localhost    Database: mcdowall_tark_test_9242
+-- Host: mysql-ens-tark-dev-1    Database: tark_full_v7
 -- ------------------------------------------------------
--- Server version	5.7.25-0ubuntu0.16.04.2
+-- Server version	5.6.24
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -190,7 +190,7 @@ CREATE TABLE `gene_names` (
   KEY `source_idx` (`source`),
   CONSTRAINT `gene_names_fk_external_id` FOREIGN KEY (`external_id`) REFERENCES `gene` (`name_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `gene_names_fk_session_id` FOREIGN KEY (`session_id`) REFERENCES `session` (`session_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -286,6 +286,24 @@ CREATE TABLE `operon_transcript` (
   CONSTRAINT `operon_transcript_fk_session_id` FOREIGN KEY (`session_id`) REFERENCES `session` (`session_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `operon_transcript_fk_transcript_id` FOREIGN KEY (`transcript_id`) REFERENCES `transcript` (`transcript_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `relationship_type`
+--
+
+DROP TABLE IF EXISTS `relationship_type`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `relationship_type` (
+  `relationship_type_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `shortname` varchar(24) DEFAULT NULL,
+  `description` varchar(256) DEFAULT NULL,
+  `version` varchar(32) DEFAULT NULL,
+  `release_date` date DEFAULT NULL,
+  PRIMARY KEY (`relationship_type_id`),
+  UNIQUE KEY `shortname_version_idx` (`shortname`,`version`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -514,15 +532,40 @@ DROP TABLE IF EXISTS `transcript_release_tag`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `transcript_release_tag` (
+  `transcript_release_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `feature_id` int(10) unsigned NOT NULL,
   `release_id` int(10) unsigned NOT NULL,
   `session_id` int(10) unsigned DEFAULT NULL,
-  PRIMARY KEY (`feature_id`,`release_id`),
+  PRIMARY KEY (`transcript_release_id`),
+  UNIQUE KEY `transcript_release_idx` (`feature_id`,`release_id`),
   KEY `transcript_release_tag_idx_feature_id` (`feature_id`),
   KEY `transcript_release_tag_idx_release_id` (`release_id`),
   CONSTRAINT `transcript_release_tag_fk_feature_id` FOREIGN KEY (`feature_id`) REFERENCES `transcript` (`transcript_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `transcript_release_tag_fk_release_id` FOREIGN KEY (`release_id`) REFERENCES `release_set` (`release_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `transcript_release_tag_relationship`
+--
+
+DROP TABLE IF EXISTS `transcript_release_tag_relationship`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `transcript_release_tag_relationship` (
+  `transcript_transcript_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `transcript_release_object_id` int(10) unsigned NOT NULL,
+  `transcript_release_subject_id` int(10) unsigned NOT NULL,
+  `relationship_type_id` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`transcript_transcript_id`),
+  KEY `transcript_release_tag_relationship_idx_relationship_type_id` (`relationship_type_id`),
+  KEY `transcript_release_tag_relationship_idx_transcript_rele_76079d8b` (`transcript_release_object_id`),
+  KEY `transcript_release_tag_relationship_idx_transcript_rele_71081d64` (`transcript_release_subject_id`),
+  UNIQUE KEY `transcript_release_idx` (`transcript_release_object_id`,`transcript_release_subject_id`,`relationship_type_id`),
+  CONSTRAINT `transcript_release_tag_relationship_fk_relationship_type_id` FOREIGN KEY (`relationship_type_id`) REFERENCES `relationship_type` (`relationship_type_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `transcript_release_tag_relationship_fk_transcript_relea_8df6fc6f` FOREIGN KEY (`transcript_release_subject_id`) REFERENCES `transcript_release_tag` (`transcript_release_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `transcript_release_tag_relationship_fk_transcript_relea_8edf7b8d` FOREIGN KEY (`transcript_release_object_id`) REFERENCES `transcript_release_tag` (`transcript_release_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -608,4 +651,4 @@ CREATE TABLE `translation_transcript` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-04-08  8:28:46
+-- Dump completed on 2019-06-04 11:41:33
