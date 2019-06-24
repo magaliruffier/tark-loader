@@ -127,7 +127,8 @@ sub run {
     }
   );
 
-  $mane_loader->load_mane( $core_dba );
+  $msg = $mane_loader->load_mane( $core_dba );
+  $self->warning($msg);
 
   $tark_dba->end_session();
 

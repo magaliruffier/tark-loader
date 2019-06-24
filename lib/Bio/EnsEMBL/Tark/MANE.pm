@@ -249,6 +249,8 @@ sub _load_relationship {
   my %object_config  = %{ $self->object_config };
   my %subject_config = %{ $self->subject_config };
 
+  my $warning_msg = q{};
+
   for my $transcript ( @{ $gene->get_all_Transcripts() } ) {
 
     # Iterate through the transcript_attribs
@@ -272,31 +274,35 @@ sub _load_relationship {
           $subject_config{source}
         );
 
-        my @transcript_subject_id = @{ $get_transcript_subject_id->fetchrow_arrayref };
+        try {
+          my @transcript_subject_id = @{ $get_transcript_subject_id->fetchrow_arrayref };
 
-        if ( $mane->{code} eq 'MANE_Select' ) {
-          $insert_mane->execute(
-            $transcript_object_id[0],
-            $transcript_subject_id[0],
-            $relationship_types->{mane_select_id}
-          );
-        } elsif ( $mane->{code} eq 'MANE_Plus' ) {
-          $insert_mane->execute(
-            $transcript_object_id[0],
-            $transcript_subject_id[0],
-            $relationship_types->{mane_plus_id}
-          );
+          if ( $mane->{code} eq 'MANE_Select' ) {
+            $insert_mane->execute(
+              $transcript_object_id[0],
+              $transcript_subject_id[0],
+              $relationship_types->{mane_select_id}
+            );
+          } elsif ( $mane->{code} eq 'MANE_Plus' ) {
+            $insert_mane->execute(
+              $transcript_object_id[0],
+              $transcript_subject_id[0],
+              $relationship_types->{mane_plus_id}
+            );
+        } catch {
+          $warning_msg = $warning_msg . "\tFAILED RELATIONSHIP: " . $remove_version[0] . ' - ' . $transcript->{stable_id} . "\n";
         }
       }
     }
   }
 
-  return;
+  return $warning_msg;
 } ## end sub _load_relationship
 
 
 =head2 genes_to_metadata_iterator
-  Description: This is the place where you should try to get the gene iterator properly
+  Description: This is the place where you should try to get the gene iterator
+               properly
   Returntype :
   Exceptions : none
   Caller     : general
