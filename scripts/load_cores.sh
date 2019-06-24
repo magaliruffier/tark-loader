@@ -108,10 +108,10 @@ then
   echo "Please specify only -e OR -i."
 fi
 
-TAG_DESCRITPION="Ensembl release ${RELEASE}"
+TAG_DESCRITPION="Ensembl release"
 if [ "$ISOURCE" -gt "0" ]
 then
-  TAG_DESCRITPION="Ensembl release ${RELEASE} (${SOURCE_NAME})"
+  TAG_DESCRITPION="Ensembl release (${SOURCE_NAME})"
 fi
 
 eval $(mysql-ens-tark-dev-1-ensrw details env_TARK_)
