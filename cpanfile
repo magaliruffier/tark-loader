@@ -5,6 +5,7 @@ requires 'DBI';
 requires 'DBIx::Class';
 requires 'Digest::SHA1';
 # requires 'HTTP::Tiny';
+requries 'JSON';
 requires 'List::Util', '>= 1.45';
 requires 'Log::Log4perl';
 requires 'Moose';
