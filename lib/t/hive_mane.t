@@ -170,6 +170,7 @@ standaloneJob(
 my $result = $test_utils->check_db(
   $tark_dba, 'TranscriptReleaseTagRelationship', {}, 1
 );
+
 is( $result, 2, 'Loaded MANE relationships' );
 
 # run_sql_on_db($test_url, 'DROP DATABASE');

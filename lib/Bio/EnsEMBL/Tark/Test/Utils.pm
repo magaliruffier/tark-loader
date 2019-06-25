@@ -20,7 +20,9 @@ package Bio::EnsEMBL::Tark::Test::Utils;
 
 use strict;
 use warnings;
+
 use Moose;
+with 'MooseX::Log::Log4perl';
 
 
 =head2 check_db
@@ -41,6 +43,7 @@ sub check_db {
   my ( $self, $dba, $table, $search_conditions, $count ) = @_;
 
   my $result_set = $dba->schema->resultset( $table )->search( $search_conditions );
+
   if ( defined $count and $count == 1 ) {
     return $result_set->count;
   }

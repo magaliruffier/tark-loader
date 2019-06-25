@@ -34,7 +34,7 @@ use Digest::SHA1 qw(sha1);
 sub checksum_array {
   my ($self, @values) = @_;
 
-  return Digest::SHA1::sha1( join ':', grep { defined } @values );
+  return Digest::SHA1::sha1( join q{:}, grep { defined } @values );
 } ## end sub checksum_array
 
 1;
