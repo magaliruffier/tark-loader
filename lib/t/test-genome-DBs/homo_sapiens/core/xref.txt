@@ -181,17 +181,7 @@
 103296	2	U24166	U24166	1	description		D
 103297	3	AAC09471	AAC09471	1	description		D
 103298	3	CAB53072	CAB53072	1	description		D
+123456	3300	MIMAT0000416	hsa-miR-1-3p	1	description		D
+123457	3300	MIMAT0031892	hsa-miR-1-5p	1	description		D
 999998	11	IPR000001	IPR000001	1	Test interpro desc1		D
 999999	11	IPR000010	IPR000010	1	Test interpro desc2		D
-3577674	1100	HGNC:2979	DNMT3B	0	DNA methyltransferase 3 beta	DIRECT	Generated via ensembl_manual
-3669547	1100	HGNC:16119	PDRG1	0	p53 and DNA damage regulated 1	DIRECT	Generated via ensembl_manual
-3560857	1100	HGNC:16153	CCM2L	0	CCM2 like scaffold protein	DIRECT	Generated via ensembl_manual
-3603701	1100	HGNC:4840	HCK	0	HCK proto-oncogene, Src family tyrosine kinase	DIRECT	Generated via ensembl_manual
-3715945	1100	HGNC:30797	TM9SF4	0	transmembrane 9 superfamily member 4	DIRECT	Generated via ensembl_manual
-3678173	1100	HGNC:14988	POFUT1	0	protein O-fucosyltransferase 1	DIRECT	Generated via ensembl_manual
-3614149	1100	HGNC:6320	KIF3B	0	kinesin family member 3B	DIRECT	Generated via ensembl_manual
-3627111	1100	HGNC:6890	MAPRE1	0	microtubule associated protein RP/EB family member 1	DIRECT	Generated via ensembl_manual
-3674564	1100	HGNC:9047	PLAGL2	0	PLAG1 like zinc finger 2	DIRECT	Generated via ensembl_manual
-3719913	1100	HGNC:16118	TTLL9	0	tubulin tyrosine ligase like 9	DEPENDENT	Generated via refseq_manual
-3569438	1100	HGNC:16223	COMMD7	0	COMM domain containing 7	DIRECT	Generated via ensembl_manual
-3551641	1100	HGNC:18318	ASXL1	0	ASXL transcriptional regulator 1	DIRECT	Generated via ensembl_manual
