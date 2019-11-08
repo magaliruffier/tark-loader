@@ -324,13 +324,19 @@ sub load_species {
 sub _load_gene {
   my ( $self, $gene, $session_pkg, $source_name, $tag, $naming_consortium, $add_name_prefix ) = @_;
 
-  my @loc_pieces = (
+ if ($source_name eq "LRG"){
+   # Do projection
+    my $projected_gene = $gene->project('chromosome', 'GRCh38');
+    $gene = $projected_gene;
+  }
+
+    my @loc_pieces = (
     $session_pkg->{assembly_id}, $gene->seq_region_name(),
     $gene->seq_region_start(), $gene->seq_region_end(),
     $gene->seq_region_strand(),
   );
 
-  my @loc_pieces_checksum = (
+   my @loc_pieces_checksum = (
     $session_pkg->{assembly_name}, $gene->seq_region_name(),
     $gene->seq_region_start(), $gene->seq_region_end(),
     $gene->seq_region_strand(),
@@ -363,9 +369,20 @@ sub _load_gene {
   $session_pkg->{gene_id} = $gene_id;
   for my $transcript ( @{ $gene->get_all_Transcripts() } ) {
 
+    if ($source_name eq "LRG"){
+     # Do transcript projection
+      my $projected_transcript = $transcript->project('chromosome', 'GRCh38');
+      $transcript = $projected_transcript;
+     }
     my @exon_checksums;
     my @exon_ids;
     for my $exon (@{ $transcript->get_all_Exons() }) {
+
+     if ($source_name eq "LRG"){
+     # Do exon projection
+      my $projected_exon = $exon->project('chromosome', 'GRCh38');
+      $exon = $projected_exon;
+     }
       my ($exon_id, $exon_checksum) = $self->_load_exon( $exon, $session_pkg, $tag );
       push @exon_checksums, $exon_checksum;
       push @exon_ids, $exon_id;
@@ -391,6 +408,11 @@ sub _load_gene {
 
     my $translation = $transcript->translation();
     if ( defined $translation ) {
+     if ($source_name eq "LRG"){
+     # Do translation projection
+      my $projected_translation = $translation->project('chromosome', 'GRCh38');
+      $translation = $projected_translation;
+     }
       $self->_load_translation( $translation, $session_pkg, $tag );
     }
 
