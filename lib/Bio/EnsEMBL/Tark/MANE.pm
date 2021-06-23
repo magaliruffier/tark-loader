@@ -115,7 +115,7 @@ SQL
     FROM
       relationship_type
     WHERE
-      shortname='MANE PLUS' AND
+      shortname='MANE PLUS CLINICAL' AND
       version=?
 SQL
 
@@ -128,7 +128,7 @@ SQL
 
   my $insert_relationship_type_plus_sql = (<<'SQL');
     INSERT INTO relationship_type (shortname, description, version, release_date)
-    VALUES ('MANE PLUS', 'Matched Annotation by NCBI and EMBL-EBI (MANE)', ?, ?)
+    VALUES ('MANE PLUS CLINICAL', 'Matched Annotation by NCBI and EMBL-EBI (MANE)', ?, ?)
 SQL
 
   $sth = $dbh->prepare( $insert_relationship_type_plus_sql );
