@@ -214,13 +214,17 @@ sub load_mane {
   # Fetch a gene iterator and cycle through loading the genes
   my $iter = $self->genes_to_metadata_iterator( $dba );
 
+  # Get Attribute Adaptor to fetch all the transcripts using 'code'
+  my $attribute_adaptor = $dba->get_AttributeAdaptor();
+
   while ( my $gene = $iter->next() ) {
     $self->_load_relationship(
       $gene,
       {
         mane_select_id => $mane_select_id[0],
         mane_plus_id   => $mane_plus_id[0]
-      }
+      },
+      $attribute_adaptor
     );
   }
 
@@ -231,6 +235,7 @@ sub load_mane {
 =head2 _load_relationship
   Arg [1]    : Bio::EnsEMBL::Gene - $gene
   Arg [2]    : HashRef
+  Arg [3]    : Bio::EnsEMBL::DBSQL::AttributeAdaptor - $attribute_adaptor
   Description: Load the relationships between to transcripts. Links are made based
                on the transcript_release_tag table to match the transcripts with
                the given release of the source that it came from.
@@ -241,7 +246,7 @@ sub load_mane {
 =cut
 
 sub _load_relationship {
-  my ( $self, $gene, $relationship_types ) = @_;
+  my ( $self, $gene, $relationship_types, $attribute_adaptor ) = @_;
 
   my $insert_mane = $self->get_query('insert_transcript_relationship_sql');
   my $get_transcript_object_id = $self->get_query('select_transcript_release_tag_id_sql');
@@ -253,8 +258,11 @@ sub _load_relationship {
 
   for my $transcript ( @{ $gene->get_all_Transcripts() } ) {
 
-    # Iterate through the transcript_attribs
-    my @mane_transcripts = @{ $transcript->get_all_Attributes( 'MANE_Select' ) };
+    # Get all the attributes of the transcript whose "code" starts with "MANE"
+    my @mane_transcripts = @{$attribute_adaptor->fetch_all_by_Transcript($transcript, 'MANE%')};
+
+    #my @mane_transcripts = @{ $transcript->get_all_Attributes( 'MANE_Select' ) };
+
     if ( @mane_transcripts ) {
       $self->log->debug( 'Loading transcript ' . $transcript->{stable_id} );
 
@@ -283,7 +291,7 @@ sub _load_relationship {
               $transcript_subject_id[0],
               $relationship_types->{mane_select_id}
             );
-          } elsif ( $mane->{code} eq 'MANE_Plus' ) {
+          } elsif ( $mane->{code} eq 'MANE_Plus_Clinical' ) {
             $insert_mane->execute(
               $transcript_object_id[0],
               $transcript_subject_id[0],
