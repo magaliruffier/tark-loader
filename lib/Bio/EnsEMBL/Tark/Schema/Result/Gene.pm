@@ -127,7 +127,13 @@ __PACKAGE__->table("gene");
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 1
+#populate biotype for gene
+=head2 biotype
 
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 40
+  
 =cut
 
 __PACKAGE__->add_columns(
@@ -175,6 +181,9 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 1,
   },
+  # populate biotype for gene
+  "biotype",
+  { data_type => "varchar", is_nullable => 1, size => 40 },
 );
 
 =head1 PRIMARY KEY
