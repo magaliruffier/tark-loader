@@ -117,13 +117,14 @@ SQL
   $sth = $dbh->prepare( $assembly_alias_sql );
   $self->set_query('assembly_alias' => $sth);
 
-
+  
   # INSERT gene
+  # populate biotype for gene
   my $gene_sql = (<<'SQL');
     INSERT INTO gene (
       stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end,
-      loc_strand, loc_checksum, name_id, gene_checksum, session_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      loc_strand, loc_checksum, name_id, gene_checksum, session_id, biotype)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE gene_id=LAST_INSERT_ID(gene_id)
 SQL
   $sth = $dbh->prepare( $gene_sql );
@@ -141,12 +142,13 @@ SQL
 
 
   # INSERT transcript
+  # populate biotype for transcript
   my $transcript_sql = (<<'SQL');
     INSERT INTO transcript (
       stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end,
       loc_strand, loc_checksum, transcript_checksum, exon_set_checksum,
-      seq_checksum, session_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      seq_checksum, session_id, biotype)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE transcript_id=LAST_INSERT_ID(transcript_id)
 SQL
   $sth = $dbh->prepare( $transcript_sql );
@@ -349,9 +351,10 @@ sub _load_gene {
   );
 
   my $sth = $self->get_insert('gene');
+  # populate biotype for gene
   $sth->execute(
     $gene->stable_id(), $gene->version(), @loc_pieces, $loc_checksum,
-    $name_id, $gene_checksum, $session_pkg->{session_id}
+    $name_id, $gene_checksum, $session_pkg->{session_id}, $gene->biotype()
   ) or  $self->log->logdie("Error inserting gene: $DBI::errstr");
 
   my $gene_id = $sth->{mysql_insertid};
@@ -447,11 +450,12 @@ sub _load_transcript {
   );
 
   my $sth = $self->get_insert('transcript');
+  # populate biotype for transcript
   $sth->execute(
     $transcript->stable_id(), $transcript->version(), @loc_pieces, $loc_checksum,
     $transcript_checksum, (
       $session_pkg->{exon_set_checksum} ? $session_pkg->{exon_set_checksum} : undef
-    ), $seq_checksum, $session_pkg->{session_id}
+    ), $seq_checksum, $session_pkg->{session_id}, $transcript->biotype()
   ) or $self->log->logdie("Error inserting transcript: $DBI::errstr");
   my $transcript_id = $sth->{mysql_insertid};
 
