@@ -157,6 +157,8 @@ CREATE TABLE `gene` (
   `name_id` varchar(32) DEFAULT NULL,
   `gene_checksum` binary(20) DEFAULT NULL,
   `session_id` int(10) unsigned DEFAULT NULL,
+  /* change schema to add biotype */
+  `biotype` varchar(40) DEFAULT NULL,
   PRIMARY KEY (`gene_id`),
   UNIQUE KEY `gene_checksum_idx` (`gene_checksum`),
   KEY `gene_idx_assembly_id` (`assembly_id`),
@@ -489,6 +491,8 @@ CREATE TABLE `transcript` (
   `transcript_checksum` binary(20) DEFAULT NULL,
   `seq_checksum` binary(20) DEFAULT NULL,
   `session_id` int(10) unsigned DEFAULT NULL,
+  /* change schema to add biotype */
+  `biotype` varchar(40) DEFAULT NULL,
   PRIMARY KEY (`transcript_id`),
   UNIQUE KEY `transcript_chk` (`transcript_checksum`),
   KEY `transcript_idx_assembly_id` (`assembly_id`),
