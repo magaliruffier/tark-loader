@@ -162,7 +162,10 @@ do
     ${NAMING_CONSORTIUM_PARAM} ${ADD_CONSORTIUM_NAME_PARAM}
 
   perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/beekeeper.pl -url mysql://${HIVE_USER}:${HIVE_PASS}@${HIVE_HOST}:${HIVE_PORT}/${HIVE_DB} -loop
-
+  
+  echo "Updating 5' and 3' UTR checksum in translation table after loading ${CORE_DB} ..."
+  mysql -h${TARK_HOST} -P${TARK_PORT} -u${TARK_USER} -p${TARK_PASS} ${TARK_DB} -e "UPDATE translation tl INNER JOIN translation_transcript tt ON tt.translation_id = tl.translation_id INNER JOIN (SELECT max(transcript_id) as transcript_id FROM transcript GROUP BY stable_id,assembly_id) AS v0 ON v0.transcript_id = tt.transcript_id INNER JOIN transcript t ON tt.transcript_id = t.transcript_id INNER JOIN sequence s ON s.seq_checksum = t.seq_checksum  SET tl.five_utr_checksum = UNHEX(SHA1(IF(t.loc_strand = 1 AND tl.loc_strand = 1, SUBSTRING(s.sequence,1,tl.loc_start-t.loc_start), SUBSTRING(s.sequence,1,t.loc_end-tl.loc_end)))), tl.three_utr_checksum = UNHEX(SHA1(IF(t.loc_strand = 1 AND tl.loc_strand = 1, SUBSTRING(s.sequence,-(t.loc_end-tl.loc_end)), SUBSTRING(s.sequence,-(tl.loc_start-t.loc_start)))));"
+  
   echo "Optimizing Tark tables after loading ${CORE_DB} ..."
   mysql -h${TARK_HOST} -P${TARK_PORT} -u${TARK_USER} -p${TARK_PASS} ${TARK_DB} -N -e "show tables;" | while read table; do echo "Optimizing $table ...     "; mysql -h${TARK_HOST} -P${TARK_PORT} -u${TARK_USER} -p${TARK_PASS} ${TARK_DB} -e "optimize table $table;"; done
 
