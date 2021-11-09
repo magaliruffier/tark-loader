@@ -22,6 +22,8 @@ CREATE INDEX `fk_translation_2_idx` ON `translation` (`session_id` ASC);
 CREATE INDEX `fk_translation_3_idx` ON `translation` (`seq_checksum` ASC);
 CREATE INDEX `fk_translation_1_idx` ON `translation` (`assembly_id` ASC);
 CREATE INDEX `stable_id_version` ON `translation` (`stable_id` ASC, `stable_id_version` ASC);
+CREATE INDEX `fk_translation_five_utr_idx` ON `translation` (`five_utr_checksum` ASC);
+CREATE INDEX `fk_translation_three_utr_idx` ON `translation` (`three_utr_checksum` ASC);
 CREATE INDEX `fk_Tagset_1_idx` ON `tagset` (`session_id` ASC);
 CREATE INDEX `short_name_idx` ON `tagset` (`shortname` ASC);
 CREATE INDEX `transcript_id` ON `tag` (`transcript_id` ASC);
