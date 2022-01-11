@@ -178,7 +178,7 @@ sub run {
   # load utr checksum
   update_utr_checksum($tark_dba);
   sub update_utr_checksum {
-    my ($dba ) = @_;
+    my ($tark_dba ) = @_;
     my $select_sql = "SELECT tl.translation_id, 
                              CASE
                                  WHEN t.loc_strand = 1 AND tl.loc_strand = 1 THEN SUBSTRING(s.sequence,1,tl.loc_start-t.loc_start)
@@ -193,10 +193,10 @@ sub run {
                              INNER JOIN (SELECT max(transcript_id) as transcript_id FROM transcript GROUP BY stable_id,assembly_id) AS v0 ON v0.transcript_id = tt.transcript_id 
                              INNER JOIN transcript t ON tt.transcript_id = t.transcript_id 
                              INNER JOIN sequence s ON s.seq_checksum = t.seq_checksum";
-    my $select = $dba->prepare($select_sql);                            
+    my $select = $tark_dba->prepare($select_sql);                            
     $select->execute();
     my $update_sql = "UPDATE translation SET five_utr_checksum = ?, three_utr_checksum  = ? WHERE translation_id = ?";
-    my $update = $dba->prepare($update_sql);
+    my $update = $tark_dba->prepare($update_sql);
     my $utils = Bio::EnsEMBL::Tark::Utils->new();
     while(my @row = $select->fetchrow_array()){
       $update->bind_param(1,$utils->checksum_array($row[2]));
