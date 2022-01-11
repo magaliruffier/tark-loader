@@ -43,6 +43,7 @@ package Bio::EnsEMBL::Tark::Hive::RunnableDB::TarkLoader;
 use strict;
 use warnings;
 use Carp;
+use DBI;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
