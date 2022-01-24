@@ -572,6 +572,36 @@ sub _load_translation {
   # Apply tags to feature we've just inserted
   $tag->tag_feature($translation_id, 'translation');
 
+  ## UTR checksum update 
+  my $tark_dbh = $self->session->dbh();
+  my $select = $tark_dbh->prepare("SELECT tl.translation_id AS translation_id_select,
+                             CASE
+                                 WHEN t.loc_strand = 1 AND tl.loc_strand = 1 THEN SUBSTRING(s.sequence,1,tl.loc_start-t.loc_start)
+                                 ELSE SUBSTRING(s.sequence,1,t.loc_end-tl.loc_end)
+                             END AS five_utr,
+                             CASE
+                                 WHEN t.loc_strand = 1 AND tl.loc_strand = 1 THEN SUBSTRING(s.sequence,-(t.loc_end-tl.loc_end))
+                                 ELSE SUBSTRING(s.sequence,-(tl.loc_start-t.loc_start))
+                             END AS three_utr
+                             FROM translation tl
+                             INNER JOIN translation_transcript tt ON tt.translation_id = tl.translation_id
+                             AND tt.transcript_id =  (select max(transcript_id) from translation_transcript where translation_id = $translation_id)
+                             INNER JOIN transcript t ON tt.transcript_id = t.transcript_id
+                             INNER JOIN sequence s ON s.seq_checksum = t.seq_checksum
+                             WHERE tl.translation_id = $translation_id") or die "prepare select failed: $tark_dbh->errstr";
+  $select->execute() or die "select execution failed: $tark_dbh->errstr";
+  my ($translation_id_select,$five_utr,$three_utr) = $select->fetchrow();
+  my $five_utr_checksum = $utils->checksum_array($five_utr);
+  my $three_utr_checksum = $utils->checksum_array($three_utr);
+  my $update = $tark_dbh->prepare("UPDATE translation SET five_utr_checksum =?, three_utr_checksum  =? WHERE translation_id =?")  or die "prepare update failed: $tark_dbh->errstr";
+  $update->bind_param(1,$five_utr_checksum);
+  $update->bind_param(2,$three_utr_checksum);
+  $update->bind_param(3,$translation_id_select);
+  $update->execute() or die "update execution failed: $tark_dbh->errstr";
+  $tark_dbh->commit();
+  $select->finish;
+  $update->finish;
+
   return;
 } ## end sub _load_translation
 
