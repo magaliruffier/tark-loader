@@ -140,6 +140,48 @@ __PACKAGE__->table("transcript");
   data_type: 'varchar'
   is_nullable: 1
   size: 40
+
+=head2 three_prime_utr_start
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+=head2 three_prime_utr_end
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+=head2 three_prime_utr_seq
+  data_type: 'longtext'
+  is_nullable: 1
+
+=head2 three_prime_utr_checksum
+  data_type: 'binary'
+  is_nullable: 1
+  size: 20
+
+=head2 five_prime_utr_start
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+=head2 five_prime_utr_end
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+=head2 five_prime_utr_seq
+  data_type: 'longtext'
+  is_nullable: 1
+
+=head2 five_prime_utr_checksum
+  data_type: 'binary'
+  is_nullable: 1
+  size: 20
   
 =cut
 
