@@ -147,8 +147,10 @@ SQL
     INSERT INTO transcript (
       stable_id, stable_id_version, assembly_id, loc_region, loc_start, loc_end,
       loc_strand, loc_checksum, transcript_checksum, exon_set_checksum,
-      seq_checksum, session_id, biotype)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      seq_checksum, session_id, biotype, three_prime_utr_start, three_prime_utr_end,
+      three_prime_utr_seq, three_prime_utr_checksum, five_prime_utr_start,
+      five_prime_utr_end, five_prime_utr_seq, five_prime_utr_checksum)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
     ON DUPLICATE KEY UPDATE transcript_id=LAST_INSERT_ID(transcript_id)
 SQL
   $sth = $dbh->prepare( $transcript_sql );
