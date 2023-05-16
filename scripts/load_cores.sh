@@ -25,9 +25,8 @@ BATCH_COUNT=1000
 SPECIES="homo_sapiens"
 ASSEMBLY=38
 RELEASE_EG_FROM=0
-RELEASE_FROM=76
-RELEASE_TO=${RELEASE_FROM}
-PREVIOUS_RELEASE=${RELEASE_FROM}
+RELEASE=77
+PREVIOUS_RELEASE=$((RELEASE-1))
 NAMING_CONSORTIUM="HGNC"
 ADD_CONSORTIUM_NAME=1
 TARK_DB="test_tark"
@@ -36,9 +35,9 @@ INCLUDE_SOURCE=""
 SOURCE_NAME="Ensembl"
 verbose=0
 
-HELP="\n\t-h Displays this message\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-b BATCH_COUNT\n\t-c NAING_CONSORTIUM\n\t-d ENSDIR\n\t-e EXCLUDE_SOURCE\n\t-i INCLUDE_SOURCE\n\t-m RELEASE_EG_FROM\n\t-n ADD_CONSORTIUM_NAME\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-q RELEASE_FROM (default: ${RELEASE_FROM})\n\t-r RELEASE_TO (default: ${RELEASE_TO})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)\n\t-w SOURCE_NAME (default: ${SOURCE_NAME})"
+HELP="\n\t-h Displays this message\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-b BATCH_COUNT\n\t-c NAING_CONSORTIUM\n\t-d ENSDIR\n\t-e EXCLUDE_SOURCE\n\t-i INCLUDE_SOURCE\n\t-m RELEASE_EG_FROM\n\t-n ADD_CONSORTIUM_NAME\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-r RELEASE (default: ${RELEASE})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)\n\t-w SOURCE_NAME (default: ${SOURCE_NAME})"
 
-while getopts "h?:a:b:c:d:e:i:m:n:p:q:r:s:t:w:" opt; do
+while getopts "h?:a:b:c:d:e:i:m:n:p:r:s:t:w:" opt; do
     case "${opt}" in
     h|\?)
         echo "Loader for importing ensembl core dbs into the Tark db."
@@ -63,9 +62,7 @@ while getopts "h?:a:b:c:d:e:i:m:n:p:q:r:s:t:w:" opt; do
         ;;
     n)  ADD_CONSORTIUM_NAME=$OPTARG
         ;;
-    q)  RELEASE_FROM=$OPTARG
-        ;;
-    r)  RELEASE_TO=$OPTARG
+    r)  RELEASE=$OPTARG
         ;;
     p)  PREVIOUS_RELEASE=$OPTARG
         ;;
@@ -91,14 +88,10 @@ then
   exit 0
 fi
 
-if [ $RELEASE_TO = 0 ]
-then
-  RELEASE_TO=$RELEASE_FROM
-fi
 
 if [ $PREVIOUS_RELEASE = 0 ]
 then
-  PREVIOUS_RELEASE=$RELEASE_FROM
+  PREVIOUS_RELEASE=$((RELEASE-1))
 fi
 
 ESOURCE=${#EXCLUDE_SOURCE}
@@ -133,44 +126,34 @@ then
   ADD_CONSORTIUM_NAME_PARAM=" --add_consortium_prefix 1"
 fi
 
-for RELEASE in $( seq $RELEASE_FROM $RELEASE_TO)
-do
 
-  CORE_DB=${SPECIES}_core_${RELEASE}_${ASSEMBLY}
-  if [ $RELEASE_EG_FROM -gt 0 ]
-  then
-    CORE_DB=${SPECIES}_core_${RELEASE_EG_FROM}_${RELEASE}_${ASSEMBLY}
-  fi
+CORE_DB=${SPECIES}_core_${RELEASE}_${ASSEMBLY}
+if [ $RELEASE_EG_FROM -gt 0 ]
+then
+  CORE_DB=${SPECIES}_core_${RELEASE_EG_FROM}_${RELEASE}_${ASSEMBLY}
+fi
 
-  HIVE_DB_NAME=hive_${TARK_DB}_${RELEASE}
-  HIVE_DB=${USER}_${HIVE_DB_NAME}
+HIVE_DB_NAME=hive_${TARK_DB}_${RELEASE}
+HIVE_DB=${USER}_${HIVE_DB_NAME}
 
-  echo "Loading ${SPECIES}_core_${RELEASE}_${ASSEMBLY}, PREVIOUS_RELEASE was ${PREVIOUS_RELEASE}"
+echo "Loading ${SPECIES}_core_${RELEASE}_${ASSEMBLY}, PREVIOUS_RELEASE was ${PREVIOUS_RELEASE}"
 
-  perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/init_pipeline.pl \
-    Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf                \
-    --tark_host ${TARK_HOST} --tark_port ${TARK_PORT} --tark_user ${TARK_USER} --tark_pass ${TARK_PASS} \
-    --tark_db ${TARK_DB} --core_host ${CORE_HOST} --core_port ${CORE_PORT} \
-    --core_user ${CORE_USER} --core_pass '' --core_dbname ${CORE_DB} \
-    --host ${HIVE_HOST} --port ${HIVE_PORT} --user ${HIVE_USER} --password ${HIVE_PASS} \
-    --pipeline_name ${HIVE_DB_NAME} --species ${SPECIES} \
-    --tag_block release --tag_shortname ${RELEASE} --tag_description "$TAG_DESCRITPION" \
-    --tag_feature_type all --tag_version 1 \
-    --block_size ${BATCH_COUNT} --report ${PWD}/loading_report_${RELEASE}.json \
-    --tag_previous_shortname ${PREVIOUS_RELEASE} --source_name ${SOURCE_NAME} \
-    --exclude_source "$EXCLUDE_SOURCE" --include_source "$INCLUDE_SOURCE" \
-    ${NAMING_CONSORTIUM_PARAM} ${ADD_CONSORTIUM_NAME_PARAM}
+perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/init_pipeline.pl \
+  Bio::EnsEMBL::Tark::Hive::PipeConfig::TarkLoader_conf                \
+  --tark_host ${TARK_HOST} --tark_port ${TARK_PORT} --tark_user ${TARK_USER} --tark_pass ${TARK_PASS} \
+  --tark_db ${TARK_DB} --core_host ${CORE_HOST} --core_port ${CORE_PORT} \
+  --core_user ${CORE_USER} --core_pass '' --core_dbname ${CORE_DB} \
+  --host ${HIVE_HOST} --port ${HIVE_PORT} --user ${HIVE_USER} --password ${HIVE_PASS} \
+  --pipeline_name ${HIVE_DB_NAME} --species ${SPECIES} \
+  --tag_block release --tag_shortname ${RELEASE} --tag_description "$TAG_DESCRITPION" \
+  --tag_feature_type all --tag_version 1 \
+  --block_size ${BATCH_COUNT} --report ${PWD}/loading_report_${RELEASE}.json \
+  --tag_previous_shortname ${PREVIOUS_RELEASE} --source_name ${SOURCE_NAME} \
+  --exclude_source "$EXCLUDE_SOURCE" --include_source "$INCLUDE_SOURCE" \
+  ${NAMING_CONSORTIUM_PARAM} ${ADD_CONSORTIUM_NAME_PARAM}
 
-  perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/beekeeper.pl -url mysql://${HIVE_USER}:${HIVE_PASS}@${HIVE_HOST}:${HIVE_PORT}/${HIVE_DB} -loop
+perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/beekeeper.pl -url mysql://${HIVE_USER}:${HIVE_PASS}@${HIVE_HOST}:${HIVE_PORT}/${HIVE_DB} -loop
 
-  echo "Optimizing Tark tables after loading ${CORE_DB} ..."
-  mysql -h${TARK_HOST} -P${TARK_PORT} -u${TARK_USER} -p${TARK_PASS} ${TARK_DB} -N -e "show tables;" | while read table; do echo "Optimizing $table ...     "; mysql -h${TARK_HOST} -P${TARK_PORT} -u${TARK_USER} -p${TARK_PASS} ${TARK_DB} -e "optimize table $table;"; done
-
-  PREVIOUS_RELEASE=${RELEASE}
-  if [ $RELEASE_EG_FROM -gt 0 ]
-  then
-    RELEASE_EG_FROM=${RELEASE_EG_FROM}+1
-  fi
-
-done
+echo "Optimizing Tark tables after loading ${CORE_DB} ..."
+mysql -h${TARK_HOST} -P${TARK_PORT} -u${TARK_USER} -p${TARK_PASS} ${TARK_DB} -N -e "show tables;" | while read table; do echo "Optimizing $table ...     "; mysql -h${TARK_HOST} -P${TARK_PORT} -u${TARK_USER} -p${TARK_PASS} ${TARK_DB} -e "optimize table $table;"; done
 
