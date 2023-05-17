@@ -37,7 +37,7 @@ verbose=0
 
 HELP="\n\t-h Displays this message\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-b BATCH_COUNT\n\t-c NAING_CONSORTIUM\n\t-d ENSDIR\n\t-e EXCLUDE_SOURCE\n\t-i INCLUDE_SOURCE\n\t-m RELEASE_EG_FROM\n\t-n ADD_CONSORTIUM_NAME\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-r RELEASE (default: ${RELEASE})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)\n\t-w SOURCE_NAME (default: ${SOURCE_NAME})"
 
-while getopts "h?:a:b:c:d:e:i:m:n:p:r:s:t:w:" opt; do
+while getopts "h?:a:b:c:d:e:i:m:n:p:r:s:t:w:q:" opt; do
     case "${opt}" in
     h|\?)
         echo "Loader for importing ensembl core dbs into the Tark db."
@@ -63,6 +63,8 @@ while getopts "h?:a:b:c:d:e:i:m:n:p:r:s:t:w:" opt; do
     n)  ADD_CONSORTIUM_NAME=$OPTARG
         ;;
     r)  RELEASE=$OPTARG
+        ;;
+    q)  RELEASE_DATE=$OPTARG
         ;;
     p)  PREVIOUS_RELEASE=$OPTARG
         ;;
@@ -146,7 +148,7 @@ perl -Ilocal/lib/perl5 ${ENSDIR}/ensembl-hive/scripts/init_pipeline.pl \
   --host ${HIVE_HOST} --port ${HIVE_PORT} --user ${HIVE_USER} --password ${HIVE_PASS} \
   --pipeline_name ${HIVE_DB_NAME} --species ${SPECIES} \
   --tag_block release --tag_shortname ${RELEASE} --tag_description "$TAG_DESCRITPION" \
-  --tag_feature_type all --tag_version 1 \
+  --tag_feature_type all --tag_version 1 --tag_release_date ${RELEASE_DATE} \
   --block_size ${BATCH_COUNT} --report ${PWD}/loading_report_${RELEASE}.json \
   --tag_previous_shortname ${PREVIOUS_RELEASE} --source_name ${SOURCE_NAME} \
   --exclude_source "$EXCLUDE_SOURCE" --include_source "$INCLUDE_SOURCE" \
