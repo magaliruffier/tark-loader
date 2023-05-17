@@ -40,6 +40,7 @@ See the NOTICE file distributed with this work for additional information
     --species homo_sapiens
     --tag_block release
     --tag_shortname 84
+    --tag_release_date 2014-10-01
     --tag_description 'Ensembl release 84'
     --tag_feature_type all
     --tag_version 1
@@ -151,6 +152,7 @@ sub pipeline_analyses {
         tag_description  => $self->o( 'tag_description' ),
         tag_feature_type => $self->o( 'tag_feature_type' ),
         tag_version      => $self->o( 'tag_version' ),
+        tag_release_date => $self->o( 'tag_release_date' ),
 
         # Species name
         species     => $self->o( 'species' ),
@@ -202,6 +204,7 @@ sub pipeline_analyses {
         # Worker parameters
         source_name            => $self->o( 'source_name' ),
         tag_shortname          => $self->o( 'tag_shortname' ),
+        tag_release_date => $self->o( 'tag_release_date' ),
         tag_previous_shortname => $self->o( 'tag_previous_shortname' ),
         report                 => $self->o( 'report' ),
       }
