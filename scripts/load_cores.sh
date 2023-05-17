@@ -26,6 +26,7 @@ SPECIES="homo_sapiens"
 ASSEMBLY=38
 RELEASE_EG_FROM=0
 RELEASE=77
+RELEASE_DATE=2014-10-01
 PREVIOUS_RELEASE=$((RELEASE-1))
 NAMING_CONSORTIUM="HGNC"
 ADD_CONSORTIUM_NAME=1
@@ -35,7 +36,7 @@ INCLUDE_SOURCE=""
 SOURCE_NAME="Ensembl"
 verbose=0
 
-HELP="\n\t-h Displays this message\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-b BATCH_COUNT\n\t-c NAING_CONSORTIUM\n\t-d ENSDIR\n\t-e EXCLUDE_SOURCE\n\t-i INCLUDE_SOURCE\n\t-m RELEASE_EG_FROM\n\t-n ADD_CONSORTIUM_NAME\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-r RELEASE (default: ${RELEASE})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)\n\t-w SOURCE_NAME (default: ${SOURCE_NAME})"
+HELP="\n\t-h Displays this message\n\t-a ASSEMBLY (default ${ASSEMBLY})\n\t-b BATCH_COUNT\n\t-c NAING_CONSORTIUM\n\t-d ENSDIR\n\t-e EXCLUDE_SOURCE\n\t-i INCLUDE_SOURCE\n\t-m RELEASE_EG_FROM\n\t-n ADD_CONSORTIUM_NAME\n\t-p PREVIOUS_RELEASE (default ${PREVIOUS_RELEASE})\n\t-r RELEASE (default: ${RELEASE})\n\t-q RELEASE_DATE (default: ${RELEASE_DATE})\n\t-s SPECIES (default: ${SPECIES})\n\t-t TARK_DB (default $TARK_DB)\n\t-w SOURCE_NAME (default: ${SOURCE_NAME})"
 
 while getopts "h?:a:b:c:d:e:i:m:n:p:r:s:t:w:q:" opt; do
     case "${opt}" in
