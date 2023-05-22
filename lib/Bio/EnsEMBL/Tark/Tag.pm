@@ -360,6 +360,7 @@ sub fetch_tag {
   my $session_id = $self->session->session_id;
 
   my $shortname = $self->config->config->{ 'release' }->{ 'shortname' };
+  my $release_date = $self->config->config->{ 'release' }->{ 'release_date' };
   my $desc      = $self->config->config->{ 'release' }->{ 'description' };
   my $source_id = 1;
   if ( defined $self->config->config->{ 'release' }->{ 'source_name' } ) {
@@ -383,7 +384,7 @@ SQL
   my $insert_release_sql = (<<'SQL');
     INSERT INTO release_set (
       shortname, description, assembly_id, release_date, session_id, source_id
-    ) VALUES (?, ?, ?, NOW(), ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE release_id=LAST_INSERT_ID(release_id)
 SQL
 
@@ -392,7 +393,7 @@ SQL
     $sth = $dbh->prepare( $insert_release_sql );
 
     # Create or find the release
-    $sth->execute($shortname, $desc, $self->assembly_id(), $session_id, $source_id);
+    $sth->execute($shortname, $desc, $self->assembly_id(), $release_date, $session_id, $source_id);
     $tag_id = $sth->{mysql_insertid};
   }
   else {

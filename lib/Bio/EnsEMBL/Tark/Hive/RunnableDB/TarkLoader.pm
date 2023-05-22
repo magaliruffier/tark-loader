@@ -127,7 +127,7 @@ sub run {
   $tag_config_hash{ $tag_block } = {};
 
   foreach my $tag_label (
-    qw/ shortname description feature_type version /
+    qw/ shortname description feature_type version release_date /
   ) {
     if ( $self->param_is_defined( 'tag_' . $tag_label ) ) {
       $tag_config_hash{ $tag_block }{ $tag_label } = $self->param( 'tag_' . $tag_label );
